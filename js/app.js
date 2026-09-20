@@ -264,7 +264,7 @@
     addSetRow();
     document.getElementById("log-date").value = todayStr();
     refreshExerciseOptions();
-    showView("dashboard");
+    showView("nutrition");
   });
 
   // ---------- Dashboard ----------
@@ -938,7 +938,7 @@
         data = Object.assign(defaultData(), parsed);
         saveData();
         toast("Data imported");
-        showView("dashboard");
+        showView("nutrition");
       } catch (err) {
         toast("Import failed: invalid file");
       }
@@ -953,7 +953,7 @@
     data = defaultData();
     saveData();
     toast("All data cleared");
-    showView("dashboard");
+    showView("nutrition");
   });
 
   // ---------- Auth ----------
@@ -982,7 +982,7 @@
     syncUnitRadios();
     nutritionViewDate = todayStr();
     document.getElementById("calorie-goal-input").value = data.calorieGoal || 2000;
-    renderDashboard();
+    renderNutrition();
   }
 
   function setAuthMode(mode) {

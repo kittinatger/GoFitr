@@ -283,6 +283,26 @@ html, body {
   color: var(--ink);
 }
 
+.nav-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.coming-soon-tag {
+  margin-left: auto;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
 .nav-icon { display: inline-flex; }
 .nav-icon svg { width: 17px; height: 17px; }
 
@@ -1076,6 +1096,7 @@ textarea { resize: vertical; font-family: inherit; }
     border-radius: 50%;
   }
   .mobile-nav .nav-btn:active { transform: scale(0.92); }
+  .mobile-nav .nav-btn:disabled { opacity: 0.32; cursor: not-allowed; pointer-events: none; }
   .mobile-nav-icon {
     display: flex;
     align-items: center;
