@@ -6,7 +6,7 @@ A simple, local-first fitness tracker. Sign in with Google, Apple, GitHub, Faceb
 
 ## Features
 
-- Log in with Google, Apple, GitHub, Facebook, or Vercel (via Supabase Auth), or create a local account (each account's data stays private on that device)
+- Log in with Google, Apple, GitHub, or Facebook (via Clerk), Vercel (via Supabase Auth), or create a local account (each account's data stays private on that device)
 - Log workouts with multiple sets (reps × weight) and notes
 - Dashboard with streak, weekly volume, and weekly/total workout counts
 - Full workout history with per-exercise filtering
@@ -26,23 +26,30 @@ python -m http.server 8123
 
 Then open `http://localhost:8123`. You can also just open `index.html` directly in a browser.
 
-Note: this only serves the static files, so local username/password accounts work fine everywhere, and the social login buttons work too as soon as `SUPABASE_URL`/`SUPABASE_ANON_KEY` are filled in (see below) — no serverless functions or Vercel deployment needed for auth, since Supabase handles it entirely from the browser.
+Note: this only serves the static files, so local username/password accounts work fine everywhere, and the social login buttons work too as soon as their keys are filled in (see below) — no serverless functions or Vercel deployment needed for auth, since both Clerk and Supabase handle it entirely from the browser.
 
-## Social login setup (Supabase Auth)
+## Social login setup
 
-Google/Apple/GitHub/Facebook/Vercel login is handled by [Supabase Auth](https://supabase.com/auth) directly from the client — there's no `api/` code involved.
+Google, Apple, GitHub, and Facebook go through [Clerk](https://clerk.com); Vercel goes through [Supabase Auth](https://supabase.com/auth) as a custom OIDC provider (Clerk's free tier doesn't support arbitrary custom OAuth/OIDC connections the way Supabase does). Both run entirely from the client — there's no `api/` code involved for either.
+
+### Clerk (Google, Apple, GitHub, Facebook)
+
+1. Create a free app at [clerk.com](https://clerk.com).
+2. In `index.html`, update the Clerk `<script>` tag's `data-clerk-publishable-key` and `src` (the domain in `src` is your app's Frontend API, shown on the Clerk dashboard). In `js/app.js`, update `CLERK_PUBLISHABLE_KEY` to match.
+3. In the Clerk dashboard, under **User & Authentication → Social Connections**, enable Google, Apple, GitHub, and Facebook. Clerk ships with shared development credentials for most providers, so they can work immediately in dev — for production you'll want to swap in your own OAuth client ID/secret for each (same provider setup steps as below, using Clerk's own callback URL instead of Supabase's).
+4. Apple specifically needs your own Service ID/Team ID/Key ID/private key from the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list/serviceId) (requires a paid Apple Developer account) even in Clerk, since Apple doesn't offer shared dev credentials.
+
+### Supabase Auth (Vercel)
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. In `js/app.js`, fill in `SUPABASE_URL` and `SUPABASE_ANON_KEY` near the top of the file (from your project's Settings → API — the anon key is public/safe to ship in client code).
-3. In the Supabase dashboard, go to **Authentication → Sign In / Providers** and enable each provider you want, adding that provider's own OAuth client ID/secret:
-   - **Google** — OAuth client from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-   - **Apple** — Service ID, Team ID, Key ID, and private key from the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list/serviceId) (requires a paid Apple Developer account)
-   - **GitHub** — OAuth App from [github.com/settings/developers](https://github.com/settings/developers)
-   - **Facebook** — app from [developers.facebook.com](https://developers.facebook.com/apps)
-   - **Vercel** — not a built-in Supabase provider; add it under the **Custom Providers** section at the bottom of that same page as an OIDC provider (issuer `https://vercel.com`), using a [Vercel App](https://vercel.com/docs/sign-in-with-vercel/getting-started) for the client ID/secret. Give it the identifier `vercel` — Supabase prefixes custom providers with `custom:`, so the resulting identifier (`custom:vercel`) must match `VERCEL_OIDC_PROVIDER_SLUG` in `js/app.js`.
-4. For every provider, set its redirect/callback URL to the one Supabase shows on that provider's setup screen (a `https://<project-ref>.supabase.co/auth/v1/callback` URL) — not a URL on your own domain.
+3. In the Supabase dashboard, go to **Authentication → Sign In / Providers**, scroll to **Custom Providers**, and add Vercel as a custom OIDC provider:
+   - Issuer URL: `https://vercel.com`
+   - Client ID / Secret: from a [Vercel App](https://vercel.com/docs/sign-in-with-vercel/getting-started) (Team Settings → Apps → Create), with its Authorization Callback URL set to the callback URL Supabase shows on this screen
+   - Provider Identifier: `vercel` — Supabase prefixes custom providers with `custom:`, so the resulting identifier (`custom:vercel`) must match `VERCEL_OIDC_PROVIDER_SLUG` in `js/app.js`
+   - If Auto-discovery fails, switch to Manual Configuration using Vercel's published endpoints: authorization `https://vercel.com/oauth/authorize`, token `https://api.vercel.com/login/oauth/token`, userinfo `https://api.vercel.com/login/oauth/userinfo`, JWKS `https://vercel.com/.well-known/jwks`
 
-Every button quietly shows a "not configured" toast instead of breaking anything until both the Supabase keys and that specific provider are set up.
+Every button quietly shows a "not configured" toast instead of breaking anything until its keys/provider are set up.
 
 ## Nutrition database setup
 

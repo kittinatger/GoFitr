@@ -4,14 +4,20 @@
   const USERS_KEY = "gofitr_users_v1";
   const SESSION_KEY = "gofitr_session_v1";
 
+  // Google/Apple/GitHub/Facebook go through Clerk (the publishable key is
+  // public, safe to ship — it's paired with the script tag's
+  // data-clerk-publishable-key in index.html). Vercel stays on Supabase's
+  // custom-OIDC path below since Clerk's free tier doesn't support arbitrary
+  // custom OAuth/OIDC providers the way Supabase does.
+  const CLERK_PUBLISHABLE_KEY = "pk_test_bHVja3ktdHJvbGwtMzEuY2xlcmsuYWNjb3VudHMuZGV2JA";
+
   // Fill these in from your Supabase project (Settings → API). The anon key
   // is a public key, safe to ship in client code — it only grants what your
-  // Supabase Row Level Security policies allow. Social login buttons quietly
-  // no-op with a toast until both are set and the corresponding provider is
-  // enabled in Supabase's Authentication → Providers screen. Vercel is
-  // registered there as a custom OIDC provider (Sign in with Vercel is
-  // OIDC-compliant); Supabase prefixes custom providers with "custom:" in
-  // the identifier it expects from signInWithOAuth.
+  // Supabase Row Level Security policies allow. The Vercel button quietly
+  // no-ops with a toast until both are set and the custom OIDC provider is
+  // enabled in Supabase's Authentication → Providers screen. Supabase
+  // prefixes custom providers with "custom:" in the identifier it expects
+  // from signInWithOAuth.
   const SUPABASE_URL = "https://nusdpphyforkukldzjpb.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51c2RwcGh5Zm9ya3VrbGR6anBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MTA5MDMsImV4cCI6MjEwNTQ4NjkwM30.8nsjwH4GqEwKmw37kF3VbzCCpfrAax9xWSq8pjQDjbM";
   const VERCEL_OIDC_PROVIDER_SLUG = "custom:vercel";
@@ -19,6 +25,23 @@
   const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
+
+  // Clerk's script tag loads with `async`, so it may not have finished
+  // fetching/executing by the time this file runs — poll briefly for
+  // window.Clerk instead of assuming it's there yet.
+  function waitForClerk(timeoutMs) {
+    return new Promise((resolve) => {
+      if (window.Clerk) { resolve(window.Clerk); return; }
+      if (!CLERK_PUBLISHABLE_KEY) { resolve(null); return; }
+      const started = Date.now();
+      const iv = setInterval(() => {
+        if (window.Clerk || Date.now() - started > timeoutMs) {
+          clearInterval(iv);
+          resolve(window.Clerk || null);
+        }
+      }, 50);
+    });
+  }
 
   const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
   const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
@@ -44,7 +67,7 @@
   });
 
   let currentUser = null;
-  let authMode = null; // "local" | "supabase"
+  let authMode = null; // "local" | "supabase" | "clerk"
   let data = defaultData();
   let charts = { progress: null, weight: null };
   let nutritionViewDate = null;
@@ -1714,16 +1737,36 @@
     supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
   }
 
-  document.getElementById("google-login-btn").addEventListener("click", () => supabaseSignIn("google"));
-  document.getElementById("apple-login-btn").addEventListener("click", () => supabaseSignIn("apple"));
-  document.getElementById("github-login-btn").addEventListener("click", () => supabaseSignIn("github"));
-  document.getElementById("facebook-login-btn").addEventListener("click", () => supabaseSignIn("facebook"));
+  function clerkSignIn(strategy) {
+    if (!window.Clerk) {
+      toast("Social login isn't configured yet.");
+      return;
+    }
+    window.Clerk.client.signIn
+      .authenticateWithRedirect({
+        strategy,
+        redirectUrl: window.location.origin,
+        redirectUrlComplete: window.location.origin,
+      })
+      .catch(() => toast("Could not start sign-in. Is this provider enabled in Clerk?"));
+  }
+
+  document.getElementById("google-login-btn").addEventListener("click", () => clerkSignIn("oauth_google"));
+  document.getElementById("apple-login-btn").addEventListener("click", () => clerkSignIn("oauth_apple"));
+  document.getElementById("github-login-btn").addEventListener("click", () => clerkSignIn("oauth_github"));
+  document.getElementById("facebook-login-btn").addEventListener("click", () => clerkSignIn("oauth_facebook"));
   document.getElementById("vercel-login-btn").addEventListener("click", () => supabaseSignIn(VERCEL_OIDC_PROVIDER_SLUG));
 
   document.getElementById("logout-btn").addEventListener("click", async () => {
     if (authMode === "supabase" && supabase) {
       try {
         await supabase.auth.signOut();
+      } catch (e) {
+        // ignore — the client-side session state is cleared below regardless
+      }
+    } else if (authMode === "clerk" && window.Clerk) {
+      try {
+        await window.Clerk.signOut();
       } catch (e) {
         // ignore — the client-side session state is cleared below regardless
       }
@@ -1903,6 +1946,14 @@
     });
   }
 
+  function bootClerkUser(user) {
+    const displayName = user.fullName
+      || (user.primaryEmailAddress && user.primaryEmailAddress.emailAddress)
+      || user.username
+      || user.id;
+    bootApp("clerk:" + user.id, { mode: "clerk", displayName });
+  }
+
   if (supabase) {
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session && session.user && !currentUser) {
@@ -1913,6 +1964,25 @@
 
   // ---------- Init ----------
   (async function init() {
+    const clerk = await waitForClerk(3000);
+    if (clerk) {
+      try {
+        await clerk.load();
+        if (clerk.user) {
+          clerk.addListener(({ user }) => {
+            if (user && !currentUser) bootClerkUser(user);
+          });
+          bootClerkUser(clerk.user);
+          return;
+        }
+        clerk.addListener(({ user }) => {
+          if (user && !currentUser) bootClerkUser(user);
+        });
+      } catch (e) {
+        // fall back to Supabase/local below.
+      }
+    }
+
     if (supabase) {
       try {
         const { data } = await supabase.auth.getSession();
