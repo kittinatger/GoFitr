@@ -811,17 +811,34 @@
     }
   }
 
+  function barcodeQrboxFunction(viewfinderWidth, viewfinderHeight) {
+    // A fixed pixel qrbox can end up scanning a region that doesn't match
+    // where the on-screen brackets are drawn on some devices/aspect ratios,
+    // so size it relative to the actual viewfinder instead (favoring a wide
+    // box, since 1D barcodes like UPC/EAN are landscape).
+    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+    const boxWidth = Math.floor(Math.min(viewfinderWidth * 0.85, minEdge * 1.4));
+    const boxHeight = Math.floor(boxWidth * 0.5);
+    return { width: boxWidth, height: boxHeight };
+  }
+
   function startBarcodeScanner() {
     if (typeof Html5Qrcode === "undefined") {
       document.getElementById("barcode-status").textContent = "Barcode scanner failed to load.";
       return;
     }
     document.getElementById("barcode-status").textContent = "Point your camera at a barcode…";
-    html5QrCodeInstance = new Html5Qrcode("barcode-reader-region");
+    html5QrCodeInstance = new Html5Qrcode("barcode-reader-region", {
+      // Use the browser's native BarcodeDetector when available (Chrome/
+      // Android) — it's substantially more reliable for 1D barcodes
+      // (UPC/EAN) than the pure-JS decoder this library falls back to.
+      useBarCodeDetectorIfSupported: true,
+      verbose: false,
+    });
     barcodeScanning = true;
     html5QrCodeInstance.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 250, height: 150 } },
+      { fps: 15, qrbox: barcodeQrboxFunction, aspectRatio: 1.5 },
       (decodedText) => {
         if (!barcodeScanning) return;
         barcodeScanning = false;
