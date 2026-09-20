@@ -39,7 +39,7 @@ Google/Apple/GitHub/Facebook/Vercel login is handled by [Supabase Auth](https://
    - **Apple** — Service ID, Team ID, Key ID, and private key from the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list/serviceId) (requires a paid Apple Developer account)
    - **GitHub** — OAuth App from [github.com/settings/developers](https://github.com/settings/developers)
    - **Facebook** — app from [developers.facebook.com](https://developers.facebook.com/apps)
-   - **Vercel** — not a built-in Supabase provider; add it under the **Custom Providers** section at the bottom of that same page as an OIDC provider (issuer `https://vercel.com`), using a [Vercel App](https://vercel.com/docs/sign-in-with-vercel/getting-started) for the client ID/secret. Give it the slug `vercel` to match `VERCEL_OIDC_PROVIDER_SLUG` in `js/app.js` (or change that constant to whatever slug you pick).
+   - **Vercel** — not a built-in Supabase provider; add it under the **Custom Providers** section at the bottom of that same page as an OIDC provider (issuer `https://vercel.com`), using a [Vercel App](https://vercel.com/docs/sign-in-with-vercel/getting-started) for the client ID/secret. Give it the identifier `vercel` — Supabase prefixes custom providers with `custom:`, so the resulting identifier (`custom:vercel`) must match `VERCEL_OIDC_PROVIDER_SLUG` in `js/app.js`.
 4. For every provider, set its redirect/callback URL to the one Supabase shows on that provider's setup screen (a `https://<project-ref>.supabase.co/auth/v1/callback` URL) — not a URL on your own domain.
 
 Every button quietly shows a "not configured" toast instead of breaking anything until both the Supabase keys and that specific provider are set up.

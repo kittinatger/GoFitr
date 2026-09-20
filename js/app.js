@@ -8,12 +8,13 @@
   // is a public key, safe to ship in client code — it only grants what your
   // Supabase Row Level Security policies allow. Social login buttons quietly
   // no-op with a toast until both are set and the corresponding provider is
-  // enabled in Supabase's Authentication → Providers screen. "vercel" is
+  // enabled in Supabase's Authentication → Providers screen. Vercel is
   // registered there as a custom OIDC provider (Sign in with Vercel is
-  // OIDC-compliant) using the slug below.
+  // OIDC-compliant); Supabase prefixes custom providers with "custom:" in
+  // the identifier it expects from signInWithOAuth.
   const SUPABASE_URL = "https://nusdpphyforkukldzjpb.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51c2RwcGh5Zm9ya3VrbGR6anBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MTA5MDMsImV4cCI6MjEwNTQ4NjkwM30.8nsjwH4GqEwKmw37kF3VbzCCpfrAax9xWSq8pjQDjbM";
-  const VERCEL_OIDC_PROVIDER_SLUG = "vercel";
+  const VERCEL_OIDC_PROVIDER_SLUG = "custom:vercel";
 
   const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
