@@ -320,6 +320,17 @@ textarea {
 
 .input-icon-field .input-icon svg { width: 16px; height: 16px; }
 
+/* Safari overlays its own "contacts autofill" person icon on fields it
+   recognizes as a username/name/contact field, which collides with our own
+   icon at the same spot — hide Safari's so only ours shows. */
+.input-icon-field input::-webkit-contacts-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
 .input-toggle-visibility {
   position: absolute;
   right: 8px;
