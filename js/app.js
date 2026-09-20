@@ -28,6 +28,9 @@
   let charts = { progress: null, weight: null };
   let nutritionViewDate = null;
   let activeFoodMeal = null;
+  let activeFoodBase = null; // { kcal100, protein100, carbs100, fat100 } when filled from search/barcode
+  let html5QrCodeInstance = null;
+  let barcodeScanning = false;
 
   // ---------- Accounts (local only — no server, no cross-device sync) ----------
   function getUsers() {
@@ -682,15 +685,168 @@
 
   function openFoodModal(meal) {
     activeFoodMeal = meal;
+    activeFoodBase = null;
     document.getElementById("food-dialog-meal").textContent = "— " + meal;
     document.getElementById("food-form").reset();
+    document.getElementById("food-serving").value = 100;
+    document.getElementById("food-search-input").value = "";
+    document.getElementById("food-search-results").innerHTML = "";
+    document.getElementById("barcode-status").textContent = "Point your camera at a barcode.";
+    setFoodSourceTab("manual");
     document.getElementById("food-overlay").classList.add("show");
     document.getElementById("food-name").focus();
   }
 
   function closeFoodModal() {
+    stopBarcodeScanner();
     document.getElementById("food-overlay").classList.remove("show");
     activeFoodMeal = null;
+  }
+
+  function setFoodSourceTab(source) {
+    document.querySelectorAll(".food-source-tab").forEach(t => t.classList.toggle("active", t.dataset.source === source));
+    document.querySelectorAll(".food-source-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === source));
+    if (source === "barcode") {
+      startBarcodeScanner();
+    } else {
+      stopBarcodeScanner();
+    }
+  }
+
+  document.querySelectorAll(".food-source-tab").forEach(tab => {
+    tab.addEventListener("click", () => setFoodSourceTab(tab.dataset.source));
+  });
+
+  function round1(n) { return Math.round(n * 10) / 10; }
+
+  function applyServingScale() {
+    if (!activeFoodBase) return;
+    const serving = parseFloat(document.getElementById("food-serving").value) || 0;
+    const factor = serving / 100;
+    document.getElementById("food-calories").value = Math.round(activeFoodBase.kcal100 * factor);
+    document.getElementById("food-protein").value = round1(activeFoodBase.protein100 * factor);
+    document.getElementById("food-carbs").value = round1(activeFoodBase.carbs100 * factor);
+    document.getElementById("food-fat").value = round1(activeFoodBase.fat100 * factor);
+  }
+
+  document.getElementById("food-serving").addEventListener("input", applyServingScale);
+
+  function applyFoodProduct(product) {
+    const n = product.nutriments || {};
+    activeFoodBase = {
+      kcal100: n["energy-kcal_100g"] || 0,
+      protein100: n["proteins_100g"] || 0,
+      carbs100: n["carbohydrates_100g"] || 0,
+      fat100: n["fat_100g"] || 0,
+    };
+    document.getElementById("food-name").value = product.product_name || "Unknown food";
+    document.getElementById("food-serving").value = 100;
+    applyServingScale();
+    setFoodSourceTab("manual");
+  }
+
+  // ---------- Open Food Facts (public, free, no API key) ----------
+  async function searchFoodDatabase(query) {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&json=1&page_size=15&fields=product_name,brands,nutriments`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("Search request failed");
+    const json = await resp.json();
+    return (json.products || []).filter(p => p.product_name && p.nutriments && p.nutriments["energy-kcal_100g"] != null);
+  }
+
+  async function lookupBarcode(code) {
+    const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriments`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("Lookup request failed");
+    const json = await resp.json();
+    if (json.status !== 1 || !json.product) throw new Error("Product not found");
+    return json.product;
+  }
+
+  function renderSearchResults(products) {
+    const container = document.getElementById("food-search-results");
+    if (products.length === 0) {
+      container.innerHTML = `<p class="empty-state" style="padding:14px 0;">No results found.</p>`;
+      return;
+    }
+    container.innerHTML = products.map((p, i) => `
+      <button type="button" class="food-search-result" data-index="${i}">
+        <span class="food-search-result-name">${escapeHtml(p.product_name)}</span>
+        <span class="food-search-result-meta">${p.brands ? escapeHtml(p.brands) + " · " : ""}${Math.round(p.nutriments["energy-kcal_100g"])} kcal/100g</span>
+      </button>
+    `).join("");
+    container.querySelectorAll(".food-search-result").forEach(btn => {
+      btn.addEventListener("click", () => applyFoodProduct(products[Number(btn.dataset.index)]));
+    });
+  }
+
+  async function doFoodSearch() {
+    const q = document.getElementById("food-search-input").value.trim();
+    if (!q) return;
+    const container = document.getElementById("food-search-results");
+    container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Searching…</p>`;
+    try {
+      const products = await searchFoodDatabase(q);
+      renderSearchResults(products);
+    } catch (e) {
+      container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Search failed. Check your connection.</p>`;
+    }
+  }
+
+  document.getElementById("food-search-btn").addEventListener("click", doFoodSearch);
+  document.getElementById("food-search-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doFoodSearch(); }
+  });
+
+  async function handleBarcodeDetected(code) {
+    document.getElementById("barcode-status").textContent = "Looking up " + code + "…";
+    try {
+      const product = await lookupBarcode(code);
+      stopBarcodeScanner();
+      applyFoodProduct(product);
+      toast("Product found");
+    } catch (e) {
+      document.getElementById("barcode-status").textContent = "No match for that barcode. Try again or use search.";
+      barcodeScanning = true;
+    }
+  }
+
+  function startBarcodeScanner() {
+    if (typeof Html5Qrcode === "undefined") {
+      document.getElementById("barcode-status").textContent = "Barcode scanner failed to load.";
+      return;
+    }
+    document.getElementById("barcode-status").textContent = "Point your camera at a barcode…";
+    html5QrCodeInstance = new Html5Qrcode("barcode-reader-region");
+    barcodeScanning = true;
+    html5QrCodeInstance.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 150 } },
+      (decodedText) => {
+        if (!barcodeScanning) return;
+        barcodeScanning = false;
+        handleBarcodeDetected(decodedText);
+      },
+      () => {}
+    ).catch(err => {
+      document.getElementById("barcode-status").textContent = "Could not access camera. " + err;
+    });
+  }
+
+  function stopBarcodeScanner() {
+    barcodeScanning = false;
+    if (html5QrCodeInstance) {
+      const instance = html5QrCodeInstance;
+      html5QrCodeInstance = null;
+      try {
+        const result = instance.stop();
+        if (result && typeof result.then === "function") {
+          result.then(() => instance.clear()).catch(() => {});
+        }
+      } catch (e) {
+        // Scanner never actually started (e.g. camera permission denied) — nothing to stop.
+      }
+    }
   }
 
   document.querySelectorAll(".add-food-btn").forEach(btn => {

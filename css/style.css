@@ -887,6 +887,89 @@ textarea { resize: vertical; font-family: inherit; }
 .food-dialog form .form-row { gap: 10px; }
 .food-dialog form .form-row .form-field { margin-bottom: 0; min-width: 0; }
 
+.food-source-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.food-source-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.food-source-tab.active { background: var(--lime); color: var(--ink); }
+
+.food-source-panel { display: none; margin-bottom: 16px; }
+.food-source-panel.active { display: block; }
+
+.food-search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.food-search-row input { flex: 1; }
+
+.food-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.food-search-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.2s var(--ease), transform 0.15s var(--ease);
+}
+
+.food-search-result:hover { border-color: var(--lime); transform: translateY(-1px); }
+
+.food-search-result-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
+.food-search-result-meta { font-size: 0.78rem; color: var(--text-muted); }
+
+.food-source-credit {
+  margin: 10px 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.barcode-reader {
+  width: 100%;
+  min-height: 220px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.barcode-reader video, .barcode-reader canvas { border-radius: var(--radius-sm); }
+
+#barcode-status {
+  text-align: center;
+  margin: 10px 0 0;
+}
+
 /* Date nav */
 .date-nav {
   display: flex;

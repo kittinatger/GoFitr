@@ -417,14 +417,42 @@
 <div id="food-overlay" class="confirm-overlay">
   <div class="confirm-dialog food-dialog">
     <h3 class="food-dialog-title">Add Food <span id="food-dialog-meal"></span></h3>
+
+    <div class="food-source-tabs">
+      <button type="button" class="food-source-tab active" data-source="manual">Manual</button>
+      <button type="button" class="food-source-tab" data-source="search">Search</button>
+      <button type="button" class="food-source-tab" data-source="barcode">Barcode</button>
+    </div>
+
+    <div class="food-source-panel" data-panel="search">
+      <div class="food-search-row">
+        <input type="text" id="food-search-input" placeholder="Search foods…" autocomplete="off">
+        <button type="button" class="btn btn-primary btn-sm" id="food-search-btn">Search</button>
+      </div>
+      <div id="food-search-results" class="food-search-results"></div>
+      <p class="food-source-credit">Data from Open Food Facts</p>
+    </div>
+
+    <div class="food-source-panel" data-panel="barcode">
+      <div id="barcode-reader-region" class="barcode-reader"></div>
+      <p class="subtitle" id="barcode-status">Point your camera at a barcode.</p>
+      <p class="food-source-credit">Data from Open Food Facts</p>
+    </div>
+
     <form id="food-form">
       <div class="form-field">
         <label for="food-name">Food name</label>
         <input type="text" id="food-name" placeholder="e.g. Grilled chicken" required autocomplete="off">
       </div>
-      <div class="form-field">
-        <label for="food-calories">Calories (kcal)</label>
-        <input type="number" id="food-calories" min="0" required>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="food-serving">Serving (g)</label>
+          <input type="number" id="food-serving" min="1" step="1" value="100">
+        </div>
+        <div class="form-field grow">
+          <label for="food-calories">Calories (kcal)</label>
+          <input type="number" id="food-calories" min="0" required>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-field">
@@ -449,6 +477,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
