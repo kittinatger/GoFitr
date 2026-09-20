@@ -108,6 +108,36 @@
     toast._t = setTimeout(() => el.classList.remove("show"), 2200);
   }
 
+  function showConfirm(message) {
+    const overlay = document.getElementById("confirm-overlay");
+    const messageEl = document.getElementById("confirm-message");
+    const okBtn = document.getElementById("confirm-ok");
+    const cancelBtn = document.getElementById("confirm-cancel");
+
+    messageEl.textContent = message;
+    overlay.classList.add("show");
+
+    return new Promise(resolve => {
+      function cleanup(result) {
+        overlay.classList.remove("show");
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        overlay.removeEventListener("click", onOverlayClick);
+        document.removeEventListener("keydown", onKeydown);
+        resolve(result);
+      }
+      function onOk() { cleanup(true); }
+      function onCancel() { cleanup(false); }
+      function onOverlayClick(e) { if (e.target === overlay) cleanup(false); }
+      function onKeydown(e) { if (e.key === "Escape") cleanup(false); }
+
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      overlay.addEventListener("click", onOverlayClick);
+      document.addEventListener("keydown", onKeydown);
+    });
+  }
+
   // ---------- Navigation ----------
   function showView(view) {
     document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
@@ -177,8 +207,11 @@
       <button type="button" class="set-remove" title="Remove set">${ICON_X}</button>
     `;
     row.querySelector(".set-remove").addEventListener("click", () => {
-      row.remove();
-      renumberSets();
+      row.classList.add("removing");
+      row.addEventListener("animationend", () => {
+        row.remove();
+        renumberSets();
+      }, { once: true });
     });
     container.appendChild(row);
   }
@@ -299,16 +332,19 @@
 
   function attachWorkoutCardHandlers(container) {
     container.querySelectorAll(".delete-workout").forEach(btn => {
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", async (e) => {
         const card = e.target.closest(".workout-card");
         const id = card.dataset.id;
-        if (confirm("Delete this workout entry?")) {
+        const ok = await showConfirm("Delete this workout entry? This can't be undone.");
+        if (!ok) return;
+        card.classList.add("removing");
+        card.addEventListener("animationend", () => {
           data.workouts = data.workouts.filter(w => w.id !== id);
           saveData();
           renderDashboard();
           renderHistory();
           renderProgress();
-        }
+        }, { once: true });
       });
     });
   }
@@ -518,12 +554,17 @@
     `).join("");
 
     list.querySelectorAll(".delete-weight").forEach(btn => {
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", async (e) => {
         const row = e.target.closest(".weight-row");
         const id = row.dataset.id;
-        data.bodyWeight = data.bodyWeight.filter(w => w.id !== id);
-        saveData();
-        renderWeight();
+        const ok = await showConfirm("Delete this body weight entry?");
+        if (!ok) return;
+        row.classList.add("removing");
+        row.addEventListener("animationend", () => {
+          data.bodyWeight = data.bodyWeight.filter(w => w.id !== id);
+          saveData();
+          renderWeight();
+        }, { once: true });
       });
     });
   }
@@ -579,13 +620,13 @@
     e.target.value = "";
   });
 
-  document.getElementById("clear-btn").addEventListener("click", () => {
-    if (confirm("This will permanently delete all workouts and body weight entries. Continue?")) {
-      data = defaultData();
-      saveData();
-      toast("All data cleared");
-      showView("dashboard");
-    }
+  document.getElementById("clear-btn").addEventListener("click", async () => {
+    const ok = await showConfirm("This will permanently delete all workouts and body weight entries. Continue?");
+    if (!ok) return;
+    data = defaultData();
+    saveData();
+    toast("All data cleared");
+    showView("dashboard");
   });
 
   // ---------- Auth ----------

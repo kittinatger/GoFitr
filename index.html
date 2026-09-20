@@ -5,9 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GoFitr — Fitness Tracker</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236ee7b7'%3E%3Crect x='1' y='9' width='3' height='6' rx='1'/%3E%3Crect x='20' y='9' width='3' height='6' rx='1'/%3E%3Crect x='4' y='10' width='2' height='4'/%3E%3Crect x='18' y='10' width='2' height='4'/%3E%3Crect x='6' y='11' width='12' height='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div class="aurora"><span></span><span></span><span></span></div>
+
 <div id="auth-screen" class="auth-screen">
   <div class="auth-card">
     <div class="brand">
@@ -301,6 +306,16 @@
 </div>
 
 <div id="toast" class="toast"></div>
+
+<div id="confirm-overlay" class="confirm-overlay">
+  <div class="confirm-dialog">
+    <p class="confirm-message" id="confirm-message"></p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+      <button type="button" class="btn btn-danger-solid" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="js/app.js"></script>
