@@ -731,36 +731,139 @@
 
   document.getElementById("food-serving").addEventListener("input", applyServingScale);
 
-  function applyFoodProduct(product) {
-    const n = product.nutriments || {};
+  function applyFoodBase(product) {
     activeFoodBase = {
-      kcal100: n["energy-kcal_100g"] || 0,
-      protein100: n["proteins_100g"] || 0,
-      carbs100: n["carbohydrates_100g"] || 0,
-      fat100: n["fat_100g"] || 0,
+      kcal100: product.kcal100 || 0,
+      protein100: product.protein100 || 0,
+      carbs100: product.carbs100 || 0,
+      fat100: product.fat100 || 0,
     };
-    document.getElementById("food-name").value = product.product_name || "Unknown food";
+    document.getElementById("food-name").value = product.name || "Unknown food";
     document.getElementById("food-serving").value = 100;
     applyServingScale();
     setFoodSourceTab("manual");
   }
 
-  // ---------- Open Food Facts (public, free, no API key) ----------
-  async function searchFoodDatabase(query) {
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&json=1&page_size=15&fields=product_name,brands,nutriments`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error("Search request failed");
-    const json = await resp.json();
-    return (json.products || []).filter(p => p.product_name && p.nutriments && p.nutriments["energy-kcal_100g"] != null);
+  // ---------- Food data sources ----------
+  // Every source below is normalized to the same shape before it reaches the
+  // UI: { source, name, brand, kcal100, protein100, carbs100, fat100 }. That
+  // keeps renderSearchResults/applyFoodBase source-agnostic — no per-provider
+  // branching once results are in the combined array, which is what avoids
+  // "overlap" bugs (mismatched indices, one source's shape leaking into
+  // another's rendering path) when merging multiple providers' results.
+
+  // Open Food Facts product-by-barcode is reliably CORS-enabled and called
+  // directly below, but its search endpoints have been flaky about CORS —
+  // that's routed through our own serverless proxy instead (server-to-server
+  // calls aren't subject to CORS at all), which also lets it degrade to an
+  // empty list instead of a hard failure if OFF is unreachable.
+  async function searchOpenFoodFacts(query) {
+    try {
+      const resp = await fetch(`/api/nutrition/off?q=${encodeURIComponent(query)}`);
+      if (!resp.ok) return [];
+      const json = await resp.json();
+      return json.results || [];
+    } catch (e) {
+      return [];
+    }
   }
 
-  async function lookupBarcode(code) {
+  async function lookupOpenFoodFacts(code) {
     const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriments`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error("Lookup request failed");
+    if (!resp.ok) return null;
     const json = await resp.json();
-    if (json.status !== 1 || !json.product) throw new Error("Product not found");
-    return json.product;
+    const p = json.product;
+    if (json.status !== 1 || !p || !p.nutriments || p.nutriments["energy-kcal_100g"] == null) return null;
+    return {
+      source: "Open Food Facts",
+      name: p.product_name || "Unknown food",
+      brand: p.brands || "",
+      kcal100: p.nutriments["energy-kcal_100g"] || 0,
+      protein100: p.nutriments["proteins_100g"] || 0,
+      carbs100: p.nutriments["carbohydrates_100g"] || 0,
+      fat100: p.nutriments["fat_100g"] || 0,
+    };
+  }
+
+  // USDA and Nutritionix need API keys, so they're routed through our own
+  // serverless functions (api/nutrition/*) which keep those keys server-side.
+  // Both endpoints degrade to { results: [] } if their env vars aren't set,
+  // so these calls are safe no-ops until the keys are configured.
+  async function searchUsda(query) {
+    try {
+      const resp = await fetch(`/api/nutrition/usda?q=${encodeURIComponent(query)}`);
+      if (!resp.ok) return [];
+      const json = await resp.json();
+      return json.results || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function lookupUsdaBarcode(code) {
+    try {
+      const resp = await fetch(`/api/nutrition/usda?upc=${encodeURIComponent(code)}`);
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      return (json.results || [])[0] || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function searchNutritionix(query) {
+    try {
+      const resp = await fetch(`/api/nutrition/nutritionix?q=${encodeURIComponent(query)}`);
+      if (!resp.ok) return [];
+      const json = await resp.json();
+      return json.results || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function lookupNutritionixBarcode(code) {
+    try {
+      const resp = await fetch(`/api/nutrition/nutritionix?upc=${encodeURIComponent(code)}`);
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      return (json.results || [])[0] || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function fetchNutritionixDetail(nixItemId) {
+    try {
+      const resp = await fetch(`/api/nutrition/nutritionix?itemId=${encodeURIComponent(nixItemId)}`);
+      if (!resp.ok) return null;
+      const json = await resp.json();
+      return (json.results || [])[0] || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function searchFoodDatabase(query) {
+    const [off, usda, nix] = await Promise.all([
+      searchOpenFoodFacts(query).catch(() => []),
+      searchUsda(query),
+      searchNutritionix(query),
+    ]);
+    return [...off, ...usda, ...nix];
+  }
+
+  // Tries each source in turn and stops at the first real match — barcode
+  // lookups are exact-match, so unlike search there's nothing to merge.
+  async function lookupBarcode(code) {
+    const off = await lookupOpenFoodFacts(code).catch(() => null);
+    if (off) return off;
+    const usda = await lookupUsdaBarcode(code);
+    if (usda) return usda;
+    const nix = await lookupNutritionixBarcode(code);
+    if (nix) return nix;
+    return null;
   }
 
   function renderSearchResults(products) {
@@ -771,13 +874,30 @@
     }
     container.innerHTML = products.map((p, i) => `
       <button type="button" class="food-search-result" data-index="${i}">
-        <span class="food-search-result-name">${escapeHtml(p.product_name)}</span>
-        <span class="food-search-result-meta">${p.brands ? escapeHtml(p.brands) + " · " : ""}${Math.round(p.nutriments["energy-kcal_100g"])} kcal/100g</span>
+        <span class="food-search-result-name">${escapeHtml(p.name)}</span>
+        <span class="food-search-result-meta">
+          ${p.brand ? escapeHtml(p.brand) + " · " : ""}${p.needsDetail ? "tap for details" : Math.round(p.kcal100) + " kcal/100g"}
+          <span class="food-source-badge">${escapeHtml(p.source)}</span>
+        </span>
       </button>
     `).join("");
     container.querySelectorAll(".food-search-result").forEach(btn => {
-      btn.addEventListener("click", () => applyFoodProduct(products[Number(btn.dataset.index)]));
+      btn.addEventListener("click", () => selectFoodProduct(products[Number(btn.dataset.index)]));
     });
+  }
+
+  async function selectFoodProduct(product) {
+    if (product.needsDetail && product.nixItemId) {
+      const container = document.getElementById("food-search-results");
+      container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Loading details…</p>`;
+      const full = await fetchNutritionixDetail(product.nixItemId);
+      if (!full) {
+        container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Couldn't load details for that item. Try another result.</p>`;
+        return;
+      }
+      product = full;
+    }
+    applyFoodBase(product);
   }
 
   async function doFoodSearch() {
@@ -800,15 +920,15 @@
 
   async function handleBarcodeDetected(code) {
     document.getElementById("barcode-status").textContent = "Looking up " + code + "…";
-    try {
-      const product = await lookupBarcode(code);
-      stopBarcodeScanner();
-      applyFoodProduct(product);
-      toast("Product found");
-    } catch (e) {
-      document.getElementById("barcode-status").textContent = "No match for that barcode. Try again or use search.";
+    const product = await lookupBarcode(code);
+    if (!product) {
+      document.getElementById("barcode-status").textContent = "No match in any database. Try search or enter manually.";
       barcodeScanning = true;
+      return;
     }
+    stopBarcodeScanner();
+    applyFoodBase(product);
+    toast(`Product found (${product.source})`);
   }
 
   function barcodeQrboxFunction(viewfinderWidth, viewfinderHeight) {
