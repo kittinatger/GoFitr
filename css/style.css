@@ -234,17 +234,6 @@ textarea {
 
 .btn-pill:active { transform: scale(0.97); }
 
-.btn-github,
-.btn-google {
-  background: var(--bg-elevated);
-  color: var(--text);
-  border: 1px solid var(--border);
-  margin-bottom: 12px;
-}
-
-.btn-github:hover,
-.btn-google:hover { border-color: var(--lime); color: var(--lime); }
-
 .btn-primary-pill {
   background: var(--lime);
   color: var(--ink);
@@ -252,8 +241,36 @@ textarea {
 
 .btn-primary-pill:hover { background: var(--lime-dim); transform: translateY(-1px); }
 
-.github-icon svg,
-.google-icon svg { width: 18px; height: 18px; }
+.auth-social-label {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+.auth-social-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.social-icon-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), transform 0.15s var(--ease);
+}
+
+.social-icon-btn:hover { border-color: var(--lime); transform: translateY(-2px); }
+.social-icon-btn:active { transform: scale(0.94); }
+.social-icon-btn svg { width: 20px; height: 20px; }
 
 .auth-divider {
   display: flex;

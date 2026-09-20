@@ -2,11 +2,11 @@
 
 **Try it live: [go-fitr-kittinat-gerdsri.vercel.app](https://go-fitr-kittinat-gerdsri.vercel.app)**
 
-A simple, local-first fitness tracker. Sign in with GitHub or a local username/password, and your workout data stays in your browser's `localStorage` — nothing is synced to a server.
+A simple, local-first fitness tracker. Sign in with Google, Apple, GitHub, Facebook, Vercel, or a local username/password, and your workout data stays in your browser's `localStorage` — nothing is synced to a server.
 
 ## Features
 
-- Log in with GitHub, or create a local account (each account's data stays private on that device)
+- Log in with Google, Apple, GitHub, Facebook, or Vercel (via Supabase Auth), or create a local account (each account's data stays private on that device)
 - Log workouts with multiple sets (reps × weight) and notes
 - Dashboard with streak, weekly volume, and weekly/total workout counts
 - Full workout history with per-exercise filtering
@@ -26,24 +26,23 @@ python -m http.server 8123
 
 Then open `http://localhost:8123`. You can also just open `index.html` directly in a browser.
 
-Note: this only serves the static files, so local username/password accounts work fine, but "Continue with GitHub"/"Continue with Google" need the `api/` serverless functions (see below), which requires deploying to Vercel.
+Note: this only serves the static files, so local username/password accounts work fine everywhere, and the social login buttons work too as soon as `SUPABASE_URL`/`SUPABASE_ANON_KEY` are filled in (see below) — no serverless functions or Vercel deployment needed for auth, since Supabase handles it entirely from the browser.
 
-## GitHub login setup
+## Social login setup (Supabase Auth)
 
-"Continue with GitHub" is backed by serverless functions under `api/` and needs three environment variables set on the Vercel project:
+Google/Apple/GitHub/Facebook/Vercel login is handled by [Supabase Auth](https://supabase.com/auth) directly from the client — there's no `api/` code involved.
 
-- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — from a [GitHub OAuth App](https://github.com/settings/developers) with callback URL `<your-domain>/api/auth/github/callback`
-- `SESSION_SECRET` — any long random string, used to sign the session cookie (shared with Google login below)
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In `js/app.js`, fill in `SUPABASE_URL` and `SUPABASE_ANON_KEY` near the top of the file (from your project's Settings → API — the anon key is public/safe to ship in client code).
+3. In the Supabase dashboard, go to **Authentication → Sign In / Providers** and enable each provider you want, adding that provider's own OAuth client ID/secret:
+   - **Google** — OAuth client from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - **Apple** — Service ID, Team ID, Key ID, and private key from the [Apple Developer portal](https://developer.apple.com/account/resources/identifiers/list/serviceId) (requires a paid Apple Developer account)
+   - **GitHub** — OAuth App from [github.com/settings/developers](https://github.com/settings/developers)
+   - **Facebook** — app from [developers.facebook.com](https://developers.facebook.com/apps)
+   - **Vercel** — not a built-in Supabase provider; add it under the **Custom Providers** section at the bottom of that same page as an OIDC provider (issuer `https://vercel.com`), using a [Vercel App](https://vercel.com/docs/sign-in-with-vercel/getting-started) for the client ID/secret. Give it the slug `vercel` to match `VERCEL_OIDC_PROVIDER_SLUG` in `js/app.js` (or change that constant to whatever slug you pick).
+4. For every provider, set its redirect/callback URL to the one Supabase shows on that provider's setup screen (a `https://<project-ref>.supabase.co/auth/v1/callback` URL) — not a URL on your own domain.
 
-## Google login setup
-
-"Continue with Google" needs its own OAuth client:
-
-- Create an OAuth client ID (type "Web application") in the [Google Cloud Console credentials page](https://console.cloud.google.com/apis/credentials)
-- Add `<your-domain>/api/auth/google/callback` as an authorized redirect URI
-- Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as environment variables on the Vercel project (reuses the same `SESSION_SECRET` as GitHub login)
-
-Both logins degrade gracefully — if their env vars aren't set, clicking the button shows a clear "not configured" message instead of breaking anything.
+Every button quietly shows a "not configured" toast instead of breaking anything until both the Supabase keys and that specific provider are set up.
 
 ## Nutrition database setup
 

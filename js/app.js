@@ -4,6 +4,21 @@
   const USERS_KEY = "gofitr_users_v1";
   const SESSION_KEY = "gofitr_session_v1";
 
+  // Fill these in from your Supabase project (Settings → API). The anon key
+  // is a public key, safe to ship in client code — it only grants what your
+  // Supabase Row Level Security policies allow. Social login buttons quietly
+  // no-op with a toast until both are set and the corresponding provider is
+  // enabled in Supabase's Authentication → Providers screen. "vercel" is
+  // registered there as a custom OIDC provider (Sign in with Vercel is
+  // OIDC-compliant) using the slug below.
+  const SUPABASE_URL = "";
+  const SUPABASE_ANON_KEY = "";
+  const VERCEL_OIDC_PROVIDER_SLUG = "vercel";
+
+  const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
   const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
   const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
   const ICON_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
@@ -28,7 +43,7 @@
   });
 
   let currentUser = null;
-  let authMode = null; // "local" | "github" | "google"
+  let authMode = null; // "local" | "supabase"
   let data = defaultData();
   let charts = { progress: null, weight: null };
   let nutritionViewDate = null;
@@ -1690,18 +1705,24 @@
     bootApp(key, { mode: "local", displayName: username });
   });
 
-  document.getElementById("github-login-btn").addEventListener("click", () => {
-    window.location.href = "/api/auth/github/login";
-  });
+  function supabaseSignIn(provider) {
+    if (!supabase) {
+      toast("Social login isn't configured yet.");
+      return;
+    }
+    supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
+  }
 
-  document.getElementById("google-login-btn").addEventListener("click", () => {
-    window.location.href = "/api/auth/google/login";
-  });
+  document.getElementById("google-login-btn").addEventListener("click", () => supabaseSignIn("google"));
+  document.getElementById("apple-login-btn").addEventListener("click", () => supabaseSignIn("apple"));
+  document.getElementById("github-login-btn").addEventListener("click", () => supabaseSignIn("github"));
+  document.getElementById("facebook-login-btn").addEventListener("click", () => supabaseSignIn("facebook"));
+  document.getElementById("vercel-login-btn").addEventListener("click", () => supabaseSignIn(VERCEL_OIDC_PROVIDER_SLUG));
 
   document.getElementById("logout-btn").addEventListener("click", async () => {
-    if (authMode === "github" || authMode === "google") {
+    if (authMode === "supabase" && supabase) {
       try {
-        await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+        await supabase.auth.signOut();
       } catch (e) {
         // ignore — the client-side session state is cleared below regardless
       }
@@ -1873,24 +1894,34 @@
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
   })();
 
+  function bootSupabaseUser(user) {
+    const meta = user.user_metadata || {};
+    bootApp("supabase:" + user.id, {
+      mode: "supabase",
+      displayName: meta.full_name || meta.name || user.email || user.id,
+    });
+  }
+
+  if (supabase) {
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session && session.user && !currentUser) {
+        bootSupabaseUser(session.user);
+      }
+    });
+  }
+
   // ---------- Init ----------
   (async function init() {
-    try {
-      const resp = await fetch("/api/me", { credentials: "same-origin" });
-      if (resp.ok) {
-        const json = await resp.json();
-        if (json.authenticated && json.user && json.user.login) {
-          const provider = json.provider || "github";
-          bootApp(provider + ":" + json.user.login, {
-            mode: provider,
-            displayName: json.user.name || json.user.login,
-          });
+    if (supabase) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data && data.session && data.session.user) {
+          bootSupabaseUser(data.session.user);
           return;
         }
+      } catch (e) {
+        // fall back to the local username/password session below.
       }
-    } catch (e) {
-      // /api/me isn't available (e.g. local static preview with no serverless
-      // functions) — fall back to the local username/password session below.
     }
 
     const session = getSession();
