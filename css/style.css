@@ -271,6 +271,8 @@ textarea {
 .social-icon-btn:hover { border-color: var(--lime); transform: translateY(-2px); }
 .social-icon-btn:active { transform: scale(0.94); }
 .social-icon-btn svg { width: 20px; height: 20px; }
+#apple-login-btn svg,
+#github-login-btn svg { color: #fff; }
 
 .auth-divider {
   display: flex;
