@@ -67,11 +67,13 @@ module.exports = async (req, res) => {
 
     if (q) {
       const resp = await fetch(`https://api.spoonacular.com/food/products/search?query=${encodeURIComponent(q)}&number=10&apiKey=${encodeURIComponent(apiKey)}`);
+      const bodyText = await resp.text();
       if (!resp.ok) {
-        res.status(200).json({ results: [], configured: true });
+        const debug = req.query.debug ? { upstreamStatus: resp.status, upstreamBody: bodyText.slice(0, 500) } : undefined;
+        res.status(200).json({ results: [], configured: true, debug });
         return;
       }
-      const json = await resp.json();
+      const json = JSON.parse(bodyText);
       // The search endpoint doesn't include nutrition — flag for a
       // follow-up detail fetch (by id) once the user picks a result.
       const results = (json.products || []).slice(0, 10).map((p) => ({

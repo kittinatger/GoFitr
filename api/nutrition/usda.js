@@ -45,14 +45,17 @@ module.exports = async (req, res) => {
   try {
     const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(apiKey)}&query=${encodeURIComponent(query)}&dataType=Branded&pageSize=10`;
     const resp = await fetch(url);
+    const bodyText = await resp.text();
     if (!resp.ok) {
-      res.status(200).json({ results: [], configured: true });
+      const debug = req.query.debug ? { upstreamStatus: resp.status, upstreamBody: bodyText.slice(0, 500) } : undefined;
+      res.status(200).json({ results: [], configured: true, debug });
       return;
     }
-    const json = await resp.json();
+    const json = JSON.parse(bodyText);
     const results = (json.foods || []).map(normalizeUsdaFood).filter(Boolean);
-    res.status(200).json({ results, configured: true });
+    const debug = req.query.debug ? { totalHits: json.totalHits, foodsReturned: (json.foods || []).length } : undefined;
+    res.status(200).json({ results, configured: true, debug });
   } catch (e) {
-    res.status(200).json({ results: [], configured: true, error: "USDA request failed" });
+    res.status(200).json({ results: [], configured: true, error: "USDA request failed: " + e.message });
   }
 };
