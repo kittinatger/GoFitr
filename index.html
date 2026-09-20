@@ -11,6 +11,19 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div id="pull-refresh-indicator" class="pull-refresh-indicator animated">
+  <div class="pull-refresh-icon-wrap" id="pull-refresh-icon-wrap">
+    <svg class="pull-refresh-ring" viewBox="0 0 40 40">
+      <circle class="pull-refresh-ring-track" cx="20" cy="20" r="16"></circle>
+      <circle class="pull-refresh-ring-progress" id="pull-refresh-ring-progress" cx="20" cy="20" r="16"></circle>
+    </svg>
+    <span class="pull-refresh-arrow" id="pull-refresh-arrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+    </span>
+  </div>
+  <span class="pull-refresh-label" id="pull-refresh-label">Pull to refresh</span>
+</div>
+
 <div id="auth-screen" class="auth-screen">
   <div class="auth-card">
     <div class="brand">

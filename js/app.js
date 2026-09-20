@@ -1347,6 +1347,164 @@
     showAuthScreen();
   });
 
+  // ---------- Pull to refresh ----------
+  // Standard pull-down-at-the-top gesture. Releasing past the threshold does
+  // a normal refresh; holding there for 5s instead does a "hard" refresh
+  // (clears any Cache API entries and reloads with a cache-busting param —
+  // as close to a hard reload as a webpage can trigger on itself, since
+  // browsers don't expose true Ctrl+Shift+R behavior to page scripts).
+  (function initPullToRefresh() {
+    const PTR_THRESHOLD = 70;
+    const PTR_MAX = 120;
+    const PTR_HOLD_MS = 5000;
+    const HIDDEN_Y = -70;
+    const VISIBLE_Y = 12;
+
+    const indicator = document.getElementById("pull-refresh-indicator");
+    const iconWrap = document.getElementById("pull-refresh-icon-wrap");
+    const ring = document.getElementById("pull-refresh-ring-progress");
+    const arrow = document.getElementById("pull-refresh-arrow");
+    const label = document.getElementById("pull-refresh-label");
+    const ringCircumference = 2 * Math.PI * 16;
+
+    let tracking = false;
+    let armed = false;
+    let fired = false;
+    let startY = 0;
+    let holdTimeout = null;
+    let holdInterval = null;
+
+    function getScrollTop() {
+      return window.scrollY || document.documentElement.scrollTop || 0;
+    }
+
+    function anyModalOpen() {
+      const confirmOverlay = document.getElementById("confirm-overlay");
+      const foodOverlay = document.getElementById("food-overlay");
+      return (confirmOverlay && confirmOverlay.classList.contains("show")) ||
+        (foodOverlay && foodOverlay.classList.contains("show"));
+    }
+
+    function clearHoldTimers() {
+      if (holdTimeout) { clearTimeout(holdTimeout); holdTimeout = null; }
+      if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
+      iconWrap.classList.remove("holding");
+    }
+
+    function setPosition(y, animated) {
+      indicator.classList.toggle("animated", !!animated);
+      indicator.style.transform = `translateX(-50%) translateY(${y}px)`;
+    }
+
+    function resetIndicator() {
+      tracking = false;
+      armed = false;
+      clearHoldTimers();
+      indicator.classList.remove("refreshing");
+      setPosition(HIDDEN_Y, true);
+      arrow.style.transform = "";
+      label.textContent = "Pull to refresh";
+    }
+
+    function startHoldTimer() {
+      const holdStart = Date.now();
+      ring.style.strokeDasharray = String(ringCircumference);
+      ring.style.strokeDashoffset = String(ringCircumference);
+      iconWrap.classList.add("holding");
+
+      holdInterval = setInterval(() => {
+        const frac = Math.min((Date.now() - holdStart) / PTR_HOLD_MS, 1);
+        ring.style.strokeDashoffset = String(ringCircumference * (1 - frac));
+      }, 50);
+
+      holdTimeout = setTimeout(() => {
+        fired = true;
+        triggerRefresh(true);
+      }, PTR_HOLD_MS);
+    }
+
+    async function hardRefresh() {
+      try {
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+      } catch (e) {
+        // Nothing to clear.
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.set("_hard", Date.now().toString());
+      window.location.href = url.toString();
+    }
+
+    function triggerRefresh(hard) {
+      clearHoldTimers();
+      indicator.classList.add("refreshing", "animated");
+      setPosition(VISIBLE_Y, true);
+      label.textContent = hard ? "Hard refreshing…" : "Refreshing…";
+      if (hard) {
+        hardRefresh();
+      } else {
+        setTimeout(() => window.location.reload(), 200);
+      }
+    }
+
+    function updateIndicator(deltaY) {
+      const clamped = Math.min(deltaY, PTR_MAX);
+      const progress = Math.min(clamped / PTR_THRESHOLD, 1);
+      setPosition(HIDDEN_Y + (VISIBLE_Y - HIDDEN_Y) * progress, false);
+      arrow.style.transform = `rotate(${progress * 180}deg)`;
+
+      if (clamped >= PTR_THRESHOLD) {
+        if (!armed) {
+          armed = true;
+          label.textContent = "Release to refresh, hold for hard refresh";
+          startHoldTimer();
+        }
+      } else if (armed) {
+        armed = false;
+        clearHoldTimers();
+        label.textContent = "Pull to refresh";
+      } else {
+        label.textContent = "Pull to refresh";
+      }
+    }
+
+    window.addEventListener("touchstart", (e) => {
+      if (getScrollTop() > 0 || anyModalOpen() || e.touches.length !== 1) return;
+      tracking = true;
+      armed = false;
+      fired = false;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+      if (!tracking || fired) return;
+      const deltaY = e.touches[0].clientY - startY;
+      if (deltaY <= 0 || getScrollTop() > 0) {
+        resetIndicator();
+        tracking = false;
+        return;
+      }
+      e.preventDefault();
+      updateIndicator(deltaY);
+    }, { passive: false });
+
+    function onTouchEnd() {
+      if (!tracking) return;
+      tracking = false;
+      if (fired) return;
+      if (armed) {
+        triggerRefresh(false);
+      } else {
+        resetIndicator();
+      }
+    }
+
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+  })();
+
   // ---------- Init ----------
   (async function init() {
     try {
