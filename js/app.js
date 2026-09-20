@@ -1017,7 +1017,7 @@
   document.getElementById("food-photo-analyze-btn").addEventListener("click", async () => {
     if (!pendingPhotoBase64) return;
     const statusEl = document.getElementById("food-photo-status");
-    statusEl.textContent = "Reading label…";
+    statusEl.textContent = "Analyzing photo…";
     try {
       const resp = await fetch("/api/nutrition/vision", {
         method: "POST",
@@ -1026,18 +1026,19 @@
       });
       const json = await resp.json();
       if (!json.configured) {
-        statusEl.textContent = "Label scanning isn't set up yet — add a GEMINI_API_KEY to enable it.";
+        statusEl.textContent = "Photo scanning isn't set up yet — add a GEMINI_API_KEY to enable it.";
         return;
       }
       if (json.error || !json.result) {
-        statusEl.textContent = json.error || "Couldn't read that label. Try another photo or enter manually.";
+        statusEl.textContent = json.error || "Couldn't analyze that photo. Try another or enter manually.";
         return;
       }
       applyFoodBase(json.result);
       statusEl.textContent = "";
-      toast(`Label read (${json.result.confidence} confidence) — please double-check`);
+      const how = json.result.method === "label" ? "Label read" : "Estimated from photo";
+      toast(`${how} (${json.result.confidence} confidence) — please double-check`);
     } catch (err) {
-      statusEl.textContent = "Reading failed. Check your connection.";
+      statusEl.textContent = "Analysis failed. Check your connection.";
     }
   });
 

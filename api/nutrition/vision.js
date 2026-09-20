@@ -1,12 +1,18 @@
-// Reads a Nutrition Facts label from a photo of food packaging using Google
-// Gemini's vision API (has a genuine free tier via https://aistudio.google.com).
-// Degrades gracefully (configured:false) if GEMINI_API_KEY isn't set.
+// Reads nutrition from a photo using Google Gemini's vision API (has a
+// genuine free tier via https://aistudio.google.com). Handles three kinds of
+// photos in one pass: a Nutrition Facts label (OCR-read exactly), packaging
+// with no visible label (identified from branding), or plain food with no
+// packaging at all (visually estimated, including an estimated portion
+// weight). Degrades gracefully (configured:false) if GEMINI_API_KEY isn't
+// set.
 //
-// This is OCR-style label reading, not meal-photo calorie guessing — the
-// model extracts the serving size and per-serving values straight off the
-// printed label, which we then normalize to per-100g here so this source
-// behaves exactly like every other one (searchable/scalable via the normal
-// Serving (g) field) instead of needing its own special handling client-side.
+// Whichever case it is, the result is normalized to per-100g here (using
+// either the label's own serving size or the estimated portion weight), so
+// this source behaves exactly like every other one — searchable/scalable
+// via the normal Serving (g) field — instead of needing special handling
+// client-side. The `method` field lets the client show the user how the
+// numbers were derived (read off a label vs. visually estimated), since
+// the two carry very different confidence.
 
 function round1(n) {
   return Math.round(n * 10) / 10;
@@ -30,7 +36,10 @@ module.exports = async (req, res) => {
   }
 
   const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-  const prompt = 'You are reading a Nutrition Facts label from a photo of food packaging. Find the product name (from the packaging/brand if visible) and the nutrition label, then extract the serving size and the calories/protein/carbs/fat listed for ONE serving. If the serving size is given in a non-gram unit (e.g. "2/3 cup"), convert it to your best estimate of grams using any gram equivalent shown on the label, or a reasonable estimate for that food if none is shown. Respond with ONLY JSON, no other text, matching exactly this shape: {"name": string, "servingGrams": number, "calories": number, "protein": number, "carbs": number, "fat": number, "confidence": "high" | "medium" | "low"}. Calories in kcal, protein/carbs/fat in grams, all for the one serving (not per 100g — that conversion happens elsewhere). If you cannot find or read a nutrition label in the image, set name to "Unknown" and all numeric fields to 0.';
+  const prompt = 'Look at this photo, which is one of: (1) a Nutrition Facts label, (2) food packaging with no legible label, or (3) plain food with no packaging at all. ' +
+    'If a Nutrition Facts label is legible anywhere in the image, read it exactly: extract the product name (from packaging/brand if visible), the serving size, and the calories/protein/carbs/fat listed for ONE serving. If the serving size is a non-gram unit (e.g. "2/3 cup"), convert it to grams using any gram equivalent shown on the label, or a reasonable estimate if none is shown. Set method to "label". ' +
+    'If there is no legible label, identify the food (from packaging/branding, or by appearance if it is unpackaged food) and estimate its typical nutrition for a plausible single serving, along with your best-guess weight of that serving in grams. Set method to "estimate". ' +
+    'Respond with ONLY JSON, no other text, matching exactly this shape: {"name": string, "method": "label" | "estimate", "servingGrams": number, "calories": number, "protein": number, "carbs": number, "fat": number, "confidence": "high" | "medium" | "low"}. Calories in kcal, protein/carbs/fat in grams, all for the one serving (not per 100g — that conversion happens elsewhere). If you cannot identify any food or label in the image at all, set name to "Unknown" and all numeric fields to 0.';
 
   try {
     const resp = await fetch(
@@ -76,17 +85,19 @@ module.exports = async (req, res) => {
     }
 
     if (!parsed.name || parsed.name === "Unknown") {
-      res.status(200).json({ configured: true, error: "Could not find a nutrition label in that photo" });
+      res.status(200).json({ configured: true, error: "Couldn't identify any food or label in that photo" });
       return;
     }
 
+    const method = parsed.method === "label" ? "label" : "estimate";
     const servingGrams = Number(parsed.servingGrams) > 0 ? Number(parsed.servingGrams) : 100;
     const factor = 100 / servingGrams;
 
     res.status(200).json({
       configured: true,
       result: {
-        source: "AI label scan",
+        source: method === "label" ? "AI label scan" : "AI photo estimate",
+        method,
         name: parsed.name,
         brand: "",
         kcal100: Math.round((Number(parsed.calories) || 0) * factor),
