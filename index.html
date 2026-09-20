@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoFitr — Fitness Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏋️</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-icon">🏋️</span>
+      <span class="brand-name">GoFitr</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+      <button class="nav-btn" data-view="log">
+        <span class="nav-icon">➕</span> Log Workout
+      </button>
+      <button class="nav-btn" data-view="history">
+        <span class="nav-icon">📅</span> History
+      </button>
+      <button class="nav-btn" data-view="progress">
+        <span class="nav-icon">📈</span> Progress
+      </button>
+      <button class="nav-btn" data-view="weight">
+        <span class="nav-icon">⚖️</span> Body Weight
+      </button>
+      <button class="nav-btn" data-view="settings">
+        <span class="nav-icon">⚙️</span> Settings
+      </button>
+    </nav>
+  </aside>
+
+  <div class="mobile-nav">
+    <button class="nav-btn active" data-view="dashboard" title="Dashboard">📊</button>
+    <button class="nav-btn" data-view="log" title="Log Workout">➕</button>
+    <button class="nav-btn" data-view="history" title="History">📅</button>
+    <button class="nav-btn" data-view="progress" title="Progress">📈</button>
+    <button class="nav-btn" data-view="weight" title="Body Weight">⚖️</button>
+    <button class="nav-btn" data-view="settings" title="Settings">⚙️</button>
+  </div>
+
+  <main class="content">
+
+    <!-- Dashboard -->
+    <section id="view-dashboard" class="view active">
+      <header class="view-header">
+        <h1>Dashboard</h1>
+        <p class="subtitle" id="today-date"></p>
+      </header>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Current Streak</div>
+          <div class="stat-value" id="stat-streak">0<span class="stat-unit">days</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Workouts This Week</div>
+          <div class="stat-value" id="stat-week-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Volume This Week</div>
+          <div class="stat-value" id="stat-week-volume">0<span class="stat-unit" id="stat-week-volume-unit">kg</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Workouts</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Recent Workouts</h2>
+          <button class="btn btn-primary btn-sm" data-goto="log">Log a workout</button>
+        </div>
+        <div id="recent-workouts" class="workout-list"></div>
+      </div>
+    </section>
+
+    <!-- Log Workout -->
+    <section id="view-log" class="view">
+      <header class="view-header">
+        <h1>Log Workout</h1>
+        <p class="subtitle">Record today's session</p>
+      </header>
+
+      <div class="panel">
+        <form id="log-form">
+          <div class="form-row">
+            <div class="form-field">
+              <label for="log-date">Date</label>
+              <input type="date" id="log-date" required>
+            </div>
+            <div class="form-field grow">
+              <label for="log-exercise">Exercise</label>
+              <input type="text" id="log-exercise" list="exercise-options" placeholder="e.g. Bench Press" required autocomplete="off">
+              <datalist id="exercise-options"></datalist>
+            </div>
+          </div>
+
+          <label class="sets-label">Sets</label>
+          <div id="sets-container" class="sets-container"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="add-set-btn">+ Add Set</button>
+
+          <div class="form-field" style="margin-top:16px;">
+            <label for="log-notes">Notes (optional)</label>
+            <textarea id="log-notes" rows="2" placeholder="How did it feel?"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Workout</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- History -->
+    <section id="view-history" class="view">
+      <header class="view-header">
+        <h1>History</h1>
+        <p class="subtitle">Everything you've logged</p>
+      </header>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Filter</h2>
+        </div>
+        <div class="form-row">
+          <div class="form-field grow">
+            <label for="filter-exercise">Exercise</label>
+            <select id="filter-exercise"><option value="">All exercises</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div id="history-list" class="workout-list history-list"></div>
+      <p id="history-empty" class="empty-state" style="display:none;">No workouts logged yet. Go log one!</p>
+    </section>
+
+    <!-- Progress -->
+    <section id="view-progress" class="view">
+      <header class="view-header">
+        <h1>Progress</h1>
+        <p class="subtitle">Track strength gains over time</p>
+      </header>
+
+      <div class="panel">
+        <div class="form-row">
+          <div class="form-field grow">
+            <label for="progress-exercise">Exercise</label>
+            <select id="progress-exercise"></select>
+          </div>
+        </div>
+        <p id="progress-empty" class="empty-state" style="display:none;">Log a couple of sessions for this exercise to see a chart.</p>
+        <canvas id="progress-chart" height="260"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Personal Records</h2></div>
+        <div id="pr-list" class="pr-list"></div>
+      </div>
+    </section>
+
+    <!-- Body Weight -->
+    <section id="view-weight" class="view">
+      <header class="view-header">
+        <h1>Body Weight</h1>
+        <p class="subtitle">Log and visualize your weight trend</p>
+      </header>
+
+      <div class="panel">
+        <form id="weight-form" class="form-row">
+          <div class="form-field">
+            <label for="weight-date">Date</label>
+            <input type="date" id="weight-date" required>
+          </div>
+          <div class="form-field">
+            <label for="weight-value">Weight (<span class="unit-label">kg</span>)</label>
+            <input type="number" id="weight-value" step="0.1" min="0" required>
+          </div>
+          <div class="form-field" style="justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Add Entry</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <p id="weight-empty" class="empty-state" style="display:none;">No body weight entries yet.</p>
+        <canvas id="weight-chart" height="220"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Entries</h2></div>
+        <div id="weight-list" class="weight-list"></div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="view">
+      <header class="view-header">
+        <h1>Settings</h1>
+        <p class="subtitle">Preferences and data management</p>
+      </header>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Units</h2></div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="unit" value="kg" checked> Kilograms (kg)</label>
+          <label class="radio-option"><input type="radio" name="unit" value="lb"> Pounds (lb)</label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Data</h2></div>
+        <p class="subtitle">Everything is stored locally in your browser — nothing leaves your device.</p>
+        <div class="form-actions" style="justify-content:flex-start; gap:12px;">
+          <button class="btn btn-ghost" id="export-btn">Export Data (JSON)</button>
+          <button class="btn btn-ghost" id="import-btn">Import Data</button>
+          <input type="file" id="import-file" accept="application/json" style="display:none;">
+          <button class="btn btn-danger" id="clear-btn">Clear All Data</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
