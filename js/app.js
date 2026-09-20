@@ -4,27 +4,10 @@
   const USERS_KEY = "gofitr_users_v1";
   const SESSION_KEY = "gofitr_session_v1";
 
-  // Google/Apple/GitHub/Facebook go through Clerk (the publishable key is
-  // public, safe to ship — it's paired with the script tag's
-  // data-clerk-publishable-key in index.html). Vercel stays on Supabase's
-  // custom-OIDC path below since Clerk's free tier doesn't support arbitrary
-  // custom OAuth/OIDC providers the way Supabase does.
+  // Google/Apple/GitHub go through Clerk (the publishable key is public,
+  // safe to ship — it's paired with the script tag's
+  // data-clerk-publishable-key in index.html).
   const CLERK_PUBLISHABLE_KEY = "pk_test_bHVja3ktdHJvbGwtMzEuY2xlcmsuYWNjb3VudHMuZGV2JA";
-
-  // Fill these in from your Supabase project (Settings → API). The anon key
-  // is a public key, safe to ship in client code — it only grants what your
-  // Supabase Row Level Security policies allow. The Vercel button quietly
-  // no-ops with a toast until both are set and the custom OIDC provider is
-  // enabled in Supabase's Authentication → Providers screen. Supabase
-  // prefixes custom providers with "custom:" in the identifier it expects
-  // from signInWithOAuth.
-  const SUPABASE_URL = "https://nusdpphyforkukldzjpb.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51c2RwcGh5Zm9ya3VrbGR6anBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5MTA5MDMsImV4cCI6MjEwNTQ4NjkwM30.8nsjwH4GqEwKmw37kF3VbzCCpfrAax9xWSq8pjQDjbM";
-  const VERCEL_OIDC_PROVIDER_SLUG = "custom:vercel";
-
-  const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-    : null;
 
   // Clerk's script tag loads with `async`, so it may not have finished
   // fetching/executing by the time this file runs — poll briefly for
@@ -67,7 +50,7 @@
   });
 
   let currentUser = null;
-  let authMode = null; // "local" | "supabase" | "clerk"
+  let authMode = null; // "local" | "clerk"
   let data = defaultData();
   let charts = { progress: null, weight: null };
   let nutritionViewDate = null;
@@ -1729,14 +1712,6 @@
     bootApp(key, { mode: "local", displayName: username });
   });
 
-  function supabaseSignIn(provider) {
-    if (!supabase) {
-      toast("Social login isn't configured yet.");
-      return;
-    }
-    supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
-  }
-
   function clerkSignIn(strategy) {
     if (!window.Clerk) {
       toast("Social login isn't configured yet.");
@@ -1754,17 +1729,9 @@
   document.getElementById("google-login-btn").addEventListener("click", () => clerkSignIn("oauth_google"));
   document.getElementById("apple-login-btn").addEventListener("click", () => clerkSignIn("oauth_apple"));
   document.getElementById("github-login-btn").addEventListener("click", () => clerkSignIn("oauth_github"));
-  document.getElementById("facebook-login-btn").addEventListener("click", () => clerkSignIn("oauth_facebook"));
-  document.getElementById("vercel-login-btn").addEventListener("click", () => supabaseSignIn(VERCEL_OIDC_PROVIDER_SLUG));
 
   document.getElementById("logout-btn").addEventListener("click", async () => {
-    if (authMode === "supabase" && supabase) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {
-        // ignore — the client-side session state is cleared below regardless
-      }
-    } else if (authMode === "clerk" && window.Clerk) {
+    if (authMode === "clerk" && window.Clerk) {
       try {
         await window.Clerk.signOut();
       } catch (e) {
@@ -1938,28 +1905,12 @@
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
   })();
 
-  function bootSupabaseUser(user) {
-    const meta = user.user_metadata || {};
-    bootApp("supabase:" + user.id, {
-      mode: "supabase",
-      displayName: meta.full_name || meta.name || user.email || user.id,
-    });
-  }
-
   function bootClerkUser(user) {
     const displayName = user.fullName
       || (user.primaryEmailAddress && user.primaryEmailAddress.emailAddress)
       || user.username
       || user.id;
     bootApp("clerk:" + user.id, { mode: "clerk", displayName });
-  }
-
-  if (supabase) {
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session && session.user && !currentUser) {
-        bootSupabaseUser(session.user);
-      }
-    });
   }
 
   // ---------- Init ----------
@@ -1979,19 +1930,7 @@
           if (user && !currentUser) bootClerkUser(user);
         });
       } catch (e) {
-        // fall back to Supabase/local below.
-      }
-    }
-
-    if (supabase) {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data && data.session && data.session.user) {
-          bootSupabaseUser(data.session.user);
-          return;
-        }
-      } catch (e) {
-        // fall back to the local username/password session below.
+        // fall back to local below.
       }
     }
 
