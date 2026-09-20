@@ -909,12 +909,14 @@ textarea { resize: vertical; font-family: inherit; }
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     width: 38px;
     height: 38px;
     border-radius: 50%;
     color: var(--text-muted);
     transition: background 0.2s var(--ease), color 0.2s var(--ease);
   }
+  .mobile-nav-icon svg { width: 19px; height: 19px; flex-shrink: 0; }
   .mobile-nav .nav-btn.active .mobile-nav-icon { background: var(--lime); color: var(--ink); }
 }
 
