@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
         carbs100: null,
         fat100: null,
         needsDetail: true,
-        nixItemId: b.nix_item_id,
+        detailUrl: `/api/nutrition/nutritionix?itemId=${encodeURIComponent(b.nix_item_id)}`,
       }));
       res.status(200).json({ results, configured: true });
       return;

@@ -758,14 +758,7 @@
   // calls aren't subject to CORS at all), which also lets it degrade to an
   // empty list instead of a hard failure if OFF is unreachable.
   async function searchOpenFoodFacts(query) {
-    try {
-      const resp = await fetch(`/api/nutrition/off?q=${encodeURIComponent(query)}`);
-      if (!resp.ok) return [];
-      const json = await resp.json();
-      return json.results || [];
-    } catch (e) {
-      return [];
-    }
+    return fetchProxyResults(`/api/nutrition/off?q=${encodeURIComponent(query)}`);
   }
 
   async function lookupOpenFoodFacts(code) {
@@ -791,78 +784,81 @@
   // Both endpoints degrade to { results: [] } if their env vars aren't set,
   // so these calls are safe no-ops until the keys are configured.
   async function searchUsda(query) {
+    return fetchProxyResults(`/api/nutrition/usda?q=${encodeURIComponent(query)}`);
+  }
+
+  async function lookupUsdaBarcode(code) {
+    return (await fetchProxyResults(`/api/nutrition/usda?upc=${encodeURIComponent(code)}`))[0] || null;
+  }
+
+  // Generic helper for the serverless proxies: they all reply with the same
+  // { results: [...] } envelope, so one function covers every source.
+  async function fetchProxyResults(url) {
     try {
-      const resp = await fetch(`/api/nutrition/usda?q=${encodeURIComponent(query)}`);
+      const resp = await fetch(url);
       if (!resp.ok) return [];
       const json = await resp.json();
       return json.results || [];
     } catch (e) {
       return [];
-    }
-  }
-
-  async function lookupUsdaBarcode(code) {
-    try {
-      const resp = await fetch(`/api/nutrition/usda?upc=${encodeURIComponent(code)}`);
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      return (json.results || [])[0] || null;
-    } catch (e) {
-      return null;
     }
   }
 
   async function searchNutritionix(query) {
-    try {
-      const resp = await fetch(`/api/nutrition/nutritionix?q=${encodeURIComponent(query)}`);
-      if (!resp.ok) return [];
-      const json = await resp.json();
-      return json.results || [];
-    } catch (e) {
-      return [];
-    }
+    return fetchProxyResults(`/api/nutrition/nutritionix?q=${encodeURIComponent(query)}`);
   }
 
   async function lookupNutritionixBarcode(code) {
-    try {
-      const resp = await fetch(`/api/nutrition/nutritionix?upc=${encodeURIComponent(code)}`);
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      return (json.results || [])[0] || null;
-    } catch (e) {
-      return null;
-    }
+    return (await fetchProxyResults(`/api/nutrition/nutritionix?upc=${encodeURIComponent(code)}`))[0] || null;
   }
 
-  async function fetchNutritionixDetail(nixItemId) {
-    try {
-      const resp = await fetch(`/api/nutrition/nutritionix?itemId=${encodeURIComponent(nixItemId)}`);
-      if (!resp.ok) return null;
-      const json = await resp.json();
-      return (json.results || [])[0] || null;
-    } catch (e) {
-      return null;
-    }
+  async function searchEdamam(query) {
+    return fetchProxyResults(`/api/nutrition/edamam?q=${encodeURIComponent(query)}`);
+  }
+
+  async function lookupEdamamBarcode(code) {
+    return (await fetchProxyResults(`/api/nutrition/edamam?upc=${encodeURIComponent(code)}`))[0] || null;
+  }
+
+  async function searchSpoonacular(query) {
+    return fetchProxyResults(`/api/nutrition/spoonacular?q=${encodeURIComponent(query)}`);
+  }
+
+  async function lookupSpoonacularBarcode(code) {
+    return (await fetchProxyResults(`/api/nutrition/spoonacular?upc=${encodeURIComponent(code)}`))[0] || null;
+  }
+
+  async function lookupUpcItemDb(code) {
+    return (await fetchProxyResults(`/api/nutrition/upcitemdb?upc=${encodeURIComponent(code)}`))[0] || null;
   }
 
   async function searchFoodDatabase(query) {
-    const [off, usda, nix] = await Promise.all([
+    const sourceLists = await Promise.all([
       searchOpenFoodFacts(query).catch(() => []),
       searchUsda(query),
       searchNutritionix(query),
+      searchEdamam(query),
+      searchSpoonacular(query),
     ]);
-    return [...off, ...usda, ...nix];
+    return sourceLists.flat();
   }
 
-  // Tries each source in turn and stops at the first real match — barcode
-  // lookups are exact-match, so unlike search there's nothing to merge.
+  // Tries each source in turn and stops at the first real nutrition match.
+  // UPCitemdb goes last since it never has nutrition data — it's a
+  // name-only fallback so a scan isn't a total dead end.
   async function lookupBarcode(code) {
-    const off = await lookupOpenFoodFacts(code).catch(() => null);
-    if (off) return off;
-    const usda = await lookupUsdaBarcode(code);
-    if (usda) return usda;
-    const nix = await lookupNutritionixBarcode(code);
-    if (nix) return nix;
+    const lookups = [
+      () => lookupOpenFoodFacts(code).catch(() => null),
+      () => lookupUsdaBarcode(code),
+      () => lookupNutritionixBarcode(code),
+      () => lookupEdamamBarcode(code),
+      () => lookupSpoonacularBarcode(code),
+      () => lookupUpcItemDb(code),
+    ];
+    for (const lookup of lookups) {
+      const result = await lookup();
+      if (result) return result;
+    }
     return null;
   }
 
@@ -887,10 +883,10 @@
   }
 
   async function selectFoodProduct(product) {
-    if (product.needsDetail && product.nixItemId) {
+    if (product.needsDetail && product.detailUrl) {
       const container = document.getElementById("food-search-results");
       container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Loading details…</p>`;
-      const full = await fetchNutritionixDetail(product.nixItemId);
+      const full = (await fetchProxyResults(product.detailUrl))[0];
       if (!full) {
         container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Couldn't load details for that item. Try another result.</p>`;
         return;
@@ -898,6 +894,9 @@
       product = full;
     }
     applyFoodBase(product);
+    if (product.nameOnly) {
+      toast("Only found a product name — fill in nutrition manually");
+    }
   }
 
   async function doFoodSearch() {
@@ -928,7 +927,9 @@
     }
     stopBarcodeScanner();
     applyFoodBase(product);
-    toast(`Product found (${product.source})`);
+    toast(product.nameOnly
+      ? "Found the product name only — fill in nutrition manually"
+      : `Product found (${product.source})`);
   }
 
   function barcodeQrboxFunction(viewfinderWidth, viewfinderHeight) {
