@@ -422,6 +422,7 @@
       <button type="button" class="food-source-tab active" data-source="manual">Manual</button>
       <button type="button" class="food-source-tab" data-source="search">Search</button>
       <button type="button" class="food-source-tab" data-source="barcode">Barcode</button>
+      <button type="button" class="food-source-tab" data-source="photo">Photo</button>
     </div>
 
     <div class="food-source-panel" data-panel="search">
@@ -436,7 +437,22 @@
     <div class="food-source-panel" data-panel="barcode">
       <div id="barcode-reader-region" class="barcode-reader"></div>
       <p class="subtitle" id="barcode-status">Point your camera at a barcode.</p>
+      <input type="file" accept="image/*" id="barcode-photo-input" class="hidden">
+      <button type="button" class="btn btn-ghost btn-sm barcode-upload-btn" id="barcode-photo-btn">Or upload a photo of a barcode</button>
       <p class="food-source-credit">Checks Open Food Facts, USDA, Nutritionix, Edamam, Spoonacular &amp; UPCitemdb</p>
+    </div>
+
+    <div class="food-source-panel" data-panel="photo">
+      <input type="file" accept="image/*" capture="environment" id="food-photo-input" class="hidden">
+      <div id="food-photo-preview-wrap" class="food-photo-preview-wrap hidden">
+        <img id="food-photo-preview" alt="Selected food photo">
+      </div>
+      <div class="food-photo-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="food-photo-pick-btn">Take or Choose Photo</button>
+        <button type="button" class="btn btn-primary btn-sm hidden" id="food-photo-analyze-btn">Analyze Photo</button>
+      </div>
+      <p class="subtitle" id="food-photo-status"></p>
+      <p class="food-source-credit">AI estimate via Google Gemini — always double-check before logging</p>
     </div>
 
     <form id="food-form">

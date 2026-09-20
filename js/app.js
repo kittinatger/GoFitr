@@ -31,6 +31,8 @@
   let activeFoodBase = null; // { kcal100, protein100, carbs100, fat100 } when filled from search/barcode
   let html5QrCodeInstance = null;
   let barcodeScanning = false;
+  let pendingPhotoBase64 = null;
+  let pendingPhotoMime = null;
 
   // ---------- Accounts (local only — no server, no cross-device sync) ----------
   function getUsers() {
@@ -686,12 +688,18 @@
   function openFoodModal(meal) {
     activeFoodMeal = meal;
     activeFoodBase = null;
+    pendingPhotoBase64 = null;
+    pendingPhotoMime = null;
     document.getElementById("food-dialog-meal").textContent = "— " + meal;
     document.getElementById("food-form").reset();
     document.getElementById("food-serving").value = 100;
     document.getElementById("food-search-input").value = "";
     document.getElementById("food-search-results").innerHTML = "";
     document.getElementById("barcode-status").textContent = "Point your camera at a barcode.";
+    document.getElementById("food-photo-preview-wrap").classList.add("hidden");
+    document.getElementById("food-photo-analyze-btn").classList.add("hidden");
+    document.getElementById("food-photo-status").textContent = "";
+    document.getElementById("food-photo-input").value = "";
     setFoodSourceTab("manual");
     document.getElementById("food-overlay").classList.add("show");
     document.getElementById("food-name").focus();
@@ -741,6 +749,19 @@
     document.getElementById("food-name").value = product.name || "Unknown food";
     document.getElementById("food-serving").value = 100;
     applyServingScale();
+    setFoodSourceTab("manual");
+  }
+
+  // AI photo estimates are absolute numbers for the portion shown, not a
+  // per-100g base — a prepared meal's weight can't be inferred from a
+  // picture, so unlike every other source there's nothing to scale here.
+  function applyDirectEstimate(product) {
+    activeFoodBase = null;
+    document.getElementById("food-name").value = product.name || "Unknown food";
+    document.getElementById("food-calories").value = Math.round(product.calories || 0);
+    document.getElementById("food-protein").value = round1(product.protein || 0);
+    document.getElementById("food-carbs").value = round1(product.carbs || 0);
+    document.getElementById("food-fat").value = round1(product.fat || 0);
     setFoodSourceTab("manual");
   }
 
@@ -932,6 +953,107 @@
       : `Product found (${product.source})`);
   }
 
+  // ---------- Barcode from an uploaded photo (no live camera needed) ----------
+  document.getElementById("barcode-photo-btn").addEventListener("click", () => {
+    document.getElementById("barcode-photo-input").click();
+  });
+
+  document.getElementById("barcode-photo-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+
+    await stopBarcodeScanner();
+    document.getElementById("barcode-status").textContent = "Reading barcode from photo…";
+
+    let reader;
+    try {
+      reader = new Html5Qrcode("barcode-reader-region");
+      const decodedText = await reader.scanFile(file, false);
+      await reader.clear();
+      handleBarcodeDetected(decodedText);
+    } catch (err) {
+      if (reader) { try { await reader.clear(); } catch (e2) {} }
+      document.getElementById("barcode-status").textContent = "Couldn't find a barcode in that photo. Try another photo or the live camera.";
+    }
+  });
+
+  // ---------- AI food-photo estimate (Google Gemini) ----------
+  function resizeImageToBase64(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Could not read file"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Could not decode image"));
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            const scale = maxDim / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", quality);
+          resolve({ base64: dataUrl.split(",")[1], mimeType: "image/jpeg" });
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById("food-photo-pick-btn").addEventListener("click", () => {
+    document.getElementById("food-photo-input").click();
+  });
+
+  document.getElementById("food-photo-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById("food-photo-status");
+    try {
+      const resized = await resizeImageToBase64(file, 1024, 0.82);
+      pendingPhotoBase64 = resized.base64;
+      pendingPhotoMime = resized.mimeType;
+      document.getElementById("food-photo-preview").src = `data:${resized.mimeType};base64,${resized.base64}`;
+      document.getElementById("food-photo-preview-wrap").classList.remove("hidden");
+      document.getElementById("food-photo-analyze-btn").classList.remove("hidden");
+      statusEl.textContent = "";
+    } catch (err) {
+      statusEl.textContent = "Couldn't read that photo. Try another.";
+    }
+  });
+
+  document.getElementById("food-photo-analyze-btn").addEventListener("click", async () => {
+    if (!pendingPhotoBase64) return;
+    const statusEl = document.getElementById("food-photo-status");
+    statusEl.textContent = "Analyzing photo…";
+    try {
+      const resp = await fetch("/api/nutrition/vision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: pendingPhotoBase64, mimeType: pendingPhotoMime }),
+      });
+      const json = await resp.json();
+      if (!json.configured) {
+        statusEl.textContent = "AI photo scanning isn't set up yet — add a GEMINI_API_KEY to enable it.";
+        return;
+      }
+      if (json.error || !json.result) {
+        statusEl.textContent = "Couldn't analyze that photo. Try again or enter manually.";
+        return;
+      }
+      applyDirectEstimate(json.result);
+      statusEl.textContent = "";
+      toast(`AI estimate added (${json.result.confidence} confidence) — please double-check`);
+    } catch (err) {
+      statusEl.textContent = "Analysis failed. Check your connection.";
+    }
+  });
+
   function barcodeQrboxFunction(viewfinderWidth, viewfinderHeight) {
     // A fixed pixel qrbox can end up scanning a region that doesn't match
     // where the on-screen brackets are drawn on some devices/aspect ratios,
@@ -971,19 +1093,21 @@
     });
   }
 
-  function stopBarcodeScanner() {
+  async function stopBarcodeScanner() {
     barcodeScanning = false;
-    if (html5QrCodeInstance) {
-      const instance = html5QrCodeInstance;
-      html5QrCodeInstance = null;
-      try {
-        const result = instance.stop();
-        if (result && typeof result.then === "function") {
-          result.then(() => instance.clear()).catch(() => {});
-        }
-      } catch (e) {
-        // Scanner never actually started (e.g. camera permission denied) — nothing to stop.
-      }
+    if (!html5QrCodeInstance) return;
+    const instance = html5QrCodeInstance;
+    html5QrCodeInstance = null;
+    try {
+      const result = instance.stop();
+      if (result && typeof result.then === "function") await result;
+    } catch (e) {
+      // Scanner never actually started (e.g. camera permission denied) — nothing to stop.
+    }
+    try {
+      await instance.clear();
+    } catch (e) {
+      // Nothing to clear.
     }
   }
 

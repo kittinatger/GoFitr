@@ -994,6 +994,34 @@ textarea { resize: vertical; font-family: inherit; }
   text-align: center;
 }
 
+.barcode-upload-btn { width: 100%; margin-top: 10px; }
+
+.food-photo-preview-wrap {
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.food-photo-preview-wrap img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.food-photo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.food-photo-actions .btn { flex: 1; }
+
+#food-photo-status {
+  text-align: center;
+  margin: 10px 0 0;
+}
+
 .barcode-reader {
   width: 100%;
   min-height: 220px;
