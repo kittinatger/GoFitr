@@ -8,6 +8,8 @@
   const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
   const ICON_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
   const ICON_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-3.22 4.44M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+  const ICON_DUMBBELL = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9" width="3" height="6" rx="1"/><rect x="20" y="9" width="3" height="6" rx="1"/><rect x="4" y="10" width="2" height="4"/><rect x="18" y="10" width="2" height="4"/><rect x="6" y="11" width="12" height="2"/></svg>';
+  const ICON_SCALE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>';
 
   const defaultData = () => ({
     workouts: [],   // { id, date: 'YYYY-MM-DD', exercise, sets: [{reps, weight}], notes }
@@ -291,7 +293,13 @@
       weekday: "long", year: "numeric", month: "long", day: "numeric"
     });
 
-    document.getElementById("stat-streak").innerHTML = `${computeStreak()}<span class="stat-unit">days</span>`;
+    const streak = computeStreak();
+    document.getElementById("stat-streak").textContent = streak;
+    const ring = document.getElementById("streak-ring");
+    const circumference = 2 * Math.PI * 52;
+    const fraction = Math.min(streak, 7) / 7;
+    ring.style.strokeDasharray = String(circumference);
+    ring.style.strokeDashoffset = String(circumference * (1 - fraction));
 
     const weekStart = startOfWeek(new Date());
     const weekWorkouts = data.workouts.filter(w => new Date(w.date + "T00:00:00") >= weekStart);
@@ -317,12 +325,15 @@
     const setsHtml = w.sets.map(s => `<span class="set-chip">${s.reps} × ${s.weight}${data.unit}</span>`).join("");
     return `
       <div class="workout-card" data-id="${w.id}">
-        <div class="workout-card-header">
-          <span class="workout-exercise">${escapeHtml(w.exercise)}</span>
-          <span class="workout-date">${formatDate(w.date)}</span>
+        <div class="workout-icon">${ICON_DUMBBELL}</div>
+        <div class="workout-body">
+          <div class="workout-card-header">
+            <span class="workout-exercise">${escapeHtml(w.exercise)}</span>
+            <span class="workout-date">${formatDate(w.date)}</span>
+          </div>
+          <div class="workout-sets">${setsHtml}</div>
+          ${w.notes ? `<div class="workout-notes">${escapeHtml(w.notes)}</div>` : ""}
         </div>
-        <div class="workout-sets">${setsHtml}</div>
-        ${w.notes ? `<div class="workout-notes">${escapeHtml(w.notes)}</div>` : ""}
         <div class="workout-actions">
           <button class="btn-icon delete-workout" title="Delete">${ICON_TRASH}</button>
         </div>
@@ -428,8 +439,8 @@
           {
             label: `Max Weight (${data.unit})`,
             data: maxWeights,
-            borderColor: "#6ee7b7",
-            backgroundColor: "rgba(110,231,183,0.15)",
+            borderColor: "#d7ff3d",
+            backgroundColor: "rgba(215,255,61,0.14)",
             tension: 0.3,
             yAxisID: "y",
             fill: true,
@@ -437,8 +448,8 @@
           {
             label: `Volume (${data.unit})`,
             data: volumes,
-            borderColor: "#60a5fa",
-            backgroundColor: "rgba(96,165,250,0.1)",
+            borderColor: "#ff6b57",
+            backgroundColor: "rgba(255,107,87,0.1)",
             tension: 0.3,
             yAxisID: "y1",
             fill: true,
@@ -456,15 +467,15 @@
       responsive: true,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { labels: { color: "#e8eaed" } },
+        legend: { labels: { color: "#f3f4ec", font: { family: "'Plus Jakarta Sans', sans-serif" } } },
       },
       scales: {
-        x: { ticks: { color: "#8b93a3" }, grid: { color: "#2a2f3a" } },
-        y: { ticks: { color: "#8b93a3" }, grid: { color: "#2a2f3a" }, position: "left" },
+        x: { ticks: { color: "#8a8f7e" }, grid: { color: "rgba(255,255,255,0.06)" } },
+        y: { ticks: { color: "#8a8f7e" }, grid: { color: "rgba(255,255,255,0.06)" }, position: "left" },
       }
     };
     if (dualAxis) {
-      opts.scales.y1 = { ticks: { color: "#8b93a3" }, grid: { display: false }, position: "right" };
+      opts.scales.y1 = { ticks: { color: "#8a8f7e" }, grid: { display: false }, position: "right" };
     }
     return opts;
   }
@@ -533,8 +544,8 @@
           datasets: [{
             label: `Weight (${data.unit})`,
             data: entries.map(e => e.weight),
-            borderColor: "#6ee7b7",
-            backgroundColor: "rgba(110,231,183,0.15)",
+            borderColor: "#d7ff3d",
+            backgroundColor: "rgba(215,255,61,0.14)",
             tension: 0.3,
             fill: true,
           }]
@@ -547,8 +558,11 @@
     const sortedDesc = [...data.bodyWeight].sort((a, b) => b.date.localeCompare(a.date));
     list.innerHTML = sortedDesc.map(e => `
       <div class="weight-row" data-id="${e.id}">
-        <span>${formatDate(e.date)}</span>
-        <span>${e.weight} ${data.unit}</span>
+        <div class="weight-icon">${ICON_SCALE}</div>
+        <div class="weight-row-body">
+          <span class="weight-row-date">${formatDate(e.date)}</span>
+          <span class="weight-row-value">${e.weight} ${data.unit}</span>
+        </div>
         <button class="btn-icon delete-weight" title="Delete">${ICON_TRASH}</button>
       </div>
     `).join("");
