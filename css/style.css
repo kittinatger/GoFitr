@@ -20,7 +20,14 @@
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  /* No text selection anywhere by default — re-enabled below for the
+     actual form fields that need it (typing/editing requires a caret,
+     which requires selection to still work there). */
+  -webkit-user-select: none;
+  user-select: none;
+}
 
 html, body {
   margin: 0;
@@ -31,6 +38,15 @@ html, body {
   /* Custom pull-to-refresh replaces the browser's native one so they don't
      both fire from the same gesture. */
   overscroll-behavior-y: contain;
+  /* Blocks pinch-zoom gestures; double-tap zoom is blocked by the
+     user-scalable=no viewport meta tag. */
+  touch-action: pan-x pan-y;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Pull to refresh */
