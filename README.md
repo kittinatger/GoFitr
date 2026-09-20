@@ -26,14 +26,24 @@ python -m http.server 8123
 
 Then open `http://localhost:8123`. You can also just open `index.html` directly in a browser.
 
-Note: this only serves the static files, so local username/password accounts work fine, but "Continue with GitHub" needs the `api/` serverless functions (see below), which requires deploying to Vercel.
+Note: this only serves the static files, so local username/password accounts work fine, but "Continue with GitHub"/"Continue with Google" need the `api/` serverless functions (see below), which requires deploying to Vercel.
 
 ## GitHub login setup
 
 "Continue with GitHub" is backed by serverless functions under `api/` and needs three environment variables set on the Vercel project:
 
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — from a [GitHub OAuth App](https://github.com/settings/developers) with callback URL `<your-domain>/api/auth/github/callback`
-- `SESSION_SECRET` — any long random string, used to sign the session cookie
+- `SESSION_SECRET` — any long random string, used to sign the session cookie (shared with Google login below)
+
+## Google login setup
+
+"Continue with Google" needs its own OAuth client:
+
+- Create an OAuth client ID (type "Web application") in the [Google Cloud Console credentials page](https://console.cloud.google.com/apis/credentials)
+- Add `<your-domain>/api/auth/google/callback` as an authorized redirect URI
+- Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as environment variables on the Vercel project (reuses the same `SESSION_SECRET` as GitHub login)
+
+Both logins degrade gracefully — if their env vars aren't set, clicking the button shows a clear "not configured" message instead of breaking anything.
 
 ## Nutrition database setup
 

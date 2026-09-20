@@ -28,7 +28,7 @@
   });
 
   let currentUser = null;
-  let authMode = null; // "local" | "github"
+  let authMode = null; // "local" | "github" | "google"
   let data = defaultData();
   let charts = { progress: null, weight: null };
   let nutritionViewDate = null;
@@ -1694,8 +1694,12 @@
     window.location.href = "/api/auth/github/login";
   });
 
+  document.getElementById("google-login-btn").addEventListener("click", () => {
+    window.location.href = "/api/auth/google/login";
+  });
+
   document.getElementById("logout-btn").addEventListener("click", async () => {
-    if (authMode === "github") {
+    if (authMode === "github" || authMode === "google") {
       try {
         await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
       } catch (e) {
@@ -1876,8 +1880,9 @@
       if (resp.ok) {
         const json = await resp.json();
         if (json.authenticated && json.user && json.user.login) {
-          bootApp("github:" + json.user.login, {
-            mode: "github",
+          const provider = json.provider || "github";
+          bootApp(provider + ":" + json.user.login, {
+            mode: provider,
             displayName: json.user.name || json.user.login,
           });
           return;

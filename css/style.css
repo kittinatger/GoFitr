@@ -234,14 +234,16 @@ textarea {
 
 .btn-pill:active { transform: scale(0.97); }
 
-.btn-github {
+.btn-github,
+.btn-google {
   background: var(--bg-elevated);
   color: var(--text);
   border: 1px solid var(--border);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
-.btn-github:hover { border-color: var(--lime); color: var(--lime); }
+.btn-github:hover,
+.btn-google:hover { border-color: var(--lime); color: var(--lime); }
 
 .btn-primary-pill {
   background: var(--lime);
@@ -250,7 +252,8 @@ textarea {
 
 .btn-primary-pill:hover { background: var(--lime-dim); transform: translateY(-1px); }
 
-.github-icon svg { width: 18px; height: 18px; }
+.github-icon svg,
+.google-icon svg { width: 18px; height: 18px; }
 
 .auth-divider {
   display: flex;
