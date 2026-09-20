@@ -30,6 +30,110 @@ html, body {
   min-height: 100vh;
 }
 
+.hidden { display: none !important; }
+
+/* Auth */
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: var(--shadow);
+}
+
+.auth-card .brand {
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.auth-tab.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.auth-form {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-form.active { display: flex; }
+
+.auth-submit { width: 100%; }
+
+.auth-error {
+  color: var(--danger);
+  font-size: 0.82rem;
+  min-height: 1em;
+  margin: -4px 0 0;
+}
+
+.auth-note {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: 18px 0 0;
+}
+
+.auth-github-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.github-icon svg { width: 18px; height: 18px; }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-bottom: 16px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 /* Sidebar */
 .sidebar {
   width: 220px;
@@ -51,7 +155,8 @@ html, body {
   font-weight: 700;
 }
 
-.brand-icon { font-size: 1.5rem; }
+.brand-icon { display: inline-flex; color: var(--accent); }
+.brand-icon svg { width: 22px; height: 22px; }
 
 .nav {
   display: flex;
@@ -84,9 +189,11 @@ html, body {
   color: var(--accent);
 }
 
-.nav-icon { font-size: 1.05rem; }
+.nav-icon { display: inline-flex; }
+.nav-icon svg { width: 17px; height: 17px; }
 
 .mobile-nav { display: none; }
+.mobile-nav .nav-btn svg { width: 22px; height: 22px; }
 
 /* Content */
 .content {
@@ -231,9 +338,11 @@ textarea { resize: vertical; font-family: inherit; }
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 1rem;
   padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
 }
+.set-remove svg { width: 15px; height: 15px; }
 .set-remove:hover { color: var(--danger); }
 
 .form-actions {
@@ -281,9 +390,11 @@ textarea { resize: vertical; font-family: inherit; }
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.95rem;
   padding: 4px 6px;
+  display: inline-flex;
+  align-items: center;
 }
+.btn-icon svg { width: 16px; height: 16px; }
 .btn-icon:hover { color: var(--danger); }
 
 /* Workout list */

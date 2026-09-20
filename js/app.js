@@ -1,7 +1,11 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "gofitr_data_v1";
+  const USERS_KEY = "gofitr_users_v1";
+  const SESSION_KEY = "gofitr_session_v1";
+
+  const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
+  const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 
   const defaultData = () => ({
     workouts: [],   // { id, date: 'YYYY-MM-DD', exercise, sets: [{reps, weight}], notes }
@@ -9,12 +13,59 @@
     unit: "kg",
   });
 
-  let data = loadData();
+  let currentUser = null;
+  let authMode = null; // "local" | "github"
+  let data = defaultData();
   let charts = { progress: null, weight: null };
+
+  // ---------- Accounts (local only — no server, no cross-device sync) ----------
+  function getUsers() {
+    try {
+      return JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+
+  function getSession() {
+    return localStorage.getItem(SESSION_KEY);
+  }
+
+  function setSession(userKey) {
+    localStorage.setItem(SESSION_KEY, userKey);
+  }
+
+  function clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  function randomSalt() {
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function sha256Hex(text) {
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function hashPassword(password, salt) {
+    return sha256Hex(salt + ":" + password);
+  }
+
+  function storageKeyFor(userKey) {
+    return "gofitr_data_v1:" + userKey;
+  }
 
   function loadData() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(storageKeyFor(currentUser));
       if (!raw) return defaultData();
       const parsed = JSON.parse(raw);
       return Object.assign(defaultData(), parsed);
@@ -25,7 +76,7 @@
   }
 
   function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(storageKeyFor(currentUser), JSON.stringify(data));
   }
 
   function uid() {
@@ -121,7 +172,7 @@
       <div class="set-index">${idx}</div>
       <input type="number" class="set-reps" placeholder="Reps" min="0" value="${reps}">
       <input type="number" class="set-weight" placeholder="Weight (${data.unit})" min="0" step="0.5" value="${weight}">
-      <button type="button" class="set-remove" title="Remove set">✕</button>
+      <button type="button" class="set-remove" title="Remove set">${ICON_X}</button>
     `;
     row.querySelector(".set-remove").addEventListener("click", () => {
       row.remove();
@@ -238,7 +289,7 @@
         <div class="workout-sets">${setsHtml}</div>
         ${w.notes ? `<div class="workout-notes">${escapeHtml(w.notes)}</div>` : ""}
         <div class="workout-actions">
-          <button class="btn-icon delete-workout" title="Delete">🗑️</button>
+          <button class="btn-icon delete-workout" title="Delete">${ICON_TRASH}</button>
         </div>
       </div>
     `;
@@ -460,7 +511,7 @@
       <div class="weight-row" data-id="${e.id}">
         <span>${formatDate(e.date)}</span>
         <span>${e.weight} ${data.unit}</span>
-        <button class="btn-icon delete-weight" title="Delete">🗑️</button>
+        <button class="btn-icon delete-weight" title="Delete">${ICON_TRASH}</button>
       </div>
     `).join("");
 
@@ -476,8 +527,13 @@
   }
 
   // ---------- Settings ----------
+  function syncUnitRadios() {
+    document.querySelectorAll('input[name="unit"]').forEach(radio => {
+      radio.checked = radio.value === data.unit;
+    });
+  }
+
   document.querySelectorAll('input[name="unit"]').forEach(radio => {
-    radio.checked = radio.value === data.unit;
     radio.addEventListener("change", (e) => {
       if (e.target.checked) {
         data.unit = e.target.value;
@@ -530,8 +586,141 @@
     }
   });
 
+  // ---------- Auth ----------
+  function showAuthScreen() {
+    document.getElementById("app-shell").classList.add("hidden");
+    document.getElementById("auth-screen").classList.remove("hidden");
+  }
+
+  function bootApp(userKey, meta) {
+    meta = meta || {};
+    currentUser = userKey;
+    authMode = meta.mode || "local";
+    data = loadData();
+    charts = { progress: null, weight: null };
+
+    document.getElementById("auth-screen").classList.add("hidden");
+    document.getElementById("app-shell").classList.remove("hidden");
+
+    const users = getUsers();
+    document.getElementById("account-username").textContent =
+      meta.displayName || (users[userKey] && users[userKey].username) || userKey;
+
+    document.getElementById("sets-container").innerHTML = "";
+    addSetRow();
+    prepLogForm();
+    syncUnitRadios();
+    renderDashboard();
+  }
+
+  document.querySelectorAll(".auth-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
+      document.getElementById(tab.dataset.auth + "-form").classList.add("active");
+      document.getElementById("login-error").textContent = "";
+      document.getElementById("signup-error").textContent = "";
+    });
+  });
+
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("login-error");
+    errorEl.textContent = "";
+
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
+    const key = username.toLowerCase();
+
+    const users = getUsers();
+    const user = users[key];
+    if (!user) { errorEl.textContent = "No account found with that username."; return; }
+
+    const hash = await hashPassword(password, user.salt);
+    if (hash !== user.hash) { errorEl.textContent = "Incorrect password."; return; }
+
+    setSession(key);
+    e.target.reset();
+    bootApp(key, { mode: "local", displayName: user.username });
+  });
+
+  document.getElementById("signup-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("signup-error");
+    errorEl.textContent = "";
+
+    const username = document.getElementById("signup-username").value.trim();
+    const password = document.getElementById("signup-password").value;
+    const confirmPassword = document.getElementById("signup-password-confirm").value;
+    const key = username.toLowerCase();
+
+    if (username.length < 3) { errorEl.textContent = "Username must be at least 3 characters."; return; }
+    if (password.length < 6) { errorEl.textContent = "Password must be at least 6 characters."; return; }
+    if (password !== confirmPassword) { errorEl.textContent = "Passwords do not match."; return; }
+
+    const users = getUsers();
+    if (users[key]) { errorEl.textContent = "That username is already taken."; return; }
+
+    const salt = randomSalt();
+    const hash = await hashPassword(password, salt);
+    users[key] = { username, salt, hash, createdAt: new Date().toISOString() };
+    saveUsers(users);
+
+    setSession(key);
+    e.target.reset();
+    bootApp(key, { mode: "local", displayName: username });
+  });
+
+  document.getElementById("github-login-btn").addEventListener("click", () => {
+    window.location.href = "/api/auth/github/login";
+  });
+
+  document.getElementById("logout-btn").addEventListener("click", async () => {
+    if (authMode === "github") {
+      try {
+        await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+      } catch (e) {
+        // ignore — the client-side session state is cleared below regardless
+      }
+    }
+    clearSession();
+    currentUser = null;
+    authMode = null;
+    document.getElementById("login-form").reset();
+    document.getElementById("signup-form").reset();
+    document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
+    document.querySelector('.auth-tab[data-auth="login"]').classList.add("active");
+    document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
+    document.getElementById("login-form").classList.add("active");
+    showAuthScreen();
+  });
+
   // ---------- Init ----------
-  addSetRow();
-  prepLogForm();
-  renderDashboard();
+  (async function init() {
+    try {
+      const resp = await fetch("/api/me", { credentials: "same-origin" });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.authenticated && json.user && json.user.login) {
+          bootApp("github:" + json.user.login, {
+            mode: "github",
+            displayName: json.user.name || json.user.login,
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      // /api/me isn't available (e.g. local static preview with no serverless
+      // functions) — fall back to the local username/password session below.
+    }
+
+    const session = getSession();
+    const users = getUsers();
+    if (session && users[session]) {
+      bootApp(session, { mode: "local", displayName: users[session].username });
+    } else {
+      showAuthScreen();
+    }
+  })();
 })();
