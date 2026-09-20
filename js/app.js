@@ -10,10 +10,15 @@
   const ICON_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-3.22 4.44M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
   const ICON_DUMBBELL = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9" width="3" height="6" rx="1"/><rect x="20" y="9" width="3" height="6" rx="1"/><rect x="4" y="10" width="2" height="4"/><rect x="18" y="10" width="2" height="4"/><rect x="6" y="11" width="12" height="2"/></svg>';
   const ICON_SCALE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>';
+  const ICON_FOOD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7c-1.2-1.8-3.2-2.6-5-2 0 2 1 3.6 2.8 4.6"></path><path d="M12 8.5c-4 0-6.8 3-6.8 6.8 0 3.7 2.6 6.7 5.6 6.7.9 0 1.6-.4 2.2-.4.6 0 1.3.4 2.2.4 3 0 5.6-3 5.6-6.7 0-3.1-1.9-5-4.4-5.9"></path></svg>';
+
+  const MEALS = ["Breakfast", "Lunch", "Dinner", "Snacks"];
 
   const defaultData = () => ({
     workouts: [],   // { id, date: 'YYYY-MM-DD', exercise, sets: [{reps, weight}], notes }
     bodyWeight: [], // { id, date, weight }
+    nutrition: [],  // { id, date, meal, name, calories, protein, carbs, fat }
+    calorieGoal: 2000,
     unit: "kg",
   });
 
@@ -21,6 +26,8 @@
   let authMode = null; // "local" | "github"
   let data = defaultData();
   let charts = { progress: null, weight: null };
+  let nutritionViewDate = null;
+  let activeFoodMeal = null;
 
   // ---------- Accounts (local only — no server, no cross-device sync) ----------
   function getUsers() {
@@ -151,6 +158,7 @@
     if (view === "history") renderHistory();
     if (view === "progress") renderProgress();
     if (view === "weight") renderWeight();
+    if (view === "nutrition") renderNutrition();
     if (view === "log") prepLogForm();
   }
 
@@ -583,6 +591,155 @@
     });
   }
 
+  // ---------- Nutrition ----------
+  function nutritionDateLabel(dateStr) {
+    if (dateStr === todayStr()) return "Today";
+    const yesterday = new Date(todayStr() + "T00:00:00");
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (dateStr === dateKey(yesterday)) return "Yesterday";
+    return formatDate(dateStr);
+  }
+
+  function shiftNutritionDate(deltaDays) {
+    const d = new Date(nutritionViewDate + "T00:00:00");
+    d.setDate(d.getDate() + deltaDays);
+    nutritionViewDate = dateKey(d);
+    renderNutrition();
+  }
+
+  document.getElementById("nutrition-prev-day").addEventListener("click", () => shiftNutritionDate(-1));
+  document.getElementById("nutrition-next-day").addEventListener("click", () => shiftNutritionDate(1));
+
+  function foodItemHtml(item) {
+    const macroParts = [];
+    if (item.protein) macroParts.push(`${item.protein}g protein`);
+    if (item.carbs) macroParts.push(`${item.carbs}g carbs`);
+    if (item.fat) macroParts.push(`${item.fat}g fat`);
+    return `
+      <div class="food-item" data-id="${item.id}">
+        <div class="food-icon">${ICON_FOOD}</div>
+        <div class="food-item-body">
+          <div class="food-item-name">${escapeHtml(item.name)}</div>
+          ${macroParts.length ? `<div class="food-item-macros">${macroParts.join(" · ")}</div>` : ""}
+        </div>
+        <div class="food-item-calories">${Math.round(item.calories)} kcal</div>
+        <button class="btn-icon delete-food" title="Delete">${ICON_TRASH}</button>
+      </div>
+    `;
+  }
+
+  function renderNutrition() {
+    if (!nutritionViewDate) nutritionViewDate = todayStr();
+    document.getElementById("nutrition-date-label").textContent = nutritionDateLabel(nutritionViewDate);
+
+    const entries = data.nutrition.filter(n => n.date === nutritionViewDate);
+
+    let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
+    entries.forEach(e => {
+      totalCalories += e.calories || 0;
+      totalProtein += e.protein || 0;
+      totalCarbs += e.carbs || 0;
+      totalFat += e.fat || 0;
+    });
+
+    MEALS.forEach(meal => {
+      const list = document.querySelector(`.food-list[data-meal-list="${meal}"]`);
+      const mealEntries = entries.filter(e => e.meal === meal);
+      if (mealEntries.length === 0) {
+        list.innerHTML = `<p class="empty-state" style="padding:14px 0;">No items yet.</p>`;
+      } else {
+        list.innerHTML = mealEntries.map(foodItemHtml).join("");
+        list.querySelectorAll(".delete-food").forEach(btn => {
+          btn.addEventListener("click", async (e) => {
+            const row = e.target.closest(".food-item");
+            const id = row.dataset.id;
+            const ok = await showConfirm("Delete this food entry?");
+            if (!ok) return;
+            row.classList.add("removing");
+            row.addEventListener("animationend", () => {
+              data.nutrition = data.nutrition.filter(n => n.id !== id);
+              saveData();
+              renderNutrition();
+            }, { once: true });
+          });
+        });
+      }
+    });
+
+    const goal = data.calorieGoal || 2000;
+    document.getElementById("stat-calories").textContent = Math.round(totalCalories);
+    document.getElementById("calorie-ring-label").textContent = `of ${goal} kcal`;
+    document.getElementById("stat-protein").innerHTML = `${Math.round(totalProtein)}<span class="stat-unit">g</span>`;
+    document.getElementById("stat-carbs").innerHTML = `${Math.round(totalCarbs)}<span class="stat-unit">g</span>`;
+    document.getElementById("stat-fat").innerHTML = `${Math.round(totalFat)}<span class="stat-unit">g</span>`;
+
+    const ring = document.getElementById("calorie-ring");
+    const circumference = 2 * Math.PI * 52;
+    const fraction = goal > 0 ? Math.min(totalCalories / goal, 1) : 0;
+    ring.style.strokeDasharray = String(circumference);
+    ring.style.strokeDashoffset = String(circumference * (1 - fraction));
+  }
+
+  function openFoodModal(meal) {
+    activeFoodMeal = meal;
+    document.getElementById("food-dialog-meal").textContent = "— " + meal;
+    document.getElementById("food-form").reset();
+    document.getElementById("food-overlay").classList.add("show");
+    document.getElementById("food-name").focus();
+  }
+
+  function closeFoodModal() {
+    document.getElementById("food-overlay").classList.remove("show");
+    activeFoodMeal = null;
+  }
+
+  document.querySelectorAll(".add-food-btn").forEach(btn => {
+    btn.addEventListener("click", () => openFoodModal(btn.dataset.meal));
+  });
+
+  document.getElementById("food-cancel").addEventListener("click", closeFoodModal);
+
+  document.getElementById("food-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "food-overlay") closeFoodModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.getElementById("food-overlay").classList.contains("show")) {
+      closeFoodModal();
+    }
+  });
+
+  document.getElementById("food-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("food-name").value.trim();
+    const calories = parseFloat(document.getElementById("food-calories").value);
+    const protein = parseFloat(document.getElementById("food-protein").value) || 0;
+    const carbs = parseFloat(document.getElementById("food-carbs").value) || 0;
+    const fat = parseFloat(document.getElementById("food-fat").value) || 0;
+
+    if (!name) { toast("Enter a food name"); return; }
+    if (isNaN(calories) || calories < 0) { toast("Enter valid calories"); return; }
+
+    data.nutrition.push({
+      id: uid(),
+      date: nutritionViewDate || todayStr(),
+      meal: activeFoodMeal,
+      name, calories, protein, carbs, fat,
+    });
+    saveData();
+    toast("Food added");
+    closeFoodModal();
+    renderNutrition();
+  });
+
+  document.getElementById("calorie-goal-input").addEventListener("change", (e) => {
+    const value = parseFloat(e.target.value);
+    data.calorieGoal = isNaN(value) || value <= 0 ? 2000 : value;
+    e.target.value = data.calorieGoal;
+    saveData();
+    toast("Calorie goal updated");
+  });
+
   // ---------- Settings ----------
   function syncUnitRadios() {
     document.querySelectorAll('input[name="unit"]').forEach(radio => {
@@ -667,6 +824,8 @@
     addSetRow();
     prepLogForm();
     syncUnitRadios();
+    nutritionViewDate = todayStr();
+    document.getElementById("calorie-goal-input").value = data.calorieGoal || 2000;
     renderDashboard();
   }
 
