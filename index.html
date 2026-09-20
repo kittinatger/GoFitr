@@ -456,16 +456,17 @@
     </div>
 
     <div class="food-source-panel" data-panel="photo">
+      <p class="subtitle food-photo-hint">Take a clear photo of the Nutrition Facts label on the packaging.</p>
       <input type="file" accept="image/*" capture="environment" id="food-photo-input" class="hidden">
       <div id="food-photo-preview-wrap" class="food-photo-preview-wrap hidden">
-        <img id="food-photo-preview" alt="Selected food photo">
+        <img id="food-photo-preview" alt="Selected packaging photo">
       </div>
       <div class="food-photo-actions">
         <button type="button" class="btn btn-ghost btn-sm" id="food-photo-pick-btn">Take or Choose Photo</button>
-        <button type="button" class="btn btn-primary btn-sm hidden" id="food-photo-analyze-btn">Analyze Photo</button>
+        <button type="button" class="btn btn-primary btn-sm hidden" id="food-photo-analyze-btn">Read Label</button>
       </div>
       <p class="subtitle" id="food-photo-status"></p>
-      <p class="food-source-credit">AI estimate via Google Gemini — always double-check before logging</p>
+      <p class="food-source-credit">AI label reading via Google Gemini — always double-check before logging</p>
     </div>
 
     <form id="food-form">

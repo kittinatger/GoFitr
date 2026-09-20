@@ -1086,6 +1086,8 @@ textarea { resize: vertical; font-family: inherit; }
 
 .barcode-upload-btn { width: 100%; margin-top: 10px; }
 
+.food-photo-hint { margin-bottom: 12px; }
+
 .food-photo-preview-wrap {
   margin-bottom: 12px;
   border-radius: var(--radius-sm);

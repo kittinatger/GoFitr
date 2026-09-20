@@ -752,19 +752,6 @@
     setFoodSourceTab("manual");
   }
 
-  // AI photo estimates are absolute numbers for the portion shown, not a
-  // per-100g base — a prepared meal's weight can't be inferred from a
-  // picture, so unlike every other source there's nothing to scale here.
-  function applyDirectEstimate(product) {
-    activeFoodBase = null;
-    document.getElementById("food-name").value = product.name || "Unknown food";
-    document.getElementById("food-calories").value = Math.round(product.calories || 0);
-    document.getElementById("food-protein").value = round1(product.protein || 0);
-    document.getElementById("food-carbs").value = round1(product.carbs || 0);
-    document.getElementById("food-fat").value = round1(product.fat || 0);
-    setFoodSourceTab("manual");
-  }
-
   // ---------- Food data sources ----------
   // Every source below is normalized to the same shape before it reaches the
   // UI: { source, name, brand, kcal100, protein100, carbs100, fat100 }. That
@@ -1030,7 +1017,7 @@
   document.getElementById("food-photo-analyze-btn").addEventListener("click", async () => {
     if (!pendingPhotoBase64) return;
     const statusEl = document.getElementById("food-photo-status");
-    statusEl.textContent = "Analyzing photo…";
+    statusEl.textContent = "Reading label…";
     try {
       const resp = await fetch("/api/nutrition/vision", {
         method: "POST",
@@ -1039,18 +1026,18 @@
       });
       const json = await resp.json();
       if (!json.configured) {
-        statusEl.textContent = "AI photo scanning isn't set up yet — add a GEMINI_API_KEY to enable it.";
+        statusEl.textContent = "Label scanning isn't set up yet — add a GEMINI_API_KEY to enable it.";
         return;
       }
       if (json.error || !json.result) {
-        statusEl.textContent = "Couldn't analyze that photo. Try again or enter manually.";
+        statusEl.textContent = json.error || "Couldn't read that label. Try another photo or enter manually.";
         return;
       }
-      applyDirectEstimate(json.result);
+      applyFoodBase(json.result);
       statusEl.textContent = "";
-      toast(`AI estimate added (${json.result.confidence} confidence) — please double-check`);
+      toast(`Label read (${json.result.confidence} confidence) — please double-check`);
     } catch (err) {
-      statusEl.textContent = "Analysis failed. Check your connection.";
+      statusEl.textContent = "Reading failed. Check your connection.";
     }
   });
 
