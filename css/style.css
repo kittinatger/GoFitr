@@ -39,13 +39,16 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  background:
+    radial-gradient(560px circle at 50% -8%, rgba(110, 231, 183, 0.16), transparent 60%),
+    var(--bg);
 }
 
 .auth-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 32px 28px;
+  border-radius: 26px;
+  padding: 36px 30px 30px;
   width: 100%;
   max-width: 380px;
   box-shadow: var(--shadow);
@@ -53,33 +56,21 @@ html, body {
 
 .auth-card .brand {
   justify-content: center;
-  margin-bottom: 24px;
-}
-
-.auth-tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--bg-elevated);
-  border-radius: 10px;
-  padding: 4px;
   margin-bottom: 20px;
 }
 
-.auth-tab {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  padding: 8px 0;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
+.auth-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 6px;
 }
 
-.auth-tab.active {
-  background: var(--accent);
-  color: var(--accent-contrast);
+.auth-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 24px;
 }
 
 .auth-form {
@@ -99,21 +90,67 @@ html, body {
   margin: -4px 0 0;
 }
 
+.auth-switch {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 16px 0 0;
+}
+
+.auth-switch.hidden { display: none; }
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.link-btn:hover { text-decoration: underline; }
+
 .auth-note {
   text-align: center;
   color: var(--text-muted);
   font-size: 0.78rem;
-  margin: 18px 0 0;
+  margin: 22px 0 0;
 }
 
-.auth-github-btn {
+/* Pill buttons */
+.btn-pill {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 13px 20px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.05s, border-color 0.15s, color 0.15s;
+}
+
+.btn-pill:active { transform: scale(0.98); }
+
+.btn-github {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
   margin-bottom: 16px;
 }
+
+.btn-github:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-primary-pill {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: var(--accent-contrast);
+}
+
+.btn-primary-pill:hover { filter: brightness(1.06); }
 
 .github-icon svg { width: 18px; height: 18px; }
 
@@ -123,7 +160,7 @@ html, body {
   gap: 10px;
   color: var(--text-muted);
   font-size: 0.78rem;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .auth-divider::before,
@@ -133,6 +170,52 @@ html, body {
   height: 1px;
   background: var(--border);
 }
+
+/* Icon-prefixed inputs */
+.input-icon-field { position: relative; }
+
+.input-icon-field input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 13px 44px 13px 42px;
+  font-size: 0.92rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input-icon-field input:focus { border-color: var(--accent); }
+
+.input-icon-field .input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  display: flex;
+  pointer-events: none;
+}
+
+.input-icon-field .input-icon svg { width: 16px; height: 16px; }
+
+.input-toggle-visibility {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.input-toggle-visibility svg { width: 16px; height: 16px; }
+.input-toggle-visibility:hover { color: var(--text); }
 
 /* Sidebar */
 .sidebar {

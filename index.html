@@ -17,47 +17,51 @@
       <span class="brand-name">GoFitr</span>
     </div>
 
-    <button type="button" id="github-login-btn" class="btn btn-ghost auth-github-btn">
+    <h1 class="auth-title" id="auth-title">Welcome back</h1>
+    <p class="auth-subtitle" id="auth-subtitle">Log in to keep tracking your progress.</p>
+
+    <button type="button" id="github-login-btn" class="btn-pill btn-github">
       <span class="github-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.09 3.29 9.39 7.86 10.91.57.1.79-.25.79-.55 0-.27-.01-1.16-.02-2.11-3.2.7-3.88-1.36-3.88-1.36-.52-1.34-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.05 11.05 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.24 2.76.12 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.69 5.4-5.25 5.69.41.36.78 1.06.78 2.14 0 1.55-.01 2.79-.01 3.17 0 .3.21.66.8.55A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"></path></svg></span>
       Continue with GitHub
     </button>
 
     <div class="auth-divider"><span>or</span></div>
 
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab active" data-auth="login">Log In</button>
-      <button type="button" class="auth-tab" data-auth="signup">Sign Up</button>
-    </div>
-
     <form id="login-form" class="auth-form active">
-      <div class="form-field">
-        <label for="login-username">Username</label>
-        <input type="text" id="login-username" required autocomplete="username">
+      <div class="input-icon-field">
+        <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+        <input type="text" id="login-username" placeholder="Username" aria-label="Username" required autocomplete="username">
       </div>
-      <div class="form-field">
-        <label for="login-password">Password</label>
-        <input type="password" id="login-password" required autocomplete="current-password">
+      <div class="input-icon-field">
+        <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+        <input type="password" id="login-password" placeholder="Password" aria-label="Password" required autocomplete="current-password">
+        <button type="button" class="input-toggle-visibility" data-target="login-password" title="Show password" aria-label="Show password"></button>
       </div>
       <p class="auth-error" id="login-error"></p>
-      <button type="submit" class="btn btn-primary auth-submit">Log In</button>
+      <button type="submit" class="btn-pill btn-primary-pill auth-submit">Log In</button>
     </form>
 
     <form id="signup-form" class="auth-form">
-      <div class="form-field">
-        <label for="signup-username">Username</label>
-        <input type="text" id="signup-username" required autocomplete="username" minlength="3">
+      <div class="input-icon-field">
+        <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+        <input type="text" id="signup-username" placeholder="Username" aria-label="Username" required autocomplete="username" minlength="3">
       </div>
-      <div class="form-field">
-        <label for="signup-password">Password</label>
-        <input type="password" id="signup-password" required autocomplete="new-password" minlength="6">
+      <div class="input-icon-field">
+        <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+        <input type="password" id="signup-password" placeholder="Password" aria-label="Password" required autocomplete="new-password" minlength="6">
+        <button type="button" class="input-toggle-visibility" data-target="signup-password" title="Show password" aria-label="Show password"></button>
       </div>
-      <div class="form-field">
-        <label for="signup-password-confirm">Confirm Password</label>
-        <input type="password" id="signup-password-confirm" required autocomplete="new-password" minlength="6">
+      <div class="input-icon-field">
+        <span class="input-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+        <input type="password" id="signup-password-confirm" placeholder="Confirm password" aria-label="Confirm password" required autocomplete="new-password" minlength="6">
+        <button type="button" class="input-toggle-visibility" data-target="signup-password-confirm" title="Show password" aria-label="Show password"></button>
       </div>
       <p class="auth-error" id="signup-error"></p>
-      <button type="submit" class="btn btn-primary auth-submit">Create Account</button>
+      <button type="submit" class="btn-pill btn-primary-pill auth-submit">Create Account</button>
     </form>
+
+    <p class="auth-switch" id="auth-switch-login">Don't have an account? <button type="button" class="link-btn" data-auth="signup">Sign Up</button></p>
+    <p class="auth-switch hidden" id="auth-switch-signup">Already have an account? <button type="button" class="link-btn" data-auth="login">Log In</button></p>
 
     <p class="auth-note">Your account and data stay on this device only — nothing is sent to a server.</p>
   </div>

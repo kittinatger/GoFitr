@@ -6,6 +6,8 @@
 
   const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
   const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+  const ICON_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+  const ICON_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-3.22 4.44M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
 
   const defaultData = () => ({
     workouts: [],   // { id, date: 'YYYY-MM-DD', exercise, sets: [{reps, weight}], notes }
@@ -613,14 +615,34 @@
     renderDashboard();
   }
 
-  document.querySelectorAll(".auth-tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
-      document.getElementById(tab.dataset.auth + "-form").classList.add("active");
-      document.getElementById("login-error").textContent = "";
-      document.getElementById("signup-error").textContent = "";
+  function setAuthMode(mode) {
+    const isLogin = mode === "login";
+    document.getElementById("login-form").classList.toggle("active", isLogin);
+    document.getElementById("signup-form").classList.toggle("active", !isLogin);
+    document.getElementById("auth-switch-login").classList.toggle("hidden", !isLogin);
+    document.getElementById("auth-switch-signup").classList.toggle("hidden", isLogin);
+    document.getElementById("auth-title").textContent = isLogin ? "Welcome back" : "Create your account";
+    document.getElementById("auth-subtitle").textContent = isLogin
+      ? "Log in to keep tracking your progress."
+      : "Set up a free local account to get started.";
+    document.getElementById("login-error").textContent = "";
+    document.getElementById("signup-error").textContent = "";
+  }
+
+  document.querySelectorAll("[data-auth]").forEach(btn => {
+    btn.addEventListener("click", () => setAuthMode(btn.dataset.auth));
+  });
+
+  document.querySelectorAll(".input-toggle-visibility").forEach(btn => {
+    btn.innerHTML = ICON_EYE;
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      if (!input) return;
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      btn.innerHTML = showing ? ICON_EYE : ICON_EYE_OFF;
+      btn.title = showing ? "Show password" : "Hide password";
+      btn.setAttribute("aria-label", btn.title);
     });
   });
 
@@ -689,10 +711,7 @@
     authMode = null;
     document.getElementById("login-form").reset();
     document.getElementById("signup-form").reset();
-    document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
-    document.querySelector('.auth-tab[data-auth="login"]').classList.add("active");
-    document.querySelectorAll(".auth-form").forEach(f => f.classList.remove("active"));
-    document.getElementById("login-form").classList.add("active");
+    setAuthMode("login");
     showAuthScreen();
   });
 
