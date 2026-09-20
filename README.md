@@ -12,6 +12,7 @@ A simple, local-first fitness tracker. Sign in with GitHub or a local username/p
 - Full workout history with per-exercise filtering
 - Progress charts (max weight & volume over time) and personal records
 - Body weight logging with a trend chart
+- Nutrition tracking with a daily food log, calorie/macro goals, and food lookup by search or barcode scan across multiple nutrition databases
 - kg/lb unit toggle
 - Export/import your data as JSON, or clear it entirely
 
@@ -33,6 +34,16 @@ Note: this only serves the static files, so local username/password accounts wor
 
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — from a [GitHub OAuth App](https://github.com/settings/developers) with callback URL `<your-domain>/api/auth/github/callback`
 - `SESSION_SECRET` — any long random string, used to sign the session cookie
+
+## Nutrition database setup
+
+Food search and barcode scanning in the Nutrition tab check multiple databases in order, each backed by a serverless proxy under `api/nutrition/` that keeps its API key server-side. All of these are optional — search/barcode lookup just skips any source whose keys aren't set:
+
+- **Open Food Facts** — free, no key, always on.
+- **USDA FoodData Central** — free, no cost, key at [fdc.nal.usda.gov/api-key-signup](https://fdc.nal.usda.gov/api-key-signup). Env var: `USDA_API_KEY`.
+- **Spoonacular** — free tier, key at [spoonacular.com/food-api](https://spoonacular.com/food-api). Env var: `SPOONACULAR_API_KEY`.
+- **UPCitemdb** — free trial tier, no key needed. Barcode-only, name-only fallback (no nutrition data) used as a last resort.
+- **Edamam** / **Nutritionix** — also supported (`EDAMAM_APP_ID`/`EDAMAM_APP_KEY`, `NUTRITIONIX_APP_ID`/`NUTRITIONIX_APP_KEY`), but both now require a paid plan to sign up, so they're not part of the default setup.
 
 ## Tech
 
