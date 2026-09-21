@@ -1322,6 +1322,7 @@
   });
 
   document.getElementById("food-cancel").addEventListener("click", closeFoodModal);
+  document.getElementById("food-dialog-close").addEventListener("click", closeFoodModal);
 
   document.getElementById("food-overlay").addEventListener("click", (e) => {
     if (e.target.id === "food-overlay") closeFoodModal();
@@ -1408,6 +1409,12 @@
     reopenFoodModal("mine");
   });
 
+  document.getElementById("custom-food-dialog-close").addEventListener("click", () => {
+    closeCustomFoodModal();
+    activeFoodMeal = pendingReturnMeal;
+    reopenFoodModal("mine");
+  });
+
   document.getElementById("custom-food-overlay").addEventListener("click", (e) => {
     if (e.target.id === "custom-food-overlay") {
       closeCustomFoodModal();
@@ -1488,6 +1495,12 @@
   document.getElementById("meal-add-item-btn").addEventListener("click", addMealItemRow);
 
   document.getElementById("meal-builder-cancel").addEventListener("click", () => {
+    closeMealBuilder();
+    activeFoodMeal = pendingReturnMeal;
+    reopenFoodModal("meals");
+  });
+
+  document.getElementById("meal-builder-dialog-close").addEventListener("click", () => {
     closeMealBuilder();
     activeFoodMeal = pendingReturnMeal;
     reopenFoodModal("meals");

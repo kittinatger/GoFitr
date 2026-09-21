@@ -976,10 +976,10 @@ textarea { resize: vertical; font-family: inherit; }
   position: fixed;
   inset: 0;
   z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   padding: 20px;
+  overflow-y: auto;
   background: rgba(0, 0, 0, 0.6);
   opacity: 0;
   pointer-events: none;
@@ -995,6 +995,8 @@ textarea { resize: vertical; font-family: inherit; }
   padding: 24px;
   max-width: 340px;
   width: 100%;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   box-shadow: var(--shadow-lift);
   transform: scale(0.92) translateY(10px);
   transition: transform 0.28s var(--ease);
@@ -1016,10 +1018,32 @@ textarea { resize: vertical; font-family: inherit; }
 }
 
 /* Food dialog */
-.food-dialog { max-width: 380px; }
+.food-dialog { max-width: 380px; position: relative; }
+
+.dialog-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.dialog-close-btn:hover { color: var(--coral); border-color: var(--coral); }
+.dialog-close-btn svg { width: 16px; height: 16px; }
 
 .food-dialog-title {
   margin: 0 0 18px;
+  padding-right: 36px;
   font-size: 1.15rem;
   font-weight: 800;
 }
