@@ -1919,6 +1919,18 @@
     if (clerk) {
       try {
         await clerk.load();
+
+        // Returning from a provider's redirect (e.g. after "Continue with
+        // Google") lands back here with Clerk's completion params in the
+        // URL — handleRedirectCallback() is what actually finishes
+        // establishing the session from those params; without it clerk.user
+        // stays empty and the app just sits on the login screen.
+        try {
+          await clerk.handleRedirectCallback();
+        } catch (e) {
+          // No pending redirect to complete — normal on every other load.
+        }
+
         if (clerk.user) {
           clerk.addListener(({ user }) => {
             if (user && !currentUser) bootClerkUser(user);
