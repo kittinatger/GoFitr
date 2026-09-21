@@ -433,13 +433,14 @@
   </div>
 </div>
 
-<div id="food-overlay" class="confirm-overlay">
-  <div class="confirm-dialog food-dialog">
-    <button type="button" class="dialog-close-btn" id="food-dialog-close" title="Close" aria-label="Close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+<div id="food-overlay" class="page-overlay">
+  <div class="page-overlay-header">
+    <button type="button" class="page-back-btn" id="food-page-back" title="Back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </button>
-    <h3 class="food-dialog-title">Add Food <span id="food-dialog-meal"></span></h3>
-
+    <h3 class="page-overlay-title">Add Food <span id="food-dialog-meal"></span></h3>
+  </div>
+  <div class="page-overlay-body food-dialog">
     <div class="food-source-tabs">
       <button type="button" class="food-source-tab active" data-source="manual">Manual</button>
       <button type="button" class="food-source-tab" data-source="search">Find Food</button>
@@ -547,12 +548,14 @@
   </div>
 </div>
 
-<div id="custom-food-overlay" class="confirm-overlay">
-  <div class="confirm-dialog food-dialog">
-    <button type="button" class="dialog-close-btn" id="custom-food-dialog-close" title="Close" aria-label="Close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+<div id="custom-food-overlay" class="page-overlay">
+  <div class="page-overlay-header">
+    <button type="button" class="page-back-btn" id="custom-food-page-back" title="Back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </button>
-    <h3 class="food-dialog-title">Add Custom Food</h3>
+    <h3 class="page-overlay-title">Add Custom Food</h3>
+  </div>
+  <div class="page-overlay-body food-dialog">
     <form id="custom-food-form">
       <div class="form-field">
         <label for="custom-food-name">Food name</label>
@@ -591,12 +594,14 @@
   </div>
 </div>
 
-<div id="meal-builder-overlay" class="confirm-overlay">
-  <div class="confirm-dialog food-dialog">
-    <button type="button" class="dialog-close-btn" id="meal-builder-dialog-close" title="Close" aria-label="Close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+<div id="meal-builder-overlay" class="page-overlay">
+  <div class="page-overlay-header">
+    <button type="button" class="page-back-btn" id="meal-builder-page-back" title="Back" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </button>
-    <h3 class="food-dialog-title">Create Meal</h3>
+    <h3 class="page-overlay-title">Create Meal</h3>
+  </div>
+  <div class="page-overlay-body food-dialog">
     <div class="form-field">
       <label for="meal-name-input">Meal name</label>
       <input type="text" id="meal-name-input" placeholder="e.g. My usual breakfast" autocomplete="off">
