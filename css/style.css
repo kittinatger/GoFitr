@@ -1017,34 +1017,19 @@ textarea { resize: vertical; font-family: inherit; }
   justify-content: flex-end;
 }
 
-/* Full-page overlays (Add Food, Add Custom Food, Create Meal) — a real
-   page rather than a floating/centered popup, since fixed-position centered
-   dialogs were unreliable on iPad Safari (misrendered/unreachable Cancel
-   button). Covers the whole viewport with the app's normal background and
-   scrolls internally; a back button in a fixed header is always reachable
-   regardless of content length or viewport quirks. */
-.page-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s var(--ease);
-}
-
-.page-overlay.show { opacity: 1; pointer-events: auto; }
-
-.page-overlay-header {
+/* Add Food / Add Custom Food / Create Meal are real full pages (like
+   Nutrition, Dashboard, etc. — toggled via .view/.view.active) rather than
+   a floating/centered popup, since a fixed-position centered dialog was
+   unreliable on iPad Safari (misrendered/unreachable Cancel button).
+   Being a normal .view also means the sidebar stays visible on desktop and
+   there's no background page left underneath to accidentally scroll. */
+.view-header-back {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
 }
+
+.view-header-back h1 { margin: 0; }
 
 .page-back-btn {
   width: 38px;
@@ -1064,16 +1049,7 @@ textarea { resize: vertical; font-family: inherit; }
 .page-back-btn:hover { color: var(--lime); border-color: var(--lime); }
 .page-back-btn svg { width: 18px; height: 18px; }
 
-.page-overlay-title { margin: 0; font-size: 1.15rem; font-weight: 800; }
-
-.page-overlay-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  max-width: 480px;
-  width: 100%;
-  margin: 0 auto;
-}
+.food-dialog { max-width: 480px; }
 
 #food-dialog-meal { color: var(--lime); }
 

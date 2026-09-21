@@ -418,6 +418,192 @@
       </div>
     </section>
 
+    <section id="view-food" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="food-page-back" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h1>Add Food <span id="food-dialog-meal"></span></h1>
+      </header>
+
+      <div class="food-dialog">
+        <div class="food-source-tabs">
+          <button type="button" class="food-source-tab active" data-source="manual">Manual</button>
+          <button type="button" class="food-source-tab" data-source="search">Find Food</button>
+          <button type="button" class="food-source-tab" data-source="barcode">Barcode</button>
+          <button type="button" class="food-source-tab" data-source="photo">Photo</button>
+        </div>
+
+        <div class="food-source-panel" data-panel="search">
+          <div class="food-find-header">
+            <div class="food-search-row">
+              <input type="text" id="food-search-input" placeholder="Search food…" autocomplete="off">
+              <button type="button" class="btn btn-primary btn-sm" id="food-search-btn">Search</button>
+            </div>
+            <button type="button" class="food-quick-add-btn" id="food-quick-add-btn" title="Add custom food">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+          </div>
+
+          <div class="food-filter-chips">
+            <button type="button" class="food-filter-chip active" data-filter="all">All Foods</button>
+            <button type="button" class="food-filter-chip" data-filter="mine">My Foods</button>
+            <button type="button" class="food-filter-chip" data-filter="meals">My Meals</button>
+            <button type="button" class="food-filter-chip" data-filter="saved">Saved Foods</button>
+          </div>
+
+          <div class="food-filter-panel active" data-filter-panel="all">
+            <div id="food-search-results" class="food-search-results"></div>
+            <p class="food-source-credit">Data from Open Food Facts, USDA, Nutritionix, Edamam &amp; Spoonacular</p>
+          </div>
+
+          <div class="food-filter-panel" data-filter-panel="mine">
+            <div id="my-foods-list" class="food-search-results"></div>
+            <button type="button" class="btn btn-primary btn-sm food-filter-cta" id="add-custom-food-btn">+ Add Custom Food</button>
+          </div>
+
+          <div class="food-filter-panel" data-filter-panel="meals">
+            <div id="my-meals-list" class="food-search-results"></div>
+            <button type="button" class="btn btn-primary btn-sm food-filter-cta" id="create-meal-btn">+ Create Meal</button>
+          </div>
+
+          <div class="food-filter-panel" data-filter-panel="saved">
+            <div id="saved-foods-list" class="food-search-results"></div>
+          </div>
+        </div>
+
+        <div class="food-source-panel" data-panel="barcode">
+          <div id="barcode-reader-region" class="barcode-reader"></div>
+          <p class="subtitle" id="barcode-status">Point your camera at a barcode.</p>
+          <input type="file" accept="image/*" id="barcode-photo-input" class="hidden">
+          <button type="button" class="btn btn-ghost btn-sm barcode-upload-btn" id="barcode-photo-btn">Or upload a photo of a barcode</button>
+          <p class="food-source-credit">Checks Open Food Facts, USDA, Nutritionix, Edamam, Spoonacular &amp; UPCitemdb</p>
+        </div>
+
+        <div class="food-source-panel" data-panel="photo">
+          <p class="subtitle food-photo-hint">Photo of the food, its packaging, or a Nutrition Facts label — whatever you've got.</p>
+          <input type="file" accept="image/*" capture="environment" id="food-photo-input" class="hidden">
+          <div id="food-photo-preview-wrap" class="food-photo-preview-wrap hidden">
+            <img id="food-photo-preview" alt="Selected packaging photo">
+          </div>
+          <div class="food-photo-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="food-photo-pick-btn">Take or Choose Photo</button>
+            <button type="button" class="btn btn-primary btn-sm hidden" id="food-photo-analyze-btn">Analyze Photo</button>
+          </div>
+          <p class="subtitle" id="food-photo-status"></p>
+          <p class="food-source-credit">Reads labels exactly, estimates otherwise — via Google Gemini. Always double-check before logging.</p>
+        </div>
+
+        <form id="food-form">
+          <div class="form-field">
+            <label for="food-name">Food name</label>
+            <input type="text" id="food-name" placeholder="e.g. Grilled chicken" required autocomplete="off">
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="food-serving">Serving (g)</label>
+              <input type="number" id="food-serving" min="1" step="1" value="100">
+            </div>
+            <div class="form-field grow">
+              <label for="food-calories">Calories (kcal)</label>
+              <input type="number" id="food-calories" min="0" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="food-protein">Protein (g)</label>
+              <input type="number" id="food-protein" min="0" step="0.1">
+            </div>
+            <div class="form-field">
+              <label for="food-carbs">Carbs (g)</label>
+              <input type="number" id="food-carbs" min="0" step="0.1">
+            </div>
+            <div class="form-field">
+              <label for="food-fat">Fat (g)</label>
+              <input type="number" id="food-fat" min="0" step="0.1">
+            </div>
+          </div>
+          <div class="confirm-actions" style="margin-top:18px; justify-content:space-between;">
+            <button type="button" class="btn btn-ghost btn-sm" id="food-save-btn" title="Bookmark for quick re-logging later">☆ Save</button>
+            <div style="display:flex; gap:10px;">
+              <button type="button" class="btn btn-ghost" id="food-cancel">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add Food</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-custom-food" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="custom-food-page-back" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h1>Add Custom Food</h1>
+      </header>
+
+      <div class="food-dialog">
+        <form id="custom-food-form">
+          <div class="form-field">
+            <label for="custom-food-name">Food name</label>
+            <input type="text" id="custom-food-name" placeholder="e.g. Mom's chili" required autocomplete="off">
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="custom-food-serving">Serving (g)</label>
+              <input type="number" id="custom-food-serving" min="1" step="1" value="100">
+            </div>
+            <div class="form-field grow">
+              <label for="custom-food-calories">Calories (kcal)</label>
+              <input type="number" id="custom-food-calories" min="0" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="custom-food-protein">Protein (g)</label>
+              <input type="number" id="custom-food-protein" min="0" step="0.1">
+            </div>
+            <div class="form-field">
+              <label for="custom-food-carbs">Carbs (g)</label>
+              <input type="number" id="custom-food-carbs" min="0" step="0.1">
+            </div>
+            <div class="form-field">
+              <label for="custom-food-fat">Fat (g)</label>
+              <input type="number" id="custom-food-fat" min="0" step="0.1">
+            </div>
+          </div>
+          <p class="subtitle">Saved to <strong>My Foods</strong> permanently — separate from the online sources, and always available to add from here.</p>
+          <div class="confirm-actions" style="margin-top:18px;">
+            <button type="button" class="btn btn-ghost" id="custom-food-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Custom Food</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-meal-builder" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="meal-builder-page-back" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h1>Create Meal</h1>
+      </header>
+
+      <div class="food-dialog">
+        <div class="form-field">
+          <label for="meal-name-input">Meal name</label>
+          <input type="text" id="meal-name-input" placeholder="e.g. My usual breakfast" autocomplete="off">
+        </div>
+        <label class="sets-label">Items</label>
+        <div id="meal-items-container" class="meal-items-container"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="meal-add-item-btn">+ Add Item</button>
+        <div class="confirm-actions" style="margin-top:18px;">
+          <button type="button" class="btn btn-ghost" id="meal-builder-cancel">Cancel</button>
+          <button type="button" class="btn btn-primary" id="meal-builder-save">Save Meal</button>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -429,189 +615,6 @@
     <div class="confirm-actions">
       <button type="button" class="btn btn-ghost" id="confirm-cancel">Cancel</button>
       <button type="button" class="btn btn-danger-solid" id="confirm-ok">Delete</button>
-    </div>
-  </div>
-</div>
-
-<div id="food-overlay" class="page-overlay">
-  <div class="page-overlay-header">
-    <button type="button" class="page-back-btn" id="food-page-back" title="Back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </button>
-    <h3 class="page-overlay-title">Add Food <span id="food-dialog-meal"></span></h3>
-  </div>
-  <div class="page-overlay-body food-dialog">
-    <div class="food-source-tabs">
-      <button type="button" class="food-source-tab active" data-source="manual">Manual</button>
-      <button type="button" class="food-source-tab" data-source="search">Find Food</button>
-      <button type="button" class="food-source-tab" data-source="barcode">Barcode</button>
-      <button type="button" class="food-source-tab" data-source="photo">Photo</button>
-    </div>
-
-    <div class="food-source-panel" data-panel="search">
-      <div class="food-find-header">
-        <div class="food-search-row">
-          <input type="text" id="food-search-input" placeholder="Search food…" autocomplete="off">
-          <button type="button" class="btn btn-primary btn-sm" id="food-search-btn">Search</button>
-        </div>
-        <button type="button" class="food-quick-add-btn" id="food-quick-add-btn" title="Add custom food">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-      </div>
-
-      <div class="food-filter-chips">
-        <button type="button" class="food-filter-chip active" data-filter="all">All Foods</button>
-        <button type="button" class="food-filter-chip" data-filter="mine">My Foods</button>
-        <button type="button" class="food-filter-chip" data-filter="meals">My Meals</button>
-        <button type="button" class="food-filter-chip" data-filter="saved">Saved Foods</button>
-      </div>
-
-      <div class="food-filter-panel active" data-filter-panel="all">
-        <div id="food-search-results" class="food-search-results"></div>
-        <p class="food-source-credit">Data from Open Food Facts, USDA, Nutritionix, Edamam &amp; Spoonacular</p>
-      </div>
-
-      <div class="food-filter-panel" data-filter-panel="mine">
-        <div id="my-foods-list" class="food-search-results"></div>
-        <button type="button" class="btn btn-primary btn-sm food-filter-cta" id="add-custom-food-btn">+ Add Custom Food</button>
-      </div>
-
-      <div class="food-filter-panel" data-filter-panel="meals">
-        <div id="my-meals-list" class="food-search-results"></div>
-        <button type="button" class="btn btn-primary btn-sm food-filter-cta" id="create-meal-btn">+ Create Meal</button>
-      </div>
-
-      <div class="food-filter-panel" data-filter-panel="saved">
-        <div id="saved-foods-list" class="food-search-results"></div>
-      </div>
-    </div>
-
-    <div class="food-source-panel" data-panel="barcode">
-      <div id="barcode-reader-region" class="barcode-reader"></div>
-      <p class="subtitle" id="barcode-status">Point your camera at a barcode.</p>
-      <input type="file" accept="image/*" id="barcode-photo-input" class="hidden">
-      <button type="button" class="btn btn-ghost btn-sm barcode-upload-btn" id="barcode-photo-btn">Or upload a photo of a barcode</button>
-      <p class="food-source-credit">Checks Open Food Facts, USDA, Nutritionix, Edamam, Spoonacular &amp; UPCitemdb</p>
-    </div>
-
-    <div class="food-source-panel" data-panel="photo">
-      <p class="subtitle food-photo-hint">Photo of the food, its packaging, or a Nutrition Facts label — whatever you've got.</p>
-      <input type="file" accept="image/*" capture="environment" id="food-photo-input" class="hidden">
-      <div id="food-photo-preview-wrap" class="food-photo-preview-wrap hidden">
-        <img id="food-photo-preview" alt="Selected packaging photo">
-      </div>
-      <div class="food-photo-actions">
-        <button type="button" class="btn btn-ghost btn-sm" id="food-photo-pick-btn">Take or Choose Photo</button>
-        <button type="button" class="btn btn-primary btn-sm hidden" id="food-photo-analyze-btn">Analyze Photo</button>
-      </div>
-      <p class="subtitle" id="food-photo-status"></p>
-      <p class="food-source-credit">Reads labels exactly, estimates otherwise — via Google Gemini. Always double-check before logging.</p>
-    </div>
-
-    <form id="food-form">
-      <div class="form-field">
-        <label for="food-name">Food name</label>
-        <input type="text" id="food-name" placeholder="e.g. Grilled chicken" required autocomplete="off">
-      </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label for="food-serving">Serving (g)</label>
-          <input type="number" id="food-serving" min="1" step="1" value="100">
-        </div>
-        <div class="form-field grow">
-          <label for="food-calories">Calories (kcal)</label>
-          <input type="number" id="food-calories" min="0" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label for="food-protein">Protein (g)</label>
-          <input type="number" id="food-protein" min="0" step="0.1">
-        </div>
-        <div class="form-field">
-          <label for="food-carbs">Carbs (g)</label>
-          <input type="number" id="food-carbs" min="0" step="0.1">
-        </div>
-        <div class="form-field">
-          <label for="food-fat">Fat (g)</label>
-          <input type="number" id="food-fat" min="0" step="0.1">
-        </div>
-      </div>
-      <div class="confirm-actions" style="margin-top:18px; justify-content:space-between;">
-        <button type="button" class="btn btn-ghost btn-sm" id="food-save-btn" title="Bookmark for quick re-logging later">☆ Save</button>
-        <div style="display:flex; gap:10px;">
-          <button type="button" class="btn btn-ghost" id="food-cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Food</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div id="custom-food-overlay" class="page-overlay">
-  <div class="page-overlay-header">
-    <button type="button" class="page-back-btn" id="custom-food-page-back" title="Back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </button>
-    <h3 class="page-overlay-title">Add Custom Food</h3>
-  </div>
-  <div class="page-overlay-body food-dialog">
-    <form id="custom-food-form">
-      <div class="form-field">
-        <label for="custom-food-name">Food name</label>
-        <input type="text" id="custom-food-name" placeholder="e.g. Mom's chili" required autocomplete="off">
-      </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label for="custom-food-serving">Serving (g)</label>
-          <input type="number" id="custom-food-serving" min="1" step="1" value="100">
-        </div>
-        <div class="form-field grow">
-          <label for="custom-food-calories">Calories (kcal)</label>
-          <input type="number" id="custom-food-calories" min="0" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-field">
-          <label for="custom-food-protein">Protein (g)</label>
-          <input type="number" id="custom-food-protein" min="0" step="0.1">
-        </div>
-        <div class="form-field">
-          <label for="custom-food-carbs">Carbs (g)</label>
-          <input type="number" id="custom-food-carbs" min="0" step="0.1">
-        </div>
-        <div class="form-field">
-          <label for="custom-food-fat">Fat (g)</label>
-          <input type="number" id="custom-food-fat" min="0" step="0.1">
-        </div>
-      </div>
-      <p class="subtitle">Saved to <strong>My Foods</strong> permanently — separate from the online sources, and always available to add from here.</p>
-      <div class="confirm-actions" style="margin-top:18px;">
-        <button type="button" class="btn btn-ghost" id="custom-food-cancel">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Custom Food</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div id="meal-builder-overlay" class="page-overlay">
-  <div class="page-overlay-header">
-    <button type="button" class="page-back-btn" id="meal-builder-page-back" title="Back" aria-label="Back">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </button>
-    <h3 class="page-overlay-title">Create Meal</h3>
-  </div>
-  <div class="page-overlay-body food-dialog">
-    <div class="form-field">
-      <label for="meal-name-input">Meal name</label>
-      <input type="text" id="meal-name-input" placeholder="e.g. My usual breakfast" autocomplete="off">
-    </div>
-    <label class="sets-label">Items</label>
-    <div id="meal-items-container" class="meal-items-container"></div>
-    <button type="button" class="btn btn-ghost btn-sm" id="meal-add-item-btn">+ Add Item</button>
-    <div class="confirm-actions" style="margin-top:18px;">
-      <button type="button" class="btn btn-ghost" id="meal-builder-cancel">Cancel</button>
-      <button type="button" class="btn btn-primary" id="meal-builder-save">Save Meal</button>
     </div>
   </div>
 </div>

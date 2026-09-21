@@ -715,6 +715,15 @@
     ring.style.strokeDashoffset = String(circumference * (1 - fraction));
   }
 
+  // Add Food / Add Custom Food / Create Meal are real full-page views (like
+  // Nutrition, Dashboard, etc.) rather than centered popups — a fixed
+  // centered overlay was unreliable on iPad Safari. Switching between them
+  // just swaps which .view is active, same mechanism as the sidebar nav.
+  function showFoodPage(id) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
   function openFoodModal(meal) {
     activeFoodMeal = meal;
     activeFoodBase = null;
@@ -733,19 +742,19 @@
     document.getElementById("food-photo-input").value = "";
     setFoodSourceTab("manual");
     setFoodFilter("all");
-    document.getElementById("food-overlay").classList.add("show");
+    showFoodPage("view-food");
     document.getElementById("food-name").focus();
   }
 
   function closeFoodModal() {
     stopBarcodeScanner();
-    document.getElementById("food-overlay").classList.remove("show");
+    document.getElementById("view-food").classList.remove("active");
     activeFoodMeal = null;
   }
 
   function reopenFoodModal(filter) {
     document.getElementById("food-dialog-meal").textContent = "— " + activeFoodMeal;
-    document.getElementById("food-overlay").classList.add("show");
+    showFoodPage("view-food");
     setFoodSourceTab("search");
     setFoodFilter(filter);
   }
@@ -1104,6 +1113,7 @@
     });
     saveData();
     closeFoodModal();
+    showFoodPage("view-nutrition");
     renderNutrition();
     toast(`Added ${meal.items.length} item${meal.items.length === 1 ? "" : "s"} from "${meal.name}"`);
   }
@@ -1321,16 +1331,17 @@
     btn.addEventListener("click", () => openFoodModal(btn.dataset.meal));
   });
 
-  document.getElementById("food-cancel").addEventListener("click", closeFoodModal);
-  document.getElementById("food-page-back").addEventListener("click", closeFoodModal);
+  function cancelFoodModal() {
+    closeFoodModal();
+    showFoodPage("view-nutrition");
+  }
 
-  document.getElementById("food-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "food-overlay") closeFoodModal();
-  });
+  document.getElementById("food-cancel").addEventListener("click", cancelFoodModal);
+  document.getElementById("food-page-back").addEventListener("click", cancelFoodModal);
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && document.getElementById("food-overlay").classList.contains("show")) {
-      closeFoodModal();
+    if (e.key === "Escape" && document.getElementById("view-food").classList.contains("active")) {
+      cancelFoodModal();
     }
   });
 
@@ -1354,6 +1365,7 @@
     saveData();
     toast("Food added");
     closeFoodModal();
+    showFoodPage("view-nutrition");
     renderNutrition();
   });
 
@@ -1383,12 +1395,12 @@
     pendingReturnMeal = returnMeal;
     document.getElementById("custom-food-form").reset();
     document.getElementById("custom-food-serving").value = 100;
-    document.getElementById("custom-food-overlay").classList.add("show");
+    showFoodPage("view-custom-food");
     document.getElementById("custom-food-name").focus();
   }
 
   function closeCustomFoodModal() {
-    document.getElementById("custom-food-overlay").classList.remove("show");
+    document.getElementById("view-custom-food").classList.remove("active");
   }
 
   document.getElementById("food-quick-add-btn").addEventListener("click", () => {
@@ -1413,14 +1425,6 @@
     closeCustomFoodModal();
     activeFoodMeal = pendingReturnMeal;
     reopenFoodModal("mine");
-  });
-
-  document.getElementById("custom-food-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "custom-food-overlay") {
-      closeCustomFoodModal();
-      activeFoodMeal = pendingReturnMeal;
-      reopenFoodModal("mine");
-    }
   });
 
   document.getElementById("custom-food-form").addEventListener("submit", (e) => {
@@ -1479,11 +1483,11 @@
     document.getElementById("meal-name-input").value = "";
     document.getElementById("meal-items-container").innerHTML = "";
     addMealItemRow();
-    document.getElementById("meal-builder-overlay").classList.add("show");
+    showFoodPage("view-meal-builder");
   }
 
   function closeMealBuilder() {
-    document.getElementById("meal-builder-overlay").classList.remove("show");
+    document.getElementById("view-meal-builder").classList.remove("active");
   }
 
   document.getElementById("create-meal-btn").addEventListener("click", () => {
@@ -1504,14 +1508,6 @@
     closeMealBuilder();
     activeFoodMeal = pendingReturnMeal;
     reopenFoodModal("meals");
-  });
-
-  document.getElementById("meal-builder-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "meal-builder-overlay") {
-      closeMealBuilder();
-      activeFoodMeal = pendingReturnMeal;
-      reopenFoodModal("meals");
-    }
   });
 
   document.getElementById("meal-builder-save").addEventListener("click", () => {
@@ -1538,11 +1534,11 @@
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (document.getElementById("custom-food-overlay").classList.contains("show")) {
+    if (document.getElementById("view-custom-food").classList.contains("active")) {
       closeCustomFoodModal();
       activeFoodMeal = pendingReturnMeal;
       reopenFoodModal("mine");
-    } else if (document.getElementById("meal-builder-overlay").classList.contains("show")) {
+    } else if (document.getElementById("view-meal-builder").classList.contains("active")) {
       closeMealBuilder();
       activeFoodMeal = pendingReturnMeal;
       reopenFoodModal("meals");
@@ -1793,9 +1789,10 @@
 
     function anyModalOpen() {
       const confirmOverlay = document.getElementById("confirm-overlay");
-      const foodOverlay = document.getElementById("food-overlay");
-      return (confirmOverlay && confirmOverlay.classList.contains("show")) ||
-        (foodOverlay && foodOverlay.classList.contains("show"));
+      const foodViewActive = ["view-food", "view-custom-food", "view-meal-builder"].some(
+        id => document.getElementById(id).classList.contains("active")
+      );
+      return (confirmOverlay && confirmOverlay.classList.contains("show")) || foodViewActive;
     }
 
     function clearHoldTimers() {
