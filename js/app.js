@@ -7,7 +7,7 @@
   // Google/Apple/GitHub go through Clerk (the publishable key is public,
   // safe to ship — it's paired with the script tag's
   // data-clerk-publishable-key in index.html).
-  const CLERK_PUBLISHABLE_KEY = "pk_test_bHVja3ktdHJvbGwtMzEuY2xlcmsuYWNjb3VudHMuZGV2JA";
+  const CLERK_PUBLISHABLE_KEY = "pk_test_c2FmZS1haXJlZGFsZS05MTc3LmNsZXJrLmFjY291bnRzLmRldiQ";
 
   // Clerk's script tag loads with `async`, so it may not have finished
   // fetching/executing by the time this file runs — poll briefly for
