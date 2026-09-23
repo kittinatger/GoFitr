@@ -12,7 +12,7 @@ A simple, local-first fitness tracker. Sign in with Google, Apple, GitHub, or a 
 - Full workout history with per-exercise filtering
 - Progress charts (max weight & volume over time) and personal records
 - Body weight logging with a trend chart
-- Nutrition tracking with a daily food log, calorie/macro goals, and food lookup by search or barcode scan across multiple nutrition databases
+- Nutrition tracking with a daily food log, calorie/macro goals, custom foods, saved meals, and bookmarked foods — all stored locally (no external food database yet; see below)
 - kg/lb unit toggle
 - Export/import your data as JSON, or clear it entirely
 
@@ -39,16 +39,19 @@ Google, Apple, and GitHub login go through [Clerk](https://clerk.com), run entir
 
 Every button quietly shows a "not configured" toast instead of breaking anything until Clerk and that specific provider are set up.
 
-## Nutrition database setup
+## Nutrition data
 
-Food search and barcode scanning in the Nutrition tab check multiple databases in order, each backed by a serverless proxy under `api/nutrition/` that keeps its API key server-side. All of these are optional — search/barcode lookup just skips any source whose keys aren't set:
+There's no external food database — the Nutrition tab is fully local:
 
-- **Open Food Facts** — free, no key, always on.
-- **USDA FoodData Central** — free, no cost, key at [fdc.nal.usda.gov/api-key-signup](https://fdc.nal.usda.gov/api-key-signup). Env var: `USDA_API_KEY`.
-- **Spoonacular** — free tier, key at [spoonacular.com/food-api](https://spoonacular.com/food-api). Env var: `SPOONACULAR_API_KEY`.
-- **UPCitemdb** — free trial tier, no key needed. Barcode-only, name-only fallback (no nutrition data) used as a last resort.
-- **Edamam** / **Nutritionix** — also supported (`EDAMAM_APP_ID`/`EDAMAM_APP_KEY`, `NUTRITIONIX_APP_ID`/`NUTRITIONIX_APP_KEY`), but both now require a paid plan to sign up, so they're not part of the default setup.
+- **Manual** — type in a food's name and macros by hand.
+- **My Foods** — custom foods you've saved permanently (name + macros).
+- **My Meals** — saved combinations of foods for one-tap re-logging.
+- **Saved Foods** — anything you've bookmarked for quick re-adding.
+
+Selecting a food from any of these opens a detail page (meal type, serving size, macros, and a micronutrient breakdown if you filled those in) before it's added to the log.
+
+This previously pulled from Open Food Facts, USDA, Nutritionix, Edamam, Spoonacular, and UPCitemdb, plus barcode scanning and an AI photo-estimate feature (Google Gemini) — all of that was removed in favor of a curated, local common-foods database (in progress).
 
 ## Tech
 
-Vanilla HTML/CSS/JS, [Chart.js](https://www.chartjs.org/) for charts, no build step required. GitHub OAuth is handled by a few small Vercel serverless functions in `api/`.
+Vanilla HTML/CSS/JS, [Chart.js](https://www.chartjs.org/) for charts, no build step required.

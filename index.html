@@ -430,34 +430,22 @@
         <div class="food-source-tabs">
           <button type="button" class="food-source-tab active" data-source="manual">Manual</button>
           <button type="button" class="food-source-tab" data-source="search">Find Food</button>
-          <button type="button" class="food-source-tab" data-source="barcode">Barcode</button>
-          <button type="button" class="food-source-tab" data-source="photo">Photo</button>
         </div>
 
         <div class="food-source-panel" data-panel="search">
           <div class="food-find-header">
-            <div class="food-search-row">
-              <input type="text" id="food-search-input" placeholder="Search food…" autocomplete="off">
-              <button type="button" class="btn btn-primary btn-sm" id="food-search-btn">Search</button>
-            </div>
             <button type="button" class="food-quick-add-btn" id="food-quick-add-btn" title="Add custom food">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
           </div>
 
           <div class="food-filter-chips">
-            <button type="button" class="food-filter-chip active" data-filter="all">All Foods</button>
-            <button type="button" class="food-filter-chip" data-filter="mine">My Foods</button>
+            <button type="button" class="food-filter-chip active" data-filter="mine">My Foods</button>
             <button type="button" class="food-filter-chip" data-filter="meals">My Meals</button>
             <button type="button" class="food-filter-chip" data-filter="saved">Saved Foods</button>
           </div>
 
-          <div class="food-filter-panel active" data-filter-panel="all">
-            <div id="food-search-results" class="food-search-results"></div>
-            <p class="food-source-credit">Data from Open Food Facts, USDA, Nutritionix, Edamam &amp; Spoonacular</p>
-          </div>
-
-          <div class="food-filter-panel" data-filter-panel="mine">
+          <div class="food-filter-panel active" data-filter-panel="mine">
             <div id="my-foods-list" class="food-search-results"></div>
             <button type="button" class="btn btn-primary btn-sm food-filter-cta" id="add-custom-food-btn">+ Add Custom Food</button>
           </div>
@@ -470,28 +458,6 @@
           <div class="food-filter-panel" data-filter-panel="saved">
             <div id="saved-foods-list" class="food-search-results"></div>
           </div>
-        </div>
-
-        <div class="food-source-panel" data-panel="barcode">
-          <div id="barcode-reader-region" class="barcode-reader"></div>
-          <p class="subtitle" id="barcode-status">Point your camera at a barcode.</p>
-          <input type="file" accept="image/*" id="barcode-photo-input" class="hidden">
-          <button type="button" class="btn btn-ghost btn-sm barcode-upload-btn" id="barcode-photo-btn">Or upload a photo of a barcode</button>
-          <p class="food-source-credit">Checks Open Food Facts, USDA, Nutritionix, Edamam, Spoonacular &amp; UPCitemdb</p>
-        </div>
-
-        <div class="food-source-panel" data-panel="photo">
-          <p class="subtitle food-photo-hint">Photo of the food, its packaging, or a Nutrition Facts label — whatever you've got.</p>
-          <input type="file" accept="image/*" capture="environment" id="food-photo-input" class="hidden">
-          <div id="food-photo-preview-wrap" class="food-photo-preview-wrap hidden">
-            <img id="food-photo-preview" alt="Selected packaging photo">
-          </div>
-          <div class="food-photo-actions">
-            <button type="button" class="btn btn-ghost btn-sm" id="food-photo-pick-btn">Take or Choose Photo</button>
-            <button type="button" class="btn btn-primary btn-sm hidden" id="food-photo-analyze-btn">Analyze Photo</button>
-          </div>
-          <p class="subtitle" id="food-photo-status"></p>
-          <p class="food-source-credit">Reads labels exactly, estimates otherwise — via Google Gemini. Always double-check before logging.</p>
         </div>
 
         <form id="food-form">
@@ -679,9 +645,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script><script
   async
   crossorigin="anonymous"
   data-clerk-publishable-key="pk_test_c2FmZS1haXJlZGFsZS05MTc3LmNsZXJrLmFjY291bnRzLmRldiQ"

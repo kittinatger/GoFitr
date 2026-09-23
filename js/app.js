@@ -55,15 +55,10 @@
   let charts = { progress: null, weight: null };
   let nutritionViewDate = null;
   let activeFoodMeal = null;
-  let activeFoodBase = null; // { kcal100, protein100, carbs100, fat100 } when filled from search/barcode
+  let activeFoodBase = null; // { kcal100, protein100, carbs100, fat100 } for the Manual tab's own serving-scale field
   let activeFoodProduct = null; // full normalized product shown on the food detail page
   let activeFoodDetailServing = 100;
-  let html5QrCodeInstance = null;
-  let barcodeScanning = false;
-  let pendingPhotoBase64 = null;
-  let pendingPhotoMime = null;
-  let activeFoodFilter = "all";
-  let lastSearchResults = [];
+  let activeFoodFilter = "mine";
   let pendingReturnMeal = null;
 
   // ---------- Accounts (local only — no server, no cross-device sync) ----------
@@ -729,27 +724,16 @@
   function openFoodModal(meal) {
     activeFoodMeal = meal;
     activeFoodBase = null;
-    pendingPhotoBase64 = null;
-    pendingPhotoMime = null;
     document.getElementById("food-dialog-meal").textContent = "— " + meal;
     document.getElementById("food-form").reset();
     document.getElementById("food-serving").value = 100;
-    document.getElementById("food-search-input").value = "";
-    document.getElementById("food-search-results").innerHTML = "";
-    lastSearchResults = [];
-    document.getElementById("barcode-status").textContent = "Point your camera at a barcode.";
-    document.getElementById("food-photo-preview-wrap").classList.add("hidden");
-    document.getElementById("food-photo-analyze-btn").classList.add("hidden");
-    document.getElementById("food-photo-status").textContent = "";
-    document.getElementById("food-photo-input").value = "";
     setFoodSourceTab("manual");
-    setFoodFilter("all");
+    setFoodFilter("mine");
     showFoodPage("view-food");
     document.getElementById("food-name").focus();
   }
 
   function closeFoodModal() {
-    stopBarcodeScanner();
     document.getElementById("view-food").classList.remove("active");
     activeFoodMeal = null;
   }
@@ -764,11 +748,6 @@
   function setFoodSourceTab(source) {
     document.querySelectorAll(".food-source-tab").forEach(t => t.classList.toggle("active", t.dataset.source === source));
     document.querySelectorAll(".food-source-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === source));
-    if (source === "barcode") {
-      startBarcodeScanner();
-    } else {
-      stopBarcodeScanner();
-    }
   }
 
   document.querySelectorAll(".food-source-tab").forEach(tab => {
@@ -790,11 +769,10 @@
   document.getElementById("food-serving").addEventListener("input", applyServingScale);
 
   // ---------- Food detail page ----------
-  // Shown whenever a concrete food is picked (search result, barcode,
-  // photo, My Foods, Saved Foods) — a fuller view of that specific food
-  // (meal type, serving, macros, micronutrients) before it's actually
-  // logged. Manual entry skips this since there's no external food object
-  // to show details for.
+  // Shown whenever a concrete food is picked (My Foods, Saved Foods) — a
+  // fuller view of that specific food (meal type, serving, macros,
+  // micronutrients) before it's actually logged. Manual entry skips this
+  // since there's no stored food object to show details for.
   const MICRO_FIELDS = [
     { key: "vitaminA", label: "Vitamin A", unit: "mcg" },
     { key: "vitaminC", label: "Vitamin C", unit: "mg" },
@@ -869,160 +847,7 @@
     }).join("");
   }
 
-  // ---------- Food data sources ----------
-  // Every source below is normalized to the same shape before it reaches the
-  // UI: { source, name, brand, kcal100, protein100, carbs100, fat100,
-  // micros100 }. That keeps renderSearchResults/showFoodDetail
-  // source-agnostic — no per-provider branching once results are in the
-  // combined array, which is what avoids
-  // "overlap" bugs (mismatched indices, one source's shape leaking into
-  // another's rendering path) when merging multiple providers' results.
-
-  // Open Food Facts product-by-barcode is reliably CORS-enabled and called
-  // directly below, but its search endpoints have been flaky about CORS —
-  // that's routed through our own serverless proxy instead (server-to-server
-  // calls aren't subject to CORS at all), which also lets it degrade to an
-  // empty list instead of a hard failure if OFF is unreachable.
-  async function searchOpenFoodFacts(query) {
-    return fetchProxyResults(`/api/nutrition/off?q=${encodeURIComponent(query)}`);
-  }
-
-  // OFF's `_100g` nutriment fields are always normalized to grams regardless
-  // of nutrient — convert to the mg/mcg units the rest of the app displays.
-  function microsFromOffNutriments(n) {
-    n = n || {};
-    const mg = (key) => round1((n[key] || 0) * 1000);
-    const mcg = (key) => round1((n[key] || 0) * 1000000);
-    return {
-      vitaminA: mcg("vitamin-a_100g"),
-      vitaminC: mg("vitamin-c_100g"),
-      vitaminD: mcg("vitamin-d_100g"),
-      vitaminE: mg("vitamin-e_100g"),
-      vitaminK: mcg("vitamin-k_100g"),
-      vitaminB1: mg("vitamin-b1_100g"),
-      vitaminB2: mg("vitamin-b2_100g"),
-      vitaminB3: mg("vitamin-pp_100g"),
-      vitaminB5: mg("pantothenic-acid_100g"),
-      vitaminB6: mg("vitamin-b6_100g"),
-      vitaminB12: mcg("vitamin-b12_100g"),
-      calcium: mg("calcium_100g"),
-      iron: mg("iron_100g"),
-      magnesium: mg("magnesium_100g"),
-      phosphorus: mg("phosphorus_100g"),
-      potassium: mg("potassium_100g"),
-      sodium: mg("sodium_100g"),
-      zinc: mg("zinc_100g"),
-      copper: mg("copper_100g"),
-      manganese: mg("manganese_100g"),
-      transFat: round1(n["trans-fat_100g"] || 0),
-      saturatedFat: round1(n["saturated-fat_100g"] || 0),
-      fiber: round1(n["fiber_100g"] || 0),
-    };
-  }
-
-  async function lookupOpenFoodFacts(code) {
-    const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriments`;
-    const resp = await fetch(url);
-    if (!resp.ok) return null;
-    const json = await resp.json();
-    const p = json.product;
-    if (json.status !== 1 || !p || !p.nutriments || p.nutriments["energy-kcal_100g"] == null) return null;
-    return {
-      source: "Open Food Facts",
-      name: p.product_name || "Unknown food",
-      brand: p.brands || "",
-      kcal100: p.nutriments["energy-kcal_100g"] || 0,
-      protein100: p.nutriments["proteins_100g"] || 0,
-      carbs100: p.nutriments["carbohydrates_100g"] || 0,
-      fat100: p.nutriments["fat_100g"] || 0,
-      micros100: microsFromOffNutriments(p.nutriments),
-    };
-  }
-
-  // USDA and Nutritionix need API keys, so they're routed through our own
-  // serverless functions (api/nutrition/*) which keep those keys server-side.
-  // Both endpoints degrade to { results: [] } if their env vars aren't set,
-  // so these calls are safe no-ops until the keys are configured.
-  async function searchUsda(query) {
-    return fetchProxyResults(`/api/nutrition/usda?q=${encodeURIComponent(query)}`);
-  }
-
-  async function lookupUsdaBarcode(code) {
-    return (await fetchProxyResults(`/api/nutrition/usda?upc=${encodeURIComponent(code)}`))[0] || null;
-  }
-
-  // Generic helper for the serverless proxies: they all reply with the same
-  // { results: [...] } envelope, so one function covers every source.
-  async function fetchProxyResults(url) {
-    try {
-      const resp = await fetch(url);
-      if (!resp.ok) return [];
-      const json = await resp.json();
-      return json.results || [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  async function searchNutritionix(query) {
-    return fetchProxyResults(`/api/nutrition/nutritionix?q=${encodeURIComponent(query)}`);
-  }
-
-  async function lookupNutritionixBarcode(code) {
-    return (await fetchProxyResults(`/api/nutrition/nutritionix?upc=${encodeURIComponent(code)}`))[0] || null;
-  }
-
-  async function searchEdamam(query) {
-    return fetchProxyResults(`/api/nutrition/edamam?q=${encodeURIComponent(query)}`);
-  }
-
-  async function lookupEdamamBarcode(code) {
-    return (await fetchProxyResults(`/api/nutrition/edamam?upc=${encodeURIComponent(code)}`))[0] || null;
-  }
-
-  async function searchSpoonacular(query) {
-    return fetchProxyResults(`/api/nutrition/spoonacular?q=${encodeURIComponent(query)}`);
-  }
-
-  async function lookupSpoonacularBarcode(code) {
-    return (await fetchProxyResults(`/api/nutrition/spoonacular?upc=${encodeURIComponent(code)}`))[0] || null;
-  }
-
-  async function lookupUpcItemDb(code) {
-    return (await fetchProxyResults(`/api/nutrition/upcitemdb?upc=${encodeURIComponent(code)}`))[0] || null;
-  }
-
-  async function searchFoodDatabase(query) {
-    const sourceLists = await Promise.all([
-      searchOpenFoodFacts(query).catch(() => []),
-      searchUsda(query),
-      searchNutritionix(query),
-      searchEdamam(query),
-      searchSpoonacular(query),
-    ]);
-    return sourceLists.flat();
-  }
-
-  // Tries each source in turn and stops at the first real nutrition match.
-  // UPCitemdb goes last since it never has nutrition data — it's a
-  // name-only fallback so a scan isn't a total dead end.
-  async function lookupBarcode(code) {
-    const lookups = [
-      () => lookupOpenFoodFacts(code).catch(() => null),
-      () => lookupUsdaBarcode(code),
-      () => lookupNutritionixBarcode(code),
-      () => lookupEdamamBarcode(code),
-      () => lookupSpoonacularBarcode(code),
-      () => lookupUpcItemDb(code),
-    ];
-    for (const lookup of lookups) {
-      const result = await lookup();
-      if (result) return result;
-    }
-    return null;
-  }
-
-  // ---------- Shared food-row rendering (search results, My Foods, Saved Foods) ----------
+  // ---------- Shared food-row rendering (My Foods, Saved Foods) ----------
   function foodKey(item) {
     return (item.name || "").trim().toLowerCase();
   }
@@ -1055,7 +880,7 @@
     opts = opts || {};
     const metaBits = [];
     if (item.brand) metaBits.push(escapeHtml(item.brand));
-    metaBits.push(item.needsDetail ? "tap for details" : `${Math.round(item.kcal100 || 0)} kcal/100g`);
+    metaBits.push(`${Math.round(item.kcal100 || 0)} kcal/100g`);
     const starred = isFoodSaved(item);
     const trailingBtn = opts.deletable
       ? `<button type="button" class="food-star-btn food-row-delete" data-index="${i}" title="Delete">${ICON_TRASH}</button>`
@@ -1080,7 +905,7 @@
       const item = items[Number(btn.dataset.index)];
       btn.addEventListener("click", () => {
         if (opts.onSelect) opts.onSelect(item);
-        else selectFoodProduct(item);
+        else showFoodDetail(item);
       });
     });
     if (opts.deletable) {
@@ -1105,18 +930,7 @@
     }
   }
 
-  function renderSearchResults(products) {
-    lastSearchResults = products;
-    const container = document.getElementById("food-search-results");
-    if (products.length === 0) {
-      container.innerHTML = `<p class="empty-state" style="padding:14px 0;">No results found.</p>`;
-      return;
-    }
-    container.innerHTML = products.map((p, i) => foodRowHtml(p, i)).join("");
-    wireFoodRows(container, products);
-  }
-
-  // ---------- Filter chips: All Foods / My Foods / My Meals / Saved Foods ----------
+  // ---------- Filter chips: My Foods / My Meals / Saved Foods ----------
   function setFoodFilter(filter) {
     activeFoodFilter = filter;
     document.querySelectorAll(".food-filter-chip").forEach(c => c.classList.toggle("active", c.dataset.filter === filter));
@@ -1132,7 +946,6 @@
     if (activeFoodFilter === "mine") renderMyFoods();
     else if (activeFoodFilter === "meals") renderMyMeals();
     else if (activeFoodFilter === "saved") renderSavedFoods();
-    else if (activeFoodFilter === "all" && lastSearchResults.length) renderSearchResults(lastSearchResults);
   }
 
   function renderMyFoods() {
@@ -1220,222 +1033,6 @@
     showFoodPage("view-nutrition");
     renderNutrition();
     toast(`Added ${meal.items.length} item${meal.items.length === 1 ? "" : "s"} from "${meal.name}"`);
-  }
-
-  async function selectFoodProduct(product) {
-    if (product.needsDetail && product.detailUrl) {
-      const container = document.getElementById("food-search-results");
-      container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Loading details…</p>`;
-      const full = (await fetchProxyResults(product.detailUrl))[0];
-      if (!full) {
-        container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Couldn't load details for that item. Try another result.</p>`;
-        return;
-      }
-      product = full;
-    }
-    if (product.nameOnly) {
-      document.getElementById("food-name").value = product.name || "Unknown food";
-      setFoodSourceTab("manual");
-      toast("Only found a product name — fill in nutrition manually");
-      return;
-    }
-    showFoodDetail(product);
-  }
-
-  async function doFoodSearch() {
-    const q = document.getElementById("food-search-input").value.trim();
-    if (!q) return;
-    const container = document.getElementById("food-search-results");
-    container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Searching…</p>`;
-    try {
-      const products = await searchFoodDatabase(q);
-      renderSearchResults(products);
-    } catch (e) {
-      container.innerHTML = `<p class="empty-state" style="padding:14px 0;">Search failed. Check your connection.</p>`;
-    }
-  }
-
-  document.getElementById("food-search-btn").addEventListener("click", doFoodSearch);
-  document.getElementById("food-search-input").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); doFoodSearch(); }
-  });
-
-  async function handleBarcodeDetected(code) {
-    document.getElementById("barcode-status").textContent = "Looking up " + code + "…";
-    const product = await lookupBarcode(code);
-    if (!product) {
-      document.getElementById("barcode-status").textContent = "No match in any database. Try search or enter manually.";
-      barcodeScanning = true;
-      return;
-    }
-    stopBarcodeScanner();
-    if (product.nameOnly) {
-      document.getElementById("food-name").value = product.name || "Unknown food";
-      setFoodSourceTab("manual");
-      toast("Found the product name only — fill in nutrition manually");
-      return;
-    }
-    showFoodDetail(product);
-    toast(`Product found (${product.source})`);
-  }
-
-  // ---------- Barcode from an uploaded photo (no live camera needed) ----------
-  document.getElementById("barcode-photo-btn").addEventListener("click", () => {
-    document.getElementById("barcode-photo-input").click();
-  });
-
-  document.getElementById("barcode-photo-input").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-
-    await stopBarcodeScanner();
-    document.getElementById("barcode-status").textContent = "Reading barcode from photo…";
-
-    let reader;
-    try {
-      reader = new Html5Qrcode("barcode-reader-region");
-      const decodedText = await reader.scanFile(file, false);
-      await reader.clear();
-      handleBarcodeDetected(decodedText);
-    } catch (err) {
-      if (reader) { try { await reader.clear(); } catch (e2) {} }
-      document.getElementById("barcode-status").textContent = "Couldn't find a barcode in that photo. Try another photo or the live camera.";
-    }
-  });
-
-  // ---------- AI food-photo estimate (Google Gemini) ----------
-  function resizeImageToBase64(file, maxDim, quality) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("Could not read file"));
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error("Could not decode image"));
-        img.onload = () => {
-          let { width, height } = img;
-          if (width > maxDim || height > maxDim) {
-            const scale = maxDim / Math.max(width, height);
-            width = Math.round(width * scale);
-            height = Math.round(height * scale);
-          }
-          const canvas = document.createElement("canvas");
-          canvas.width = width;
-          canvas.height = height;
-          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL("image/jpeg", quality);
-          resolve({ base64: dataUrl.split(",")[1], mimeType: "image/jpeg" });
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  document.getElementById("food-photo-pick-btn").addEventListener("click", () => {
-    document.getElementById("food-photo-input").click();
-  });
-
-  document.getElementById("food-photo-input").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const statusEl = document.getElementById("food-photo-status");
-    try {
-      const resized = await resizeImageToBase64(file, 1024, 0.82);
-      pendingPhotoBase64 = resized.base64;
-      pendingPhotoMime = resized.mimeType;
-      document.getElementById("food-photo-preview").src = `data:${resized.mimeType};base64,${resized.base64}`;
-      document.getElementById("food-photo-preview-wrap").classList.remove("hidden");
-      document.getElementById("food-photo-analyze-btn").classList.remove("hidden");
-      statusEl.textContent = "";
-    } catch (err) {
-      statusEl.textContent = "Couldn't read that photo. Try another.";
-    }
-  });
-
-  document.getElementById("food-photo-analyze-btn").addEventListener("click", async () => {
-    if (!pendingPhotoBase64) return;
-    const statusEl = document.getElementById("food-photo-status");
-    statusEl.textContent = "Analyzing photo…";
-    try {
-      const resp = await fetch("/api/nutrition/vision", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: pendingPhotoBase64, mimeType: pendingPhotoMime }),
-      });
-      const json = await resp.json();
-      if (!json.configured) {
-        statusEl.textContent = "Photo scanning isn't set up yet — add a GEMINI_API_KEY to enable it.";
-        return;
-      }
-      if (json.error || !json.result) {
-        statusEl.textContent = json.error || "Couldn't analyze that photo. Try another or enter manually.";
-        return;
-      }
-      showFoodDetail(json.result);
-      statusEl.textContent = "";
-      const how = json.result.method === "label" ? "Label read" : "Estimated from photo";
-      toast(`${how} (${json.result.confidence} confidence) — please double-check`);
-    } catch (err) {
-      statusEl.textContent = "Analysis failed. Check your connection.";
-    }
-  });
-
-  function barcodeQrboxFunction(viewfinderWidth, viewfinderHeight) {
-    // A fixed pixel qrbox can end up scanning a region that doesn't match
-    // where the on-screen brackets are drawn on some devices/aspect ratios,
-    // so size it relative to the actual viewfinder instead (favoring a wide
-    // box, since 1D barcodes like UPC/EAN are landscape).
-    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-    const boxWidth = Math.floor(Math.min(viewfinderWidth * 0.85, minEdge * 1.4));
-    const boxHeight = Math.floor(boxWidth * 0.5);
-    return { width: boxWidth, height: boxHeight };
-  }
-
-  function startBarcodeScanner() {
-    if (typeof Html5Qrcode === "undefined") {
-      document.getElementById("barcode-status").textContent = "Barcode scanner failed to load.";
-      return;
-    }
-    document.getElementById("barcode-status").textContent = "Point your camera at a barcode…";
-    html5QrCodeInstance = new Html5Qrcode("barcode-reader-region", {
-      // Use the browser's native BarcodeDetector when available (Chrome/
-      // Android) — it's substantially more reliable for 1D barcodes
-      // (UPC/EAN) than the pure-JS decoder this library falls back to.
-      useBarCodeDetectorIfSupported: true,
-      verbose: false,
-    });
-    barcodeScanning = true;
-    html5QrCodeInstance.start(
-      { facingMode: "environment" },
-      { fps: 15, qrbox: barcodeQrboxFunction, aspectRatio: 1.5 },
-      (decodedText) => {
-        if (!barcodeScanning) return;
-        barcodeScanning = false;
-        handleBarcodeDetected(decodedText);
-      },
-      () => {}
-    ).catch(err => {
-      document.getElementById("barcode-status").textContent = "Could not access camera. " + err;
-    });
-  }
-
-  async function stopBarcodeScanner() {
-    barcodeScanning = false;
-    if (!html5QrCodeInstance) return;
-    const instance = html5QrCodeInstance;
-    html5QrCodeInstance = null;
-    try {
-      const result = instance.stop();
-      if (result && typeof result.then === "function") await result;
-    } catch (e) {
-      // Scanner never actually started (e.g. camera permission denied) — nothing to stop.
-    }
-    try {
-      await instance.clear();
-    } catch (e) {
-      // Nothing to clear.
-    }
   }
 
   document.querySelectorAll(".add-food-btn").forEach(btn => {
