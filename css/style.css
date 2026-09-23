@@ -435,7 +435,7 @@ textarea {
 .content {
   flex: 1;
   padding: 28px 32px 60px;
-  max-width: 1000px;
+  max-width: 1300px;
 }
 
 .view { display: none; }
@@ -1049,7 +1049,7 @@ textarea { resize: vertical; font-family: inherit; }
 .page-back-btn:hover { color: var(--lime); border-color: var(--lime); }
 .page-back-btn svg { width: 18px; height: 18px; }
 
-.food-dialog { max-width: 720px; }
+.food-dialog { max-width: 900px; }
 
 #food-dialog-meal { color: var(--lime); }
 
