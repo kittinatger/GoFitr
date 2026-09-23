@@ -534,6 +534,66 @@
       </div>
     </section>
 
+    <section id="view-food-detail" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="food-detail-back" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h1>Food Item</h1>
+      </header>
+
+      <div class="food-dialog">
+        <div class="food-detail-hero">
+          <div class="food-detail-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7c-1.2-1.8-3.2-2.6-5-2 0 2 1 3.6 2.8 4.6"></path><path d="M12 8.5c-4 0-6.8 3-6.8 6.8 0 3.7 2.6 6.7 5.6 6.7.9 0 1.6-.4 2.2-.4.6 0 1.3.4 2.2.4 3 0 5.6-3 5.6-6.7 0-3.1-1.9-5-4.4-5.9"></path></svg>
+          </div>
+          <div class="food-detail-hero-info">
+            <h2 id="food-detail-name">Food name</h2>
+          </div>
+          <button type="button" class="food-star-btn food-detail-star" id="food-detail-star-btn" title="Save for later"></button>
+        </div>
+
+        <label class="sets-label">Meal Type</label>
+        <div class="food-detail-meal-row">
+          <button type="button" class="food-detail-meal-btn" data-meal="Breakfast">Breakfast</button>
+          <button type="button" class="food-detail-meal-btn" data-meal="Lunch">Lunch</button>
+          <button type="button" class="food-detail-meal-btn" data-meal="Dinner">Dinner</button>
+          <button type="button" class="food-detail-meal-btn" data-meal="Snacks">Snacks</button>
+        </div>
+
+        <label class="sets-label" for="food-detail-serving">Serving (g)</label>
+        <input type="number" id="food-detail-serving" min="1" step="1" value="100">
+
+        <label class="sets-label">Main Macros</label>
+        <div class="food-detail-macros-row">
+          <div class="food-detail-calorie-card">
+            <div class="food-detail-calorie-value" id="food-detail-calories">0</div>
+            <div class="food-detail-calorie-label">Calories</div>
+          </div>
+          <div class="food-detail-macro-list">
+            <div class="food-detail-macro-line"><span>Protein</span><span id="food-detail-protein">0g</span></div>
+            <div class="food-detail-macro-line"><span>Carbs</span><span id="food-detail-carbs">0g</span></div>
+            <div class="food-detail-macro-line"><span>Fat</span><span id="food-detail-fat">0g</span></div>
+          </div>
+        </div>
+
+        <label class="sets-label">Other Macros</label>
+        <div class="food-detail-list-card">
+          <div class="food-detail-macro-line"><span>Trans Fat</span><span id="food-detail-transfat">0g</span></div>
+          <div class="food-detail-macro-line"><span>Saturated Fat</span><span id="food-detail-satfat">0g</span></div>
+          <div class="food-detail-macro-line"><span>Fiber</span><span id="food-detail-fiber">0g</span></div>
+        </div>
+
+        <label class="sets-label">Micronutrients</label>
+        <div class="food-detail-list-card" id="food-detail-micros"></div>
+
+        <div class="confirm-actions" style="margin-top:18px;">
+          <button type="button" class="btn btn-ghost" id="food-detail-cancel">Cancel</button>
+          <button type="button" class="btn btn-primary" id="food-detail-add-btn">Add Food</button>
+        </div>
+      </div>
+    </section>
+
     <section id="view-custom-food" class="view">
       <header class="view-header view-header-back">
         <button type="button" class="page-back-btn" id="custom-food-page-back" title="Back" aria-label="Back">

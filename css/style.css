@@ -1192,6 +1192,109 @@ textarea { resize: vertical; font-family: inherit; }
 .food-star-btn:hover { color: var(--lime); transform: scale(1.1); }
 .food-star-btn.starred { color: var(--lime); }
 
+/* Food detail page (shown when a search/barcode/photo/saved result is
+   selected, before it's actually added to the log) */
+.food-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.food-detail-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.food-detail-icon svg { width: 24px; height: 24px; }
+
+.food-detail-hero-info { flex: 1; min-width: 0; }
+.food-detail-hero-info h2 { margin: 0; font-size: 1.15rem; font-weight: 800; overflow-wrap: break-word; }
+
+.food-detail-star {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.food-detail-meal-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.food-detail-meal-btn {
+  flex: 1;
+  min-width: 70px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.food-detail-meal-btn.active { background: var(--lime); color: var(--ink); border-color: transparent; }
+
+#food-detail-serving { margin-bottom: 4px; }
+
+.food-detail-macros-row { display: flex; gap: 10px; }
+
+.food-detail-calorie-card {
+  flex: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.food-detail-calorie-value { font-size: 1.8rem; font-weight: 800; }
+.food-detail-calorie-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+
+.food-detail-macro-list {
+  flex: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.food-detail-macro-line { display: flex; justify-content: space-between; font-size: 0.88rem; }
+.food-detail-macro-line span:first-child { color: var(--text-muted); }
+.food-detail-macro-line span:last-child { font-weight: 700; }
+
+.food-detail-list-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 14px;
+}
+
+.food-detail-list-card .food-detail-macro-line {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.food-detail-list-card .food-detail-macro-line:last-child { border-bottom: none; }
+
 .food-search-result-name { font-weight: 700; font-size: 0.88rem; color: var(--text); }
 .food-search-result-meta {
   display: flex;

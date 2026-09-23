@@ -56,6 +56,8 @@
   let nutritionViewDate = null;
   let activeFoodMeal = null;
   let activeFoodBase = null; // { kcal100, protein100, carbs100, fat100 } when filled from search/barcode
+  let activeFoodProduct = null; // full normalized product shown on the food detail page
+  let activeFoodDetailServing = 100;
   let html5QrCodeInstance = null;
   let barcodeScanning = false;
   let pendingPhotoBase64 = null;
@@ -787,24 +789,92 @@
 
   document.getElementById("food-serving").addEventListener("input", applyServingScale);
 
-  function applyFoodBase(product) {
-    activeFoodBase = {
+  // ---------- Food detail page ----------
+  // Shown whenever a concrete food is picked (search result, barcode,
+  // photo, My Foods, Saved Foods) — a fuller view of that specific food
+  // (meal type, serving, macros, micronutrients) before it's actually
+  // logged. Manual entry skips this since there's no external food object
+  // to show details for.
+  const MICRO_FIELDS = [
+    { key: "vitaminA", label: "Vitamin A", unit: "mcg" },
+    { key: "vitaminC", label: "Vitamin C", unit: "mg" },
+    { key: "vitaminD", label: "Vitamin D", unit: "mcg" },
+    { key: "vitaminE", label: "Vitamin E", unit: "mg" },
+    { key: "vitaminK", label: "Vitamin K", unit: "mcg" },
+    { key: "vitaminB1", label: "Vitamin B1", unit: "mg" },
+    { key: "vitaminB2", label: "Vitamin B2", unit: "mg" },
+    { key: "vitaminB3", label: "Vitamin B3", unit: "mg" },
+    { key: "vitaminB5", label: "Vitamin B5", unit: "mg" },
+    { key: "vitaminB6", label: "Vitamin B6", unit: "mg" },
+    { key: "vitaminB12", label: "Vitamin B12", unit: "mcg" },
+    { key: "calcium", label: "Calcium", unit: "mg" },
+    { key: "iron", label: "Iron", unit: "mg" },
+    { key: "magnesium", label: "Magnesium", unit: "mg" },
+    { key: "phosphorus", label: "Phosphorus", unit: "mg" },
+    { key: "potassium", label: "Potassium", unit: "mg" },
+    { key: "sodium", label: "Sodium", unit: "mg" },
+    { key: "zinc", label: "Zinc", unit: "mg" },
+    { key: "copper", label: "Copper", unit: "mg" },
+    { key: "manganese", label: "Manganese", unit: "mg" },
+  ];
+
+  function showFoodDetail(product) {
+    activeFoodProduct = {
+      name: product.name || "Unknown food",
       kcal100: product.kcal100 || 0,
       protein100: product.protein100 || 0,
       carbs100: product.carbs100 || 0,
       fat100: product.fat100 || 0,
+      micros100: product.micros100 || {},
     };
-    document.getElementById("food-name").value = product.name || "Unknown food";
-    document.getElementById("food-serving").value = 100;
-    applyServingScale();
-    setFoodSourceTab("manual");
+    activeFoodDetailServing = 100;
+    document.getElementById("food-detail-name").textContent = activeFoodProduct.name;
+    document.getElementById("food-detail-serving").value = 100;
+    renderFoodDetailMealButtons();
+    renderFoodDetailStar();
+    renderFoodDetailMacros();
+    showFoodPage("view-food-detail");
+  }
+
+  function renderFoodDetailMealButtons() {
+    document.querySelectorAll(".food-detail-meal-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.meal === activeFoodMeal);
+    });
+  }
+
+  function renderFoodDetailStar() {
+    const starred = isFoodSaved(activeFoodProduct);
+    const btn = document.getElementById("food-detail-star-btn");
+    btn.classList.toggle("starred", starred);
+    btn.innerHTML = starred ? ICON_STAR_FILLED : ICON_STAR_OUTLINE;
+    btn.title = starred ? "Remove bookmark" : "Save for later";
+  }
+
+  function renderFoodDetailMacros() {
+    const factor = activeFoodDetailServing / 100;
+    const p = activeFoodProduct;
+    document.getElementById("food-detail-calories").textContent = Math.round(p.kcal100 * factor);
+    document.getElementById("food-detail-protein").textContent = round1(p.protein100 * factor) + "g";
+    document.getElementById("food-detail-carbs").textContent = round1(p.carbs100 * factor) + "g";
+    document.getElementById("food-detail-fat").textContent = round1(p.fat100 * factor) + "g";
+
+    const m = p.micros100 || {};
+    document.getElementById("food-detail-transfat").textContent = round1((m.transFat || 0) * factor) + "g";
+    document.getElementById("food-detail-satfat").textContent = round1((m.saturatedFat || 0) * factor) + "g";
+    document.getElementById("food-detail-fiber").textContent = round1((m.fiber || 0) * factor) + "g";
+
+    document.getElementById("food-detail-micros").innerHTML = MICRO_FIELDS.map(f => {
+      const val = round1((m[f.key] || 0) * factor);
+      return `<div class="food-detail-macro-line"><span>${f.label}</span><span>${val}${f.unit}</span></div>`;
+    }).join("");
   }
 
   // ---------- Food data sources ----------
   // Every source below is normalized to the same shape before it reaches the
-  // UI: { source, name, brand, kcal100, protein100, carbs100, fat100 }. That
-  // keeps renderSearchResults/applyFoodBase source-agnostic — no per-provider
-  // branching once results are in the combined array, which is what avoids
+  // UI: { source, name, brand, kcal100, protein100, carbs100, fat100,
+  // micros100 }. That keeps renderSearchResults/showFoodDetail
+  // source-agnostic — no per-provider branching once results are in the
+  // combined array, which is what avoids
   // "overlap" bugs (mismatched indices, one source's shape leaking into
   // another's rendering path) when merging multiple providers' results.
 
@@ -815,6 +885,39 @@
   // empty list instead of a hard failure if OFF is unreachable.
   async function searchOpenFoodFacts(query) {
     return fetchProxyResults(`/api/nutrition/off?q=${encodeURIComponent(query)}`);
+  }
+
+  // OFF's `_100g` nutriment fields are always normalized to grams regardless
+  // of nutrient — convert to the mg/mcg units the rest of the app displays.
+  function microsFromOffNutriments(n) {
+    n = n || {};
+    const mg = (key) => round1((n[key] || 0) * 1000);
+    const mcg = (key) => round1((n[key] || 0) * 1000000);
+    return {
+      vitaminA: mcg("vitamin-a_100g"),
+      vitaminC: mg("vitamin-c_100g"),
+      vitaminD: mcg("vitamin-d_100g"),
+      vitaminE: mg("vitamin-e_100g"),
+      vitaminK: mcg("vitamin-k_100g"),
+      vitaminB1: mg("vitamin-b1_100g"),
+      vitaminB2: mg("vitamin-b2_100g"),
+      vitaminB3: mg("vitamin-pp_100g"),
+      vitaminB5: mg("pantothenic-acid_100g"),
+      vitaminB6: mg("vitamin-b6_100g"),
+      vitaminB12: mcg("vitamin-b12_100g"),
+      calcium: mg("calcium_100g"),
+      iron: mg("iron_100g"),
+      magnesium: mg("magnesium_100g"),
+      phosphorus: mg("phosphorus_100g"),
+      potassium: mg("potassium_100g"),
+      sodium: mg("sodium_100g"),
+      zinc: mg("zinc_100g"),
+      copper: mg("copper_100g"),
+      manganese: mg("manganese_100g"),
+      transFat: round1(n["trans-fat_100g"] || 0),
+      saturatedFat: round1(n["saturated-fat_100g"] || 0),
+      fiber: round1(n["fiber_100g"] || 0),
+    };
   }
 
   async function lookupOpenFoodFacts(code) {
@@ -832,6 +935,7 @@
       protein100: p.nutriments["proteins_100g"] || 0,
       carbs100: p.nutriments["carbohydrates_100g"] || 0,
       fat100: p.nutriments["fat_100g"] || 0,
+      micros100: microsFromOffNutriments(p.nutriments),
     };
   }
 
@@ -1039,7 +1143,7 @@
     }
     container.innerHTML = data.customFoods.map((f, i) => foodRowHtml(f, i, { deletable: true })).join("");
     wireFoodRows(container, data.customFoods, {
-      onSelect: (item) => applyFoodBase(item),
+      onSelect: (item) => showFoodDetail(item),
       deletable: true,
       onDelete: (item) => {
         data.customFoods = data.customFoods.filter(f => f.id !== item.id);
@@ -1057,7 +1161,7 @@
     }
     container.innerHTML = data.savedFoods.map((f, i) => foodRowHtml(f, i)).join("");
     wireFoodRows(container, data.savedFoods, {
-      onSelect: (item) => applyFoodBase(item),
+      onSelect: (item) => showFoodDetail(item),
     });
   }
 
@@ -1129,10 +1233,13 @@
       }
       product = full;
     }
-    applyFoodBase(product);
     if (product.nameOnly) {
+      document.getElementById("food-name").value = product.name || "Unknown food";
+      setFoodSourceTab("manual");
       toast("Only found a product name — fill in nutrition manually");
+      return;
     }
+    showFoodDetail(product);
   }
 
   async function doFoodSearch() {
@@ -1162,10 +1269,14 @@
       return;
     }
     stopBarcodeScanner();
-    applyFoodBase(product);
-    toast(product.nameOnly
-      ? "Found the product name only — fill in nutrition manually"
-      : `Product found (${product.source})`);
+    if (product.nameOnly) {
+      document.getElementById("food-name").value = product.name || "Unknown food";
+      setFoodSourceTab("manual");
+      toast("Found the product name only — fill in nutrition manually");
+      return;
+    }
+    showFoodDetail(product);
+    toast(`Product found (${product.source})`);
   }
 
   // ---------- Barcode from an uploaded photo (no live camera needed) ----------
@@ -1261,7 +1372,7 @@
         statusEl.textContent = json.error || "Couldn't analyze that photo. Try another or enter manually.";
         return;
       }
-      applyFoodBase(json.result);
+      showFoodDetail(json.result);
       statusEl.textContent = "";
       const how = json.result.method === "label" ? "Label read" : "Estimated from photo";
       toast(`${how} (${json.result.confidence} confidence) — please double-check`);
@@ -1343,6 +1454,61 @@
     if (e.key === "Escape" && document.getElementById("view-food").classList.contains("active")) {
       cancelFoodModal();
     }
+  });
+
+  document.querySelectorAll(".food-detail-meal-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeFoodMeal = btn.dataset.meal;
+      renderFoodDetailMealButtons();
+    });
+  });
+
+  document.getElementById("food-detail-serving").addEventListener("input", (e) => {
+    activeFoodDetailServing = parseFloat(e.target.value) || 0;
+    renderFoodDetailMacros();
+  });
+
+  document.getElementById("food-detail-star-btn").addEventListener("click", () => {
+    toggleSavedFood(activeFoodProduct);
+    renderFoodDetailStar();
+  });
+
+  function returnToFoodSearch() {
+    document.getElementById("view-food-detail").classList.remove("active");
+    reopenFoodModal(activeFoodFilter);
+  }
+
+  document.getElementById("food-detail-back").addEventListener("click", returnToFoodSearch);
+  document.getElementById("food-detail-cancel").addEventListener("click", returnToFoodSearch);
+
+  document.getElementById("food-detail-add-btn").addEventListener("click", () => {
+    if (!activeFoodMeal) { toast("Pick a meal type first"); return; }
+    const factor = activeFoodDetailServing / 100;
+    const p = activeFoodProduct;
+    const m = p.micros100 || {};
+    const micros = {};
+    MICRO_FIELDS.forEach(f => { micros[f.key] = round1((m[f.key] || 0) * factor); });
+
+    data.nutrition.push({
+      id: uid(),
+      date: nutritionViewDate || todayStr(),
+      meal: activeFoodMeal,
+      name: p.name,
+      calories: Math.round(p.kcal100 * factor),
+      protein: round1(p.protein100 * factor),
+      carbs: round1(p.carbs100 * factor),
+      fat: round1(p.fat100 * factor),
+      transFat: round1((m.transFat || 0) * factor),
+      saturatedFat: round1((m.saturatedFat || 0) * factor),
+      fiber: round1((m.fiber || 0) * factor),
+      micros,
+    });
+    saveData();
+    toast("Food added");
+    document.getElementById("view-food-detail").classList.remove("active");
+    closeFoodModal();
+    showFoodPage("view-nutrition");
+    renderNutrition();
   });
 
   document.getElementById("food-form").addEventListener("submit", (e) => {
