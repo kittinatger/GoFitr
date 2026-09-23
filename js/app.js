@@ -58,7 +58,8 @@
   let activeFoodBase = null; // { kcal100, protein100, carbs100, fat100 } for the Manual tab's own serving-scale field
   let activeFoodProduct = null; // full normalized product shown on the food detail page
   let activeFoodDetailServing = 100;
-  let activeFoodFilter = "mine";
+  let activeFoodFilter = "all";
+  let activeFoodCategory = "All";
   let pendingReturnMeal = null;
 
   // ---------- Accounts (local only — no server, no cross-device sync) ----------
@@ -728,7 +729,8 @@
     document.getElementById("food-form").reset();
     document.getElementById("food-serving").value = 100;
     setFoodSourceTab("manual");
-    setFoodFilter("mine");
+    document.getElementById("all-foods-search").value = "";
+    setFoodFilter("all");
     showFoodPage("view-food");
     document.getElementById("food-name").focus();
   }
@@ -930,7 +932,7 @@
     }
   }
 
-  // ---------- Filter chips: My Foods / My Meals / Saved Foods ----------
+  // ---------- Filter chips: All Foods / My Foods / My Meals / Saved Foods ----------
   function setFoodFilter(filter) {
     activeFoodFilter = filter;
     document.querySelectorAll(".food-filter-chip").forEach(c => c.classList.toggle("active", c.dataset.filter === filter));
@@ -943,10 +945,41 @@
   });
 
   function renderActiveFoodFilterPanel() {
-    if (activeFoodFilter === "mine") renderMyFoods();
+    if (activeFoodFilter === "all") renderAllFoods();
+    else if (activeFoodFilter === "mine") renderMyFoods();
     else if (activeFoodFilter === "meals") renderMyMeals();
     else if (activeFoodFilter === "saved") renderSavedFoods();
   }
+
+  // ---------- Built-in common-foods database (js/food-database.js) ----------
+  function renderAllFoods() {
+    const container = document.getElementById("all-foods-list");
+    const database = window.GOFITR_FOOD_DATABASE || [];
+    const query = (document.getElementById("all-foods-search").value || "").trim().toLowerCase();
+    let items = database;
+    if (activeFoodCategory !== "All") {
+      items = items.filter(item => item.category === activeFoodCategory);
+    }
+    if (query) {
+      items = items.filter(item => item.name.toLowerCase().includes(query));
+    }
+    if (items.length === 0) {
+      container.innerHTML = `<p class="empty-state" style="padding:14px 0;">No foods found.</p>`;
+      return;
+    }
+    container.innerHTML = items.map((item, i) => foodRowHtml(item, i)).join("");
+    wireFoodRows(container, items, { onSelect: (item) => showFoodDetail(item) });
+  }
+
+  document.querySelectorAll(".food-category-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      activeFoodCategory = chip.dataset.category;
+      document.querySelectorAll(".food-category-chip").forEach(c => c.classList.toggle("active", c === chip));
+      renderAllFoods();
+    });
+  });
+
+  document.getElementById("all-foods-search").addEventListener("input", renderAllFoods);
 
   function renderMyFoods() {
     const container = document.getElementById("my-foods-list");

@@ -12,7 +12,7 @@ A simple, local-first fitness tracker. Sign in with Google, Apple, GitHub, or a 
 - Full workout history with per-exercise filtering
 - Progress charts (max weight & volume over time) and personal records
 - Body weight logging with a trend chart
-- Nutrition tracking with a daily food log, calorie/macro goals, custom foods, saved meals, and bookmarked foods — all stored locally (no external food database yet; see below)
+- Nutrition tracking with a daily food log, calorie/macro goals, a built-in database of 500+ common foods (browsable by category or searchable), custom foods, saved meals, and bookmarked foods — all stored/served locally, no external APIs
 - kg/lb unit toggle
 - Export/import your data as JSON, or clear it entirely
 
@@ -41,16 +41,17 @@ Every button quietly shows a "not configured" toast instead of breaking anything
 
 ## Nutrition data
 
-There's no external food database — the Nutrition tab is fully local:
+There's no external food database or API — the Nutrition tab is fully local:
 
+- **All Foods** — a built-in database of 500+ common foods, drinks, desserts, and snacks from around the world (`js/food-database.js`), browsable by category (Fruits, Vegetables, Fast Food, International Dishes, etc.) or by typing to search.
 - **Manual** — type in a food's name and macros by hand.
 - **My Foods** — custom foods you've saved permanently (name + macros).
 - **My Meals** — saved combinations of foods for one-tap re-logging.
 - **Saved Foods** — anything you've bookmarked for quick re-adding.
 
-Selecting a food from any of these opens a detail page (meal type, serving size, macros, and a micronutrient breakdown if you filled those in) before it's added to the log.
+Selecting a food from any of these opens a detail page (meal type, serving size, macros, and a full micronutrient breakdown) before it's added to the log.
 
-This previously pulled from Open Food Facts, USDA, Nutritionix, Edamam, Spoonacular, and UPCitemdb, plus barcode scanning and an AI photo-estimate feature (Google Gemini) — all of that was removed in favor of a curated, local common-foods database (in progress).
+The built-in database's values (including all micronutrients) are hand-authored from general nutrition knowledge, not sourced from a lab or live API — treat them as good approximations, not certified nutrition facts. This replaced an earlier version of the app that pulled from Open Food Facts, USDA, Nutritionix, Edamam, Spoonacular, and UPCitemdb, plus barcode scanning and an AI photo-estimate feature (Google Gemini) — all removed in favor of this curated, fully local dataset.
 
 ## Tech
 

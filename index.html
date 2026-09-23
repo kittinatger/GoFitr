@@ -440,12 +440,39 @@
           </div>
 
           <div class="food-filter-chips">
-            <button type="button" class="food-filter-chip active" data-filter="mine">My Foods</button>
+            <button type="button" class="food-filter-chip active" data-filter="all">All Foods</button>
+            <button type="button" class="food-filter-chip" data-filter="mine">My Foods</button>
             <button type="button" class="food-filter-chip" data-filter="meals">My Meals</button>
             <button type="button" class="food-filter-chip" data-filter="saved">Saved Foods</button>
           </div>
 
-          <div class="food-filter-panel active" data-filter-panel="mine">
+          <div class="food-filter-panel active" data-filter-panel="all">
+            <input type="text" id="all-foods-search" class="food-db-search-input" placeholder="Search foods…" autocomplete="off">
+            <div class="food-category-chips" id="food-category-chips">
+              <button type="button" class="food-category-chip active" data-category="All">All</button>
+              <button type="button" class="food-category-chip" data-category="Fruits">Fruits</button>
+              <button type="button" class="food-category-chip" data-category="Vegetables">Vegetables</button>
+              <button type="button" class="food-category-chip" data-category="Grains & Starches">Grains & Starches</button>
+              <button type="button" class="food-category-chip" data-category="Breads & Bakery">Breads & Bakery</button>
+              <button type="button" class="food-category-chip" data-category="Legumes">Legumes</button>
+              <button type="button" class="food-category-chip" data-category="Nuts & Seeds">Nuts & Seeds</button>
+              <button type="button" class="food-category-chip" data-category="Dairy & Eggs">Dairy & Eggs</button>
+              <button type="button" class="food-category-chip" data-category="Meat & Poultry">Meat & Poultry</button>
+              <button type="button" class="food-category-chip" data-category="Seafood">Seafood</button>
+              <button type="button" class="food-category-chip" data-category="Breakfast">Breakfast</button>
+              <button type="button" class="food-category-chip" data-category="Fast Food">Fast Food</button>
+              <button type="button" class="food-category-chip" data-category="International Dishes">International</button>
+              <button type="button" class="food-category-chip" data-category="Soups & Stews">Soups & Stews</button>
+              <button type="button" class="food-category-chip" data-category="Desserts & Sweets">Desserts & Sweets</button>
+              <button type="button" class="food-category-chip" data-category="Snacks">Snacks</button>
+              <button type="button" class="food-category-chip" data-category="Beverages">Beverages</button>
+              <button type="button" class="food-category-chip" data-category="Condiments & Sauces">Condiments & Sauces</button>
+            </div>
+            <div id="all-foods-list" class="food-search-results"></div>
+            <p class="food-db-credit">Nutrition data curated by GoFitr — approximate, not lab-verified.</p>
+          </div>
+
+          <div class="food-filter-panel" data-filter-panel="mine">
             <div id="my-foods-list" class="food-search-results"></div>
             <button type="button" class="btn btn-primary btn-sm food-filter-cta" id="add-custom-food-btn">+ Add Custom Food</button>
           </div>
@@ -652,6 +679,7 @@
   src="https://safe-airedale-9177.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
   type="text/javascript"
 ></script>
+<script src="js/food-database.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

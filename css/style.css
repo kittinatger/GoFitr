@@ -1134,6 +1134,40 @@ textarea { resize: vertical; font-family: inherit; }
 
 .food-filter-cta { width: 100%; margin-top: 10px; }
 
+.food-db-search-input { margin-bottom: 10px; }
+
+.food-category-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+  padding-bottom: 2px;
+}
+
+.food-category-chip {
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.food-category-chip.active { border-color: var(--lime); color: var(--lime); }
+
+.food-db-credit {
+  margin: 10px 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 .food-search-results {
   display: flex;
   flex-direction: column;
