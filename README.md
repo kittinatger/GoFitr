@@ -43,7 +43,7 @@ Every button quietly shows a "not configured" toast instead of breaking anything
 
 There's no external food database or API — the Nutrition tab is fully local:
 
-- **All Foods** — a built-in database of 500+ common foods, drinks, desserts, and snacks from around the world (`js/food-database.js`), browsable by category (Fruits, Vegetables, Fast Food, International Dishes, etc.) or by typing to search.
+- **All Foods** — a built-in database of 900+ common foods, drinks, desserts, and snacks from around the world (`js/food-database.js`), browsable by category (Fruits, Vegetables, Fast Food, or specific cuisines like Mexican, Chinese, Japanese, Indian, African, Italian, etc.) or by typing to search.
 - **Manual** — type in a food's name and macros by hand.
 - **My Foods** — custom foods you've saved permanently (name + macros).
 - **My Meals** — saved combinations of foods for one-tap re-logging.
