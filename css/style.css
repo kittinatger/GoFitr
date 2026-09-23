@@ -1049,7 +1049,7 @@ textarea { resize: vertical; font-family: inherit; }
 .page-back-btn:hover { color: var(--lime); border-color: var(--lime); }
 .page-back-btn svg { width: 18px; height: 18px; }
 
-.food-dialog { max-width: 480px; }
+.food-dialog { max-width: 720px; }
 
 #food-dialog-meal { color: var(--lime); }
 
@@ -1172,7 +1172,7 @@ textarea { resize: vertical; font-family: inherit; }
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 220px;
+  max-height: 420px;
   overflow-y: auto;
 }
 
