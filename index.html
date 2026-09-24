@@ -410,9 +410,9 @@
           <span class="settings-row-arrow">›</span>
         </div>
         <div class="settings-row-divider"></div>
-        <div class="settings-row" id="import-data-row" style="cursor:pointer;">
+        <div class="settings-row" id="connections-row" style="cursor:pointer;">
           <span class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>
-          <span class="settings-row-label">Import Data</span>
+          <span class="settings-row-label">Connections</span>
           <span class="settings-row-arrow">›</span>
         </div>
       </div>
@@ -571,7 +571,7 @@
         <p class="subtitle">Everything is stored locally in your browser — nothing leaves your device. Export regularly as a backup.</p>
         <div class="form-actions" style="justify-content:flex-start; gap:12px; flex-wrap:wrap;">
           <button class="btn btn-ghost" id="export-btn">Export Data (JSON)</button>
-          <button class="btn btn-ghost" id="import-btn">Import Data</button>
+          <button class="btn btn-ghost" id="import-btn">Restore Backup (JSON)</button>
           <input type="file" id="import-file" accept="application/json" style="display:none;">
           <button class="btn btn-danger" id="clear-btn">Clear All Data</button>
         </div>
@@ -628,12 +628,12 @@
       <div id="statistics-content"></div>
     </section>
 
-    <section id="view-import-data" class="view">
+    <section id="view-connections" class="view">
       <header class="view-header view-header-back">
-        <button type="button" class="page-back-btn" id="import-data-back" title="Back" aria-label="Back">
+        <button type="button" class="page-back-btn" id="connections-back" title="Back" aria-label="Back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <h1>Import Data</h1>
+        <h1>Connections</h1>
       </header>
       <div class="view-content">
         <p class="settings-section-label" style="margin-top:0;">From another app</p>

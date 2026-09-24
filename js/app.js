@@ -1612,8 +1612,8 @@
   });
   document.getElementById("statistics-back").addEventListener("click", () => showView("settings"));
 
-  document.getElementById("import-data-row").addEventListener("click", () => showView("import-data"));
-  document.getElementById("import-data-back").addEventListener("click", () => showView("settings"));
+  document.getElementById("connections-row").addEventListener("click", () => showView("connections"));
+  document.getElementById("connections-back").addEventListener("click", () => showView("settings"));
 
   document.querySelectorAll('input[name="unit"]').forEach(radio => {
     radio.addEventListener("change", (e) => {
