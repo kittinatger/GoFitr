@@ -61,6 +61,9 @@
     compactFoodList: false,
     heightUnit: "cm",
     distanceUnit: "km",
+    paceUnit: "minkm",
+    energyUnit: "kcal",
+    fluidUnit: "ml",
     sex: "male",
   });
 
@@ -1827,29 +1830,54 @@
       return row;
     }
 
-    const panel = document.createElement("div");
-    panel.className = "panel";
-    panel.style.cssText = "display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;";
-    const rows = [
-      { label: "Weight Units", key: "unit",         opts: [{value:"kg",label:"Kg"},{value:"lb",label:"Lbs"}] },
-      { label: "Height Units", key: "heightUnit",   opts: [{value:"cm",label:"Cm"},{value:"in",label:"In"}] },
-      { label: "Distance Units",key:"distanceUnit", opts: [{value:"km",label:"Km"},{value:"mi",label:"Mi"}] },
-      { label: "Sex",           key: "sex",         opts: [{value:"male",label:"Male"},{value:"female",label:"Female"}] },
+    const sections = [
+      {
+        label: "Body",
+        rows: [
+          { label: "Weight",      key: "unit",         opts: [{value:"kg",label:"Kg"},{value:"lb",label:"Lbs"}] },
+          { label: "Height",      key: "heightUnit",   opts: [{value:"cm",label:"Cm"},{value:"in",label:"In"}] },
+          { label: "Sex",         key: "sex",          opts: [{value:"male",label:"Male"},{value:"female",label:"Female"}] },
+        ],
+      },
+      {
+        label: "Activity",
+        rows: [
+          { label: "Distance",    key: "distanceUnit", opts: [{value:"km",label:"Km"},{value:"mi",label:"Mi"}] },
+          { label: "Pace",        key: "paceUnit",     opts: [{value:"minkm",label:"min/km"},{value:"minmi",label:"min/mi"}] },
+        ],
+      },
+      {
+        label: "Nutrition",
+        rows: [
+          { label: "Energy",      key: "energyUnit",   opts: [{value:"kcal",label:"kcal"},{value:"kj",label:"kJ"}] },
+          { label: "Fluid",       key: "fluidUnit",    opts: [{value:"ml",label:"ml"},{value:"floz",label:"fl oz"}] },
+        ],
+      },
     ];
-    rows.forEach((r, i) => {
-      if (i > 0) {
-        const div = document.createElement("div");
-        div.className = "settings-row-divider";
-        div.style.margin = "0 20px";
-        panel.appendChild(div);
-      }
-      panel.appendChild(makeSegRow(r.label, r.key, r.opts));
+
+    sections.forEach(sec => {
+      const wrap = document.createElement("div");
+      wrap.style.cssText = "padding:16px 16px 0;";
+      wrap.innerHTML = `<p class="settings-section-label" style="margin-top:0;margin-bottom:8px;">${sec.label}</p>`;
+      const panel = document.createElement("div");
+      panel.className = "panel";
+      panel.style.cssText = "padding:0;overflow:hidden;";
+      sec.rows.forEach((r, i) => {
+        if (i > 0) {
+          const div = document.createElement("div");
+          div.className = "settings-row-divider";
+          div.style.margin = "0 20px";
+          panel.appendChild(div);
+        }
+        panel.appendChild(makeSegRow(r.label, r.key, r.opts));
+      });
+      wrap.appendChild(panel);
+      container.appendChild(wrap);
     });
 
-    const wrap = document.createElement("div");
-    wrap.style.cssText = "padding:16px;";
-    wrap.appendChild(panel);
-    container.appendChild(wrap);
+    const spacer = document.createElement("div");
+    spacer.style.height = "16px";
+    container.appendChild(spacer);
   }
 
   function renderCalendar() {
