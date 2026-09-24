@@ -1619,3 +1619,16 @@ textarea { resize: vertical; font-family: inherit; }
   padding: 6px;
   box-sizing: border-box;
 }
+
+/* Connection type tags on app cards */
+.import-app-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+.import-app-tag--import { background: #e8f5e9; color: #2e7d32; }
+.import-app-tag--sync    { background: #e3f2fd; color: #1565c0; }
+.import-app-tag--connect { background: #fff3e0; color: #e65100; }
