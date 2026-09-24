@@ -60,11 +60,20 @@
     showMacroCards: true,
     compactFoodList: false,
     heightUnit: "cm",
+    bodyMeasureUnit: "cm",
+    tempUnit: "c",
+    glucoseUnit: "mgdl",
+    sex: "male",
     distanceUnit: "km",
+    speedUnit: "kmh",
     paceUnit: "minkm",
+    elevationUnit: "m",
     energyUnit: "kcal",
     fluidUnit: "ml",
-    sex: "male",
+    servingUnit: "g",
+    macroDisplay: "g",
+    dateFormat: "dmy",
+    timeFormat: "24h",
   });
 
   let currentUser = null;
@@ -1834,23 +1843,37 @@
       {
         label: "Body",
         rows: [
-          { label: "Weight",      key: "unit",         opts: [{value:"kg",label:"Kg"},{value:"lb",label:"Lbs"}] },
-          { label: "Height",      key: "heightUnit",   opts: [{value:"cm",label:"Cm"},{value:"in",label:"In"}] },
-          { label: "Sex",         key: "sex",          opts: [{value:"male",label:"Male"},{value:"female",label:"Female"}] },
+          { label: "Weight",            key: "unit",            opts: [{value:"kg",label:"Kg"},{value:"lb",label:"Lbs"}] },
+          { label: "Height",            key: "heightUnit",      opts: [{value:"cm",label:"Cm"},{value:"in",label:"In"}] },
+          { label: "Body Measurements", key: "bodyMeasureUnit", opts: [{value:"cm",label:"Cm"},{value:"in",label:"In"}] },
+          { label: "Temperature",       key: "tempUnit",        opts: [{value:"c",label:"°C"},{value:"f",label:"°F"}] },
+          { label: "Blood Glucose",     key: "glucoseUnit",     opts: [{value:"mgdl",label:"mg/dL"},{value:"mmol",label:"mmol/L"}] },
+          { label: "Sex",               key: "sex",             opts: [{value:"male",label:"Male"},{value:"female",label:"Female"}] },
         ],
       },
       {
         label: "Activity",
         rows: [
-          { label: "Distance",    key: "distanceUnit", opts: [{value:"km",label:"Km"},{value:"mi",label:"Mi"}] },
-          { label: "Pace",        key: "paceUnit",     opts: [{value:"minkm",label:"min/km"},{value:"minmi",label:"min/mi"}] },
+          { label: "Distance",          key: "distanceUnit",    opts: [{value:"km",label:"Km"},{value:"mi",label:"Mi"}] },
+          { label: "Speed",             key: "speedUnit",       opts: [{value:"kmh",label:"km/h"},{value:"mph",label:"mph"}] },
+          { label: "Pace",              key: "paceUnit",        opts: [{value:"minkm",label:"min/km"},{value:"minmi",label:"min/mi"}] },
+          { label: "Elevation",         key: "elevationUnit",   opts: [{value:"m",label:"m"},{value:"ft",label:"ft"}] },
         ],
       },
       {
         label: "Nutrition",
         rows: [
-          { label: "Energy",      key: "energyUnit",   opts: [{value:"kcal",label:"kcal"},{value:"kj",label:"kJ"}] },
-          { label: "Fluid",       key: "fluidUnit",    opts: [{value:"ml",label:"ml"},{value:"floz",label:"fl oz"}] },
+          { label: "Energy",            key: "energyUnit",      opts: [{value:"kcal",label:"kcal"},{value:"kj",label:"kJ"}] },
+          { label: "Fluid",             key: "fluidUnit",       opts: [{value:"ml",label:"ml"},{value:"floz",label:"fl oz"}] },
+          { label: "Serving Size",      key: "servingUnit",     opts: [{value:"g",label:"g"},{value:"oz",label:"oz"}] },
+          { label: "Macros Display",    key: "macroDisplay",    opts: [{value:"g",label:"g"},{value:"pct",label:"%"}] },
+        ],
+      },
+      {
+        label: "Display",
+        rows: [
+          { label: "Date Format",       key: "dateFormat",      opts: [{value:"dmy",label:"DD/MM"},{value:"mdy",label:"MM/DD"},{value:"ymd",label:"YY/MM/DD"}] },
+          { label: "Time",              key: "timeFormat",      opts: [{value:"24h",label:"24h"},{value:"12h",label:"12h"}] },
         ],
       },
     ];
