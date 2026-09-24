@@ -415,6 +415,12 @@
           <span class="settings-row-label">Connections</span>
           <span class="settings-row-arrow">›</span>
         </div>
+        <div class="settings-row-divider"></div>
+        <div class="settings-row" id="accounts-row" style="cursor:pointer;">
+          <span class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+          <span class="settings-row-label">Accounts</span>
+          <span class="settings-row-arrow">›</span>
+        </div>
       </div>
 
       <div class="panel">
@@ -445,12 +451,6 @@
             <button class="btn btn-primary" id="change-password-submit">Update Password</button>
           </div>
         </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><h2>Connected Accounts</h2></div>
-        <p class="subtitle" id="connected-accounts-subtitle"></p>
-        <div id="connected-accounts-list" class="connected-accounts-list"></div>
       </div>
 
       <!-- Preferences -->
@@ -702,6 +702,21 @@
             <button class="btn btn-ghost" id="import-btn">Restore Backup (JSON)</button>
             <input type="file" id="import-file" accept="application/json" style="display:none;">
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-accounts" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="accounts-back" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h1>Accounts</h1>
+      </header>
+      <div class="view-content">
+        <p class="subtitle" style="margin-bottom:16px;">Link social accounts to sign in with a single tap. Connected accounts are tied to your GoFitr profile.</p>
+        <div class="panel">
+          <div id="connected-accounts-list" class="connected-accounts-list"></div>
         </div>
       </div>
     </section>

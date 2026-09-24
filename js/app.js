@@ -1485,11 +1485,9 @@
 
   async function renderConnectedAccounts() {
     const list = document.getElementById("connected-accounts-list");
-    const subtitle = document.getElementById("connected-accounts-subtitle");
     if (!list) return;
 
     if (authMode === "local") {
-      subtitle.textContent = "You're using a local username and password. Social login is available when signing up via Google, Apple, or GitHub.";
       list.innerHTML = `<div class="connected-account-row connected-account-row--active">
         <span class="connected-account-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
         <span class="connected-account-label">Username &amp; Password</span>
@@ -1500,11 +1498,8 @@
 
     if (authMode !== "clerk" || !window.Clerk || !window.Clerk.user) {
       list.innerHTML = "";
-      subtitle.textContent = "";
       return;
     }
-
-    subtitle.textContent = "Add more ways to sign in to your account.";
     const user = window.Clerk.user;
     const linked = new Set(user.externalAccounts.map(a => a.provider));
 
@@ -1614,6 +1609,8 @@
 
   document.getElementById("connections-row").addEventListener("click", () => showView("connections"));
   document.getElementById("connections-back").addEventListener("click", () => showView("settings"));
+  document.getElementById("accounts-row").addEventListener("click", () => { renderConnectedAccounts(); showView("accounts"); });
+  document.getElementById("accounts-back").addEventListener("click", () => showView("settings"));
 
   document.querySelectorAll('input[name="unit"]').forEach(radio => {
     radio.addEventListener("change", (e) => {
