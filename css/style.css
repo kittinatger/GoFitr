@@ -1807,7 +1807,16 @@ textarea { resize: vertical; font-family: inherit; }
 .settings-row-icon svg { width: 18px; height: 18px; }
 .settings-row-label { flex: 1; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
 .settings-row-arrow { color: var(--text-muted); font-size: 1.2rem; }
+.settings-row-value { font-size: 0.85rem; color: var(--text-muted); margin-right: 4px; }
 .settings-row-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 20px; }
+
+/* Mini calendar */
+.mini-cal { background: var(--bg-card); border-radius: var(--radius-sm); padding: 16px; }
+.mini-cal-header { text-align: center; font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 12px; }
+.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.mini-cal-day-head { text-align: center; font-size: 0.7rem; font-weight: 600; color: var(--text-muted); padding: 4px 0; }
+.mini-cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; color: var(--text-muted); border-radius: 50%; }
+.mini-cal-today { background: var(--lime); color: var(--ink); font-weight: 700; }
 
 /* Import app cards */
 .import-app-grid {

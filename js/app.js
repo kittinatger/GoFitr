@@ -57,6 +57,8 @@
     themeAuto: true,
     themeDark: "lime-dark",
     themeLight: "lime-light",
+    showMacroCards: true,
+    compactFoodList: false,
   });
 
   let currentUser = null;
@@ -1474,23 +1476,14 @@
   }
 
   function renderSettings() {
-    document.querySelectorAll('input[name="unit"]').forEach(radio => {
-      radio.checked = radio.value === data.unit;
-    });
-    document.querySelectorAll('input[name="weekStart"]').forEach(radio => {
-      radio.checked = radio.value === (data.weekStart || "monday");
-    });
+    const unitsVal = document.getElementById("units-row-value");
+    if (unitsVal) unitsVal.textContent = data.unit || "kg";
     document.getElementById("calorie-goal-input").value = data.calorieGoal || 2000;
     document.getElementById("protein-goal-input").value = data.proteinGoal || 0;
     document.getElementById("carbs-goal-input").value = data.carbsGoal || 0;
     document.getElementById("fat-goal-input").value = data.fatGoal || 0;
     document.getElementById("weight-goal-input").value = data.weightGoal || 0;
     document.getElementById("weight-goal-label").textContent = `Target body weight (${data.unit || "kg"})`;
-    const mn = data.mealNames || {};
-    ["Breakfast","Lunch","Dinner","Snacks"].forEach(m => {
-      const el = document.getElementById(`meal-label-${m.toLowerCase()}`);
-      if (el) el.value = mn[m] || "";
-    });
     renderConnectedAccounts();
   }
 
@@ -1796,6 +1789,205 @@
         </p>
       </div>`;
     container.appendChild(disclaimer);
+  }
+
+  function renderUnits() {
+    const container = document.getElementById("units-content");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const current = data.unit || "kg";
+    const options = [
+      { value: "kg", label: "Kilograms", sub: "kg" },
+      { value: "lb", label: "Pounds", sub: "lb" },
+    ];
+
+    const sec = document.createElement("div");
+    sec.style.cssText = "padding:16px 16px 0;";
+    sec.innerHTML = `<p class="settings-section-label" style="margin-top:0;margin-bottom:8px;">Weight Unit</p>`;
+    const panel = document.createElement("div");
+    panel.className = "panel panel-rows";
+    options.forEach((opt, i) => {
+      if (i > 0) {
+        const div = document.createElement("div");
+        div.className = "settings-row-divider";
+        panel.appendChild(div);
+      }
+      const row = document.createElement("div");
+      row.className = "settings-row";
+      row.style.cursor = "pointer";
+      const checked = opt.value === current;
+      row.innerHTML = `
+        <span class="settings-row-label" style="font-weight:${checked ? 600 : 400};">${opt.label} <span style="color:var(--text-muted);font-weight:400;">(${opt.sub})</span></span>
+        <svg class="theme-check ${checked ? "visible" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      row.addEventListener("click", () => {
+        data.unit = opt.value;
+        saveData();
+        const unitsVal = document.getElementById("units-row-value");
+        if (unitsVal) unitsVal.textContent = opt.value;
+        renderUnits();
+        renderWeight();
+      });
+      panel.appendChild(row);
+    });
+    sec.appendChild(panel);
+    container.appendChild(sec);
+  }
+
+  function renderCalendar() {
+    const container = document.getElementById("calendar-content");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const current = data.weekStart || "monday";
+
+    function buildMiniCal(startDay) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const startOffset = startDay === "sunday" ? firstDay : (firstDay === 0 ? 6 : firstDay - 1);
+      const monthName = today.toLocaleString("default", { month: "long" });
+      const dayHeaders = startDay === "sunday"
+        ? ["Su","Mo","Tu","We","Th","Fr","Sa"]
+        : ["Mo","Tu","We","Th","Fr","Sa","Su"];
+
+      let cells = "";
+      for (let i = 0; i < startOffset; i++) cells += `<div class="mini-cal-cell"></div>`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const isToday = d === today.getDate();
+        cells += `<div class="mini-cal-cell${isToday ? " mini-cal-today" : ""}">${d}</div>`;
+      }
+      return `
+        <div class="mini-cal">
+          <div class="mini-cal-header">${monthName} ${year}</div>
+          <div class="mini-cal-grid">
+            ${dayHeaders.map(h => `<div class="mini-cal-day-head">${h}</div>`).join("")}
+            ${cells}
+          </div>
+        </div>`;
+    }
+
+    const sec = document.createElement("div");
+    sec.style.cssText = "padding:16px 16px 0;";
+    sec.innerHTML = `<p class="settings-section-label" style="margin-top:0;margin-bottom:8px;">Start Week On</p>`;
+    const panel = document.createElement("div");
+    panel.className = "panel panel-rows";
+    const opts = [
+      { value: "sunday", label: "Sunday" },
+      { value: "monday", label: "Monday" },
+    ];
+    opts.forEach((opt, i) => {
+      if (i > 0) {
+        const div = document.createElement("div");
+        div.className = "settings-row-divider";
+        panel.appendChild(div);
+      }
+      const row = document.createElement("div");
+      row.className = "settings-row";
+      row.style.cursor = "pointer";
+      const checked = opt.value === current;
+      row.innerHTML = `
+        <span class="settings-row-label" style="font-weight:${checked ? 600 : 400};">${opt.label}</span>
+        <svg class="theme-check ${checked ? "visible" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      row.addEventListener("click", () => {
+        data.weekStart = opt.value;
+        saveData();
+        renderCalendar();
+      });
+      panel.appendChild(row);
+    });
+    sec.appendChild(panel);
+    container.appendChild(sec);
+
+    const calWrap = document.createElement("div");
+    calWrap.style.cssText = "padding:16px;";
+    calWrap.innerHTML = buildMiniCal(current);
+    container.appendChild(calWrap);
+  }
+
+  function renderOtherPrefs() {
+    const container = document.getElementById("other-prefs-content");
+    if (!container) return;
+    container.innerHTML = "";
+
+    function makeToggleSection(title, items) {
+      const sec = document.createElement("div");
+      sec.style.cssText = "padding:16px 16px 0;";
+      sec.innerHTML = `<p class="settings-section-label" style="margin-top:0;margin-bottom:8px;">${title}</p>`;
+      const panel = document.createElement("div");
+      panel.className = "panel";
+      items.forEach((item, i) => {
+        if (i > 0) {
+          const div = document.createElement("div");
+          div.className = "settings-row-divider";
+          panel.appendChild(div);
+        }
+        const row = document.createElement("div");
+        row.className = "settings-row";
+        row.style.cssText = "align-items:flex-start;gap:12px;";
+        row.innerHTML = `
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.875rem;font-weight:600;color:${item.disabled ? "var(--text-muted)" : "var(--text)"};">${item.label}${item.disabled ? ' <span class="coming-soon-tag">Soon</span>' : ""}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${item.desc}</div>
+          </div>
+          <label class="toggle-switch" style="${item.disabled ? "opacity:0.4;pointer-events:none;" : ""}">
+            <input type="checkbox" ${item.checked ? "checked" : ""} ${item.disabled ? "disabled" : ""} data-key="${item.key}">
+            <span class="slider"></span>
+          </label>`;
+        if (!item.disabled) {
+          row.querySelector("input").addEventListener("change", (e) => {
+            data[item.key] = e.target.checked;
+            saveData();
+            if (item.key === "showMacroCards") renderNutrition();
+          });
+        }
+        panel.appendChild(row);
+      });
+      sec.appendChild(panel);
+      container.appendChild(sec);
+    }
+
+    makeToggleSection("App Layout", [
+      { key: "showMacroCards", label: "Show Macro Cards", desc: "Display protein, carbs and fat cards on the nutrition screen.", checked: data.showMacroCards !== false },
+      { key: "compactFoodList", label: "Compact Food List", desc: "Show food items in a smaller, denser list style.", checked: !!data.compactFoodList },
+    ]);
+
+    makeToggleSection("Calories", [
+      { key: "_calBurned", label: "Track Calories Burned", desc: "Your workouts will adjust your daily calorie goal.", checked: false, disabled: true },
+    ]);
+
+    // Meal Labels
+    const mealSec = document.createElement("div");
+    mealSec.style.cssText = "padding:16px;";
+    const mn = data.mealNames || {};
+    mealSec.innerHTML = `
+      <p class="settings-section-label" style="margin-top:0;margin-bottom:8px;">Meal Labels</p>
+      <div class="panel" style="gap:14px;display:flex;flex-direction:column;">
+        <p class="subtitle" style="margin:0;">Rename your meal slots. Leave blank to keep the default name.</p>
+        <div class="form-row">
+          <div class="form-field grow"><label for="meal-label-breakfast">Breakfast</label><input type="text" id="meal-label-breakfast" placeholder="Breakfast" maxlength="30" value="${mn.Breakfast || ""}"></div>
+          <div class="form-field grow"><label for="meal-label-lunch">Lunch</label><input type="text" id="meal-label-lunch" placeholder="Lunch" maxlength="30" value="${mn.Lunch || ""}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field grow"><label for="meal-label-dinner">Dinner</label><input type="text" id="meal-label-dinner" placeholder="Dinner" maxlength="30" value="${mn.Dinner || ""}"></div>
+          <div class="form-field grow"><label for="meal-label-snacks">Snacks</label><input type="text" id="meal-label-snacks" placeholder="Snacks" maxlength="30" value="${mn.Snacks || ""}"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="save-meal-labels-btn" style="align-self:flex-start;">Save Labels</button>
+      </div>`;
+    container.appendChild(mealSec);
+    document.getElementById("save-meal-labels-btn").addEventListener("click", () => {
+      data.mealNames = {
+        Breakfast: document.getElementById("meal-label-breakfast").value.trim(),
+        Lunch: document.getElementById("meal-label-lunch").value.trim(),
+        Dinner: document.getElementById("meal-label-dinner").value.trim(),
+        Snacks: document.getElementById("meal-label-snacks").value.trim(),
+      };
+      saveData();
+      renderNutrition();
+      toast("Meal labels saved");
+    });
   }
 
   // Border: value is just the ring colour (or "none" / "rainbow")
@@ -2176,16 +2368,12 @@
   document.getElementById("accounts-back").addEventListener("click", () => showView("settings"));
   document.getElementById("themes-row").addEventListener("click", () => { renderThemes(); showView("themes"); });
   document.getElementById("themes-back").addEventListener("click", () => showView("settings"));
-
-  document.querySelectorAll('input[name="unit"]').forEach(radio => {
-    radio.addEventListener("change", (e) => {
-      if (e.target.checked) {
-        data.unit = e.target.value;
-        saveData();
-        toast(`Units set to ${data.unit}`);
-      }
-    });
-  });
+  document.getElementById("units-row").addEventListener("click", () => { renderUnits(); showView("units"); });
+  document.getElementById("units-back").addEventListener("click", () => showView("settings"));
+  document.getElementById("calendar-row").addEventListener("click", () => { renderCalendar(); showView("calendar"); });
+  document.getElementById("calendar-back").addEventListener("click", () => showView("settings"));
+  document.getElementById("other-prefs-row").addEventListener("click", () => { renderOtherPrefs(); showView("other-prefs"); });
+  document.getElementById("other-prefs-back").addEventListener("click", () => showView("settings"));
 
   function goalInputHandler(field, inputId) {
     document.getElementById(inputId).addEventListener("change", (e) => {
@@ -2200,28 +2388,6 @@
   goalInputHandler("carbsGoal", "carbs-goal-input");
   goalInputHandler("fatGoal", "fat-goal-input");
   goalInputHandler("weightGoal", "weight-goal-input");
-
-  // Week start
-  document.querySelectorAll('input[name="weekStart"]').forEach(radio => {
-    radio.addEventListener("change", (e) => {
-      if (e.target.checked) {
-        data.weekStart = e.target.value;
-        saveData();
-        toast(`Week starts on ${e.target.value === "sunday" ? "Sunday" : "Monday"}`);
-      }
-    });
-  });
-
-  // Meal label inputs
-  ["Breakfast","Lunch","Dinner","Snacks"].forEach(meal => {
-    const el = document.getElementById(`meal-label-${meal.toLowerCase()}`);
-    if (!el) return;
-    el.addEventListener("change", () => {
-      if (!data.mealNames) data.mealNames = {};
-      data.mealNames[meal] = el.value.trim();
-      saveData();
-    });
-  });
 
   // Change password (in Accounts sub-page)
   document.getElementById("change-password-submit").addEventListener("click", async () => {
