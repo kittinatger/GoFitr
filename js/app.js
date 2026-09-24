@@ -1635,9 +1635,17 @@
 
   function profileApplyToCard(rec) {
     const displayName = rec.displayName || rec.username || currentUser;
-    const username    = rec.username || currentUser;
+    // For Clerk users strip the "clerk:" prefix from the storage key
+    let usernameLabel = rec.username || currentUser;
+    if (usernameLabel.startsWith("clerk:")) {
+      const clerkUser = window.Clerk?.user;
+      usernameLabel = clerkUser?.username
+        || clerkUser?.primaryEmailAddress?.emailAddress?.split("@")[0]
+        || clerkUser?.fullName
+        || "social";
+    }
     document.getElementById("profile-card-name").textContent = displayName;
-    document.getElementById("profile-card-username").textContent = "@" + username;
+    document.getElementById("profile-card-username").textContent = "@" + usernameLabel;
 
     // Avatar
     const avatarEl = document.getElementById("profile-avatar-display");
@@ -1662,13 +1670,15 @@
     // Banner
     const bannerEl = document.getElementById("profile-banner-display");
     if (rec.banner) {
+      bannerEl.classList.remove("profile-banner--none");
       if (rec.banner.startsWith("data:")) {
         bannerEl.style.background = `url(${rec.banner}) center/cover no-repeat`;
       } else {
         bannerEl.style.background = rec.banner;
       }
     } else {
-      bannerEl.style.background = "var(--accent)";
+      bannerEl.classList.add("profile-banner--none");
+      bannerEl.style.background = "";
     }
 
     // Title
@@ -1687,17 +1697,32 @@
     const userRec = users[currentUser] || {};
     profileDraft = {};
 
-    document.getElementById("profile-username-input").value = userRec.username || currentUser;
-    document.getElementById("profile-display-name").value  = userRec.displayName || userRec.username || currentUser;
-    document.getElementById("profile-bio").value           = userRec.bio || "";
-    document.getElementById("profile-username-hint").textContent = "";
+    const isClerk = authMode === "clerk";
+    const usernameInput = document.getElementById("profile-username-input");
+    const usernameHint  = document.getElementById("profile-username-hint");
 
-    // If there's a saved title text, populate the title input
-    if (userRec.title && userRec.title.text) {
-      document.getElementById("profile-title-text").value = userRec.title.text;
+    if (isClerk) {
+      // For Clerk users show the Clerk display name as username; editing not supported
+      const clerkUser = window.Clerk?.user;
+      const clerkHandle = clerkUser?.username
+        || clerkUser?.primaryEmailAddress?.emailAddress
+        || clerkUser?.fullName
+        || "Clerk user";
+      usernameInput.value    = clerkHandle;
+      usernameInput.disabled = true;
+      usernameInput.style.opacity = "0.5";
+      usernameHint.textContent = "Username is managed by your social account.";
+      usernameHint.style.color = "var(--muted)";
     } else {
-      document.getElementById("profile-title-text").value = "";
+      usernameInput.value    = userRec.username || currentUser;
+      usernameInput.disabled = false;
+      usernameInput.style.opacity = "";
+      usernameHint.textContent = "";
     }
+
+    document.getElementById("profile-display-name").value = userRec.displayName || userRec.username || currentUser;
+    document.getElementById("profile-bio").value          = userRec.bio || "";
+    document.getElementById("profile-title-text").value   = userRec.title?.text || "";
 
     profileApplyToCard(userRec);
     profileBuildSwatches(userRec);
@@ -1824,7 +1849,9 @@
   document.getElementById("profile-banner-upload-btn").addEventListener("click", () => document.getElementById("profile-banner-file").click());
   document.getElementById("profile-banner-clear-btn").addEventListener("click", () => {
     profileDraft.banner = null;
-    document.getElementById("profile-banner-display").style.background = "var(--accent)";
+    const bannerEl = document.getElementById("profile-banner-display");
+    bannerEl.classList.add("profile-banner--none");
+    bannerEl.style.background = "";
     profileBuildSwatches(Object.assign({}, getUsers()[currentUser] || {}, profileDraft));
   });
   document.getElementById("profile-banner-file").addEventListener("change", (e) => {
@@ -1885,42 +1912,40 @@
   document.getElementById("profile-back").addEventListener("click", () => showView("settings"));
 
   document.getElementById("profile-save").addEventListener("click", async () => {
-    const newUsername  = document.getElementById("profile-username-input").value.trim().toLowerCase();
-    const displayName  = document.getElementById("profile-display-name").value.trim();
-    const bio          = document.getElementById("profile-bio").value.trim();
-    const titleText    = document.getElementById("profile-title-text").value.trim();
+    const isClerk     = authMode === "clerk";
+    const displayName = document.getElementById("profile-display-name").value.trim();
+    const bio         = document.getElementById("profile-bio").value.trim();
+    const titleText   = document.getElementById("profile-title-text").value.trim();
 
-    // Validate username
-    if (!newUsername || !/^[a-z0-9_]{3,30}$/.test(newUsername)) {
-      toast("Invalid username — 3–30 chars, letters/numbers/underscores."); return;
-    }
-
-    const users = getUsers();
+    const users  = getUsers();
     const oldKey = currentUser;
     const oldRec = users[oldKey] || {};
 
-    // Username change?
-    if (newUsername !== oldKey) {
-      if (users[newUsername]) { toast("Username already taken."); return; }
-      // Migrate: copy record under new key
-      users[newUsername] = Object.assign({}, oldRec, { username: newUsername });
-      delete users[oldKey];
-      // Migrate data
-      const oldDataRaw = localStorage.getItem(`gofitr_data_${oldKey}`);
-      if (oldDataRaw) {
-        localStorage.setItem(`gofitr_data_${newUsername}`, oldDataRaw);
-        localStorage.removeItem(`gofitr_data_${oldKey}`);
+    if (!isClerk) {
+      // Validate and possibly migrate username
+      const newUsername = document.getElementById("profile-username-input").value.trim().toLowerCase();
+      if (!newUsername || !/^[a-z0-9_]{3,30}$/.test(newUsername)) {
+        toast("Invalid username — 3–30 chars, letters/numbers/underscores."); return;
       }
-      saveUsers(users);
-      // Update session key & currentUser
-      setSession(newUsername);
-      currentUser = newUsername;
+      if (newUsername !== oldKey) {
+        if (users[newUsername]) { toast("Username already taken."); return; }
+        users[newUsername] = Object.assign({}, oldRec, { username: newUsername });
+        delete users[oldKey];
+        const oldDataRaw = localStorage.getItem(`gofitr_data_${oldKey}`);
+        if (oldDataRaw) {
+          localStorage.setItem(`gofitr_data_${newUsername}`, oldDataRaw);
+          localStorage.removeItem(`gofitr_data_${oldKey}`);
+        }
+        saveUsers(users);
+        setSession(newUsername);
+        currentUser = newUsername;
+      }
     }
 
     // Save all fields
-    const rec = users[currentUser] || users[newUsername] || {};
-    rec.username    = newUsername;
-    rec.displayName = displayName || newUsername;
+    const rec = users[currentUser] || {};
+    if (!isClerk) rec.username = currentUser;
+    rec.displayName = displayName || rec.username || currentUser;
     rec.bio         = bio;
 
     // Title
