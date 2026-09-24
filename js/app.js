@@ -1425,6 +1425,29 @@
     return added;
   }
 
+  function importFromLiftoff(csv) {
+    const rows = parseCSV(csv);
+    const groups = {};
+    for (const r of rows) {
+      // Liftoff CSV columns: Date, Workout, Exercise, Set, Reps, Weight, Notes
+      const date = (r["Date"] || "").slice(0, 10);
+      const exercise = (r["Exercise"] || r["Exercise Name"] || "").trim();
+      const reps = parseInt(r["Reps"]);
+      const weight = parseFloat(r["Weight"]) || 0;
+      if (!date || !exercise || !reps) continue;
+      const key = `${date}|${exercise}`;
+      if (!groups[key]) groups[key] = { date, exercise, sets: [], notes: (r["Notes"] || r["Workout Notes"] || "").trim() };
+      groups[key].sets.push({ reps, weight });
+    }
+    let added = 0;
+    for (const g of Object.values(groups)) {
+      const exists = data.workouts.some(w => w.date === g.date && w.exercise === g.exercise);
+      if (!exists) { data.workouts.push({ id: uid(), ...g }); added++; }
+    }
+    if (added > 0) saveData();
+    return added;
+  }
+
   // ---------- Settings ----------
   function displayMealName(meal) {
     return (data.mealNames && data.mealNames[meal]) || meal;
@@ -1721,6 +1744,19 @@
       toast(`Imported ${added} workout(s) from Hevy`);
       if (added > 0) renderDashboard();
     } catch { toast("Import failed: invalid Hevy CSV"); }
+    e.target.value = "";
+  });
+
+  document.getElementById("import-liftoff-btn").addEventListener("click", () =>
+    document.getElementById("import-liftoff-file").click());
+  document.getElementById("import-liftoff-file").addEventListener("change", async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const text = await file.text();
+    try {
+      const added = importFromLiftoff(text);
+      toast(`Imported ${added} workout(s) from Liftoff`);
+      if (added > 0) renderDashboard();
+    } catch { toast("Import failed: invalid Liftoff CSV"); }
     e.target.value = "";
   });
 
