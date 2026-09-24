@@ -1358,6 +1358,73 @@
   });
 
 
+  // ---------- CSV import utilities ----------
+  function splitCSVRow(row) {
+    const result = [];
+    let cur = "", inQ = false;
+    for (const ch of row) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ""; }
+      else { cur += ch; }
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  function parseCSV(text) {
+    const lines = text.trim().split(/\r?\n/);
+    const headers = splitCSVRow(lines[0]);
+    return lines.slice(1).filter(l => l.trim()).map(l => {
+      const vals = splitCSVRow(l);
+      return Object.fromEntries(headers.map((h, i) => [h.trim(), vals[i] ?? ""]));
+    });
+  }
+
+  function importFromStrong(csv) {
+    const rows = parseCSV(csv);
+    const groups = {};
+    for (const r of rows) {
+      const date = (r["Date"] || "").slice(0, 10);
+      const exercise = (r["Exercise Name"] || "").trim();
+      const reps = parseInt(r["Reps"]);
+      const weight = parseFloat(r["Weight"]) || 0;
+      if (!date || !exercise || !reps) continue;
+      const key = `${date}|${exercise}`;
+      if (!groups[key]) groups[key] = { date, exercise, sets: [], notes: (r["Workout Notes"] || "").trim() };
+      groups[key].sets.push({ reps, weight });
+    }
+    let added = 0;
+    for (const g of Object.values(groups)) {
+      const exists = data.workouts.some(w => w.date === g.date && w.exercise === g.exercise);
+      if (!exists) { data.workouts.push({ id: uid(), ...g }); added++; }
+    }
+    if (added > 0) saveData();
+    return added;
+  }
+
+  function importFromHevy(csv) {
+    const rows = parseCSV(csv);
+    const groups = {};
+    for (const r of rows) {
+      const date = (r["start_time"] || "").slice(0, 10);
+      const exercise = (r["exercise_title"] || "").trim();
+      const reps = parseInt(r["reps"]);
+      let weight = parseFloat(r["weight_kg"]) || 0;
+      if (data.unit === "lb") weight = Math.round(weight * 2.20462 * 10) / 10;
+      if (!date || !exercise || !reps) continue;
+      const key = `${date}|${exercise}`;
+      if (!groups[key]) groups[key] = { date, exercise, sets: [], notes: (r["exercise_notes"] || "").trim() };
+      groups[key].sets.push({ reps, weight });
+    }
+    let added = 0;
+    for (const g of Object.values(groups)) {
+      const exists = data.workouts.some(w => w.date === g.date && w.exercise === g.exercise);
+      if (!exists) { data.workouts.push({ id: uid(), ...g }); added++; }
+    }
+    if (added > 0) saveData();
+    return added;
+  }
+
   // ---------- Settings ----------
   function displayMealName(meal) {
     return (data.mealNames && data.mealNames[meal]) || meal;
@@ -1625,6 +1692,32 @@
       }
     };
     reader.readAsText(file);
+    e.target.value = "";
+  });
+
+  document.getElementById("import-strong-btn").addEventListener("click", () =>
+    document.getElementById("import-strong-file").click());
+  document.getElementById("import-strong-file").addEventListener("change", async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const text = await file.text();
+    try {
+      const added = importFromStrong(text);
+      toast(`Imported ${added} workout(s) from Strong`);
+      if (added > 0) renderDashboard();
+    } catch { toast("Import failed: invalid Strong CSV"); }
+    e.target.value = "";
+  });
+
+  document.getElementById("import-hevy-btn").addEventListener("click", () =>
+    document.getElementById("import-hevy-file").click());
+  document.getElementById("import-hevy-file").addEventListener("change", async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const text = await file.text();
+    try {
+      const added = importFromHevy(text);
+      toast(`Imported ${added} workout(s) from Hevy`);
+      if (added > 0) renderDashboard();
+    } catch { toast("Import failed: invalid Hevy CSV"); }
     e.target.value = "";
   });
 

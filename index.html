@@ -563,12 +563,20 @@
       <p class="settings-section-label">Data</p>
       <div class="panel">
         <p class="subtitle">Everything is stored locally in your browser — nothing leaves your device. Export regularly as a backup.</p>
-        <div class="form-actions" style="justify-content:flex-start; gap:12px;">
+        <div class="form-actions" style="justify-content:flex-start; gap:12px; flex-wrap:wrap;">
           <button class="btn btn-ghost" id="export-btn">Export Data (JSON)</button>
           <button class="btn btn-ghost" id="import-btn">Import Data</button>
           <input type="file" id="import-file" accept="application/json" style="display:none;">
           <button class="btn btn-danger" id="clear-btn">Clear All Data</button>
         </div>
+        <p class="subtitle" style="margin-top:16px;">Import workout history from other apps:</p>
+        <div class="form-actions" style="justify-content:flex-start; gap:12px; flex-wrap:wrap;">
+          <button class="btn btn-ghost" id="import-strong-btn">Import from Strong</button>
+          <input type="file" id="import-strong-file" accept=".csv" style="display:none;">
+          <button class="btn btn-ghost" id="import-hevy-btn">Import from Hevy</button>
+          <input type="file" id="import-hevy-file" accept=".csv" style="display:none;">
+        </div>
+        <p class="subtitle" style="margin-top:6px;">Export your workout history as CSV from Strong or Hevy, then import here.</p>
       </div>
 
       <!-- Resources -->
