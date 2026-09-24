@@ -471,9 +471,9 @@
       </div>
 
       <div class="panel panel-rows">
-        <div class="settings-row settings-row-disabled">
+        <div class="settings-row" id="themes-row">
           <span class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></span>
-          <span class="settings-row-label">Themes <span class="coming-soon-tag">Soon</span></span>
+          <span class="settings-row-label">Themes</span>
           <span class="settings-row-arrow">›</span>
         </div>
         <div class="settings-row-divider"></div>
@@ -977,6 +977,19 @@
             </div>
           </form>
         </div>
+      </div>
+    </section>
+
+    <!-- Theme Center -->
+    <section id="view-themes" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="themes-back" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1>Themes</h1>
+      </header>
+      <div class="view-content" id="themes-content">
+        <!-- Built dynamically by renderThemes() -->
       </div>
     </section>
 
