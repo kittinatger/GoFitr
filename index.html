@@ -409,6 +409,12 @@
           <span class="settings-row-label">Statistics</span>
           <span class="settings-row-arrow">›</span>
         </div>
+        <div class="settings-row-divider"></div>
+        <div class="settings-row" id="import-data-row" style="cursor:pointer;">
+          <span class="settings-row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>
+          <span class="settings-row-label">Import Data</span>
+          <span class="settings-row-arrow">›</span>
+        </div>
       </div>
 
       <div class="panel">
@@ -569,14 +575,6 @@
           <input type="file" id="import-file" accept="application/json" style="display:none;">
           <button class="btn btn-danger" id="clear-btn">Clear All Data</button>
         </div>
-        <p class="subtitle" style="margin-top:16px;">Import workout history from other apps:</p>
-        <div class="form-actions" style="justify-content:flex-start; gap:12px; flex-wrap:wrap;">
-          <button class="btn btn-ghost" id="import-strong-btn">Import from Strong</button>
-          <input type="file" id="import-strong-file" accept=".csv" style="display:none;">
-          <button class="btn btn-ghost" id="import-hevy-btn">Import from Hevy</button>
-          <input type="file" id="import-hevy-file" accept=".csv" style="display:none;">
-        </div>
-        <p class="subtitle" style="margin-top:6px;">Export your workout history as CSV from Strong or Hevy, then import here.</p>
       </div>
 
       <!-- Resources -->
@@ -628,6 +626,51 @@
         <h1>Statistics</h1>
       </header>
       <div id="statistics-content"></div>
+    </section>
+
+    <section id="view-import-data" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="import-data-back" title="Back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h1>Import Data</h1>
+      </header>
+      <div class="view-content">
+        <div class="panel">
+          <div class="panel-header"><h2>Restore Backup</h2></div>
+          <p class="subtitle">Restore a GoFitr JSON backup file.</p>
+          <div class="form-actions" style="justify-content:flex-start; gap:12px; margin-top:8px;">
+            <button class="btn btn-ghost" id="import-btn">Import Backup (JSON)</button>
+            <input type="file" id="import-file" accept="application/json" style="display:none;">
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>Import from Strong</h2></div>
+          <p class="subtitle">Export your workout history as a CSV from the Strong app, then select it below.</p>
+          <ol class="subtitle" style="padding-left:18px; margin-top:8px; line-height:1.8;">
+            <li>In Strong, go to Profile → Settings → Export</li>
+            <li>Save the CSV file to your device</li>
+            <li>Tap the button below and select the file</li>
+          </ol>
+          <div class="form-actions" style="justify-content:flex-start; margin-top:12px;">
+            <button class="btn btn-ghost" id="import-strong-btn">Import from Strong</button>
+            <input type="file" id="import-strong-file" accept=".csv" style="display:none;">
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h2>Import from Hevy</h2></div>
+          <p class="subtitle">Export your workout history as a CSV from the Hevy app, then select it below.</p>
+          <ol class="subtitle" style="padding-left:18px; margin-top:8px; line-height:1.8;">
+            <li>In Hevy, go to Profile → Settings → Export Workouts (CSV)</li>
+            <li>Save the CSV file to your device</li>
+            <li>Tap the button below and select the file</li>
+          </ol>
+          <div class="form-actions" style="justify-content:flex-start; margin-top:12px;">
+            <button class="btn btn-ghost" id="import-hevy-btn">Import from Hevy</button>
+            <input type="file" id="import-hevy-file" accept=".csv" style="display:none;">
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="view-food" class="view">

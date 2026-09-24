@@ -1589,6 +1589,9 @@
   });
   document.getElementById("statistics-back").addEventListener("click", () => showView("settings"));
 
+  document.getElementById("import-data-row").addEventListener("click", () => showView("import-data"));
+  document.getElementById("import-data-back").addEventListener("click", () => showView("settings"));
+
   document.querySelectorAll('input[name="unit"]').forEach(radio => {
     radio.addEventListener("change", (e) => {
       if (e.target.checked) {
