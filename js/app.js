@@ -1604,6 +1604,90 @@
     `;
   }
 
+  // ---------- Profile sub-page ----------
+  function renderProfile() {
+    const users = getUsers();
+    const userRec = users[currentUser] || {};
+    const displayName = userRec.displayName || userRec.username || currentUser;
+    const username = userRec.username || currentUser;
+    const bio = userRec.bio || "";
+    const avatar = userRec.avatar || null;
+
+    document.getElementById("profile-username-display").value = username;
+    document.getElementById("profile-display-name").value = displayName;
+    document.getElementById("profile-bio").value = bio;
+    document.getElementById("profile-card-name").textContent = displayName;
+    document.getElementById("profile-card-username").textContent = "@" + username;
+
+    const avatarEl = document.getElementById("profile-avatar-display");
+    if (avatar) {
+      avatarEl.innerHTML = `<img src="${avatar}" alt="Avatar">`;
+    } else {
+      avatarEl.innerHTML = (displayName[0] || "?").toUpperCase();
+    }
+  }
+
+  document.getElementById("profile-row").addEventListener("click", () => {
+    renderProfile();
+    showView("profile");
+  });
+  document.getElementById("profile-back").addEventListener("click", () => showView("settings"));
+
+  document.getElementById("profile-save").addEventListener("click", () => {
+    const displayName = document.getElementById("profile-display-name").value.trim();
+    const bio = document.getElementById("profile-bio").value.trim();
+    const users = getUsers();
+    if (!users[currentUser]) return;
+    users[currentUser].displayName = displayName || users[currentUser].username;
+    users[currentUser].bio = bio;
+    saveUsers(users);
+    // Update header name
+    const shownName = users[currentUser].displayName;
+    document.getElementById("account-username").textContent = shownName;
+    const accUn = document.getElementById("accounts-username");
+    if (accUn) accUn.textContent = shownName;
+    // Refresh card
+    document.getElementById("profile-card-name").textContent = shownName;
+    toast("Profile saved");
+    showView("settings");
+  });
+
+  document.getElementById("profile-avatar-btn").addEventListener("click", () => {
+    document.getElementById("profile-avatar-file").click();
+  });
+
+  document.getElementById("profile-avatar-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast("Image must be under 2 MB"); e.target.value = ""; return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      const users = getUsers();
+      if (!users[currentUser]) return;
+      users[currentUser].avatar = dataUrl;
+      saveUsers(users);
+      const avatarEl = document.getElementById("profile-avatar-display");
+      avatarEl.innerHTML = `<img src="${dataUrl}" alt="Avatar">`;
+      toast("Photo updated");
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  });
+
+  // Live card preview as user types display name
+  document.getElementById("profile-display-name").addEventListener("input", (e) => {
+    const val = e.target.value.trim();
+    const users = getUsers();
+    const userRec = users[currentUser] || {};
+    document.getElementById("profile-card-name").textContent = val || userRec.username || currentUser;
+    // Update avatar initial if no photo
+    const avatarEl = document.getElementById("profile-avatar-display");
+    if (!avatarEl.querySelector("img")) {
+      avatarEl.textContent = (val[0] || (userRec.username || "?")[0]).toUpperCase();
+    }
+  });
+
   document.getElementById("statistics-row").addEventListener("click", () => {
     renderStatistics();
     showView("statistics");
@@ -1781,7 +1865,14 @@
     document.getElementById("app-shell").classList.remove("hidden");
 
     const users = getUsers();
-    const displayName = meta.displayName || (users[userKey] && users[userKey].username) || userKey;
+    const userRec = users[userKey] || {};
+    const displayName = userRec.displayName || meta.displayName || userRec.username || userKey;
+    // Persist displayName from signup into user record if not yet stored
+    if (meta.displayName && !userRec.displayName) {
+      userRec.displayName = meta.displayName;
+      users[userKey] = userRec;
+      saveUsers(users);
+    }
     document.getElementById("account-username").textContent = displayName;
     const accUn = document.getElementById("accounts-username");
     if (accUn) accUn.textContent = displayName;

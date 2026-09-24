@@ -1632,3 +1632,71 @@ textarea { resize: vertical; font-family: inherit; }
 .import-app-tag--import { background: #e8f5e9; color: #2e7d32; }
 .import-app-tag--sync    { background: #e3f2fd; color: #1565c0; }
 .import-app-tag--connect { background: #fff3e0; color: #e65100; }
+
+/* ---- Profile page ---- */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+.profile-avatar-btn {
+  position: relative;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+}
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.profile-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.profile-avatar-btn:hover .profile-avatar-overlay,
+.profile-avatar-btn:focus .profile-avatar-overlay { opacity: 1; }
+.profile-card-info { flex: 1; min-width: 0; }
+.profile-card-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-card-username {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
