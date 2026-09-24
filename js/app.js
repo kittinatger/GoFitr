@@ -1605,17 +1605,17 @@
   }
 
   // ---------- Profile sub-page ----------
+  // Border: value is just the ring colour (or "none" / "rainbow")
   const BORDER_PRESETS = [
-    { label: "Default",  value: "none" },
-    { label: "Blue",     value: "3px solid #2196f3" },
-    { label: "Gold",     value: "3px solid #FFD700" },
-    { label: "Coral",    value: "3px solid var(--coral)" },
-    { label: "Green",    value: "3px solid #4caf50" },
-    { label: "Purple",   value: "3px solid #9c27b0" },
-    { label: "White",    value: "3px solid #ffffff" },
-    { label: "Rainbow",  value: "3px solid transparent", extra: "background: linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06) border-box;" },
+    { label: "None",    value: "none",    swatch: null },
+    { label: "Blue",    value: "#2196f3", swatch: "#2196f3" },
+    { label: "Gold",    value: "#FFD700", swatch: "#FFD700" },
+    { label: "Coral",   value: "#ff6b57", swatch: "#ff6b57" },
+    { label: "Green",   value: "#4caf50", swatch: "#4caf50" },
+    { label: "Purple",  value: "#9c27b0", swatch: "#9c27b0" },
+    { label: "White",   value: "#ffffff", swatch: "#ffffff" },
+    { label: "Rainbow", value: "rainbow", swatch: "linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06)" },
   ];
-  const BORDER_COLORS  = ["none","#2196f3","#FFD700","var(--coral)","#4caf50","#9c27b0","#ffffff","rainbow"];
 
   const BANNER_PRESETS = [
     { label: "Blue",    value: "linear-gradient(135deg,#1a237e,#42a5f5)" },
@@ -1655,17 +1655,21 @@
       avatarEl.textContent = (displayName[0] || "?").toUpperCase();
     }
 
-    // Border
+    // Border — use box-shadow rings so no sizing/overflow issues
     const wrapEl = document.getElementById("profile-avatar-wrap");
+    const gap = "var(--bg-card)";
     if (rec.border && rec.border !== "none") {
       if (rec.border === "rainbow") {
-        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--bg-card);background:linear-gradient(var(--bg-card),var(--bg-card)) padding-box,linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06) border-box;border:3px solid transparent;box-sizing:border-box;`;
+        // Stacked box-shadow rings approximate a rainbow band
+        wrapEl.style.boxShadow = `0 0 0 3px ${gap}, 0 0 0 5px #f06, 0 0 0 7px #fa0, 0 0 0 9px #4caf50, 0 0 0 11px #2196f3`;
       } else {
-        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--bg-card);border:${rec.border};box-sizing:border-box;`;
+        wrapEl.style.boxShadow = `0 0 0 3px ${gap}, 0 0 0 6px ${rec.border}`;
       }
     } else {
-      wrapEl.style.cssText = "width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--bg-card);";
+      wrapEl.style.boxShadow = `0 0 0 3px ${gap}`;
     }
+    // Never put a CSS border on the wrap — it shrinks the inner area
+    wrapEl.style.border = "none";
 
     // Banner
     const bannerEl = document.getElementById("profile-banner-display");
@@ -1733,19 +1737,15 @@
     // Border swatches
     const borderContainer = document.getElementById("profile-border-swatches");
     borderContainer.innerHTML = "";
-    BORDER_PRESETS.forEach((p, i) => {
+    BORDER_PRESETS.forEach(p => {
       const btn = document.createElement("button");
       btn.className = "profile-swatch" + (((profileDraft.border ?? userRec.border) === p.value) ? " selected" : "");
       btn.title = p.label;
       if (p.value === "none") {
-        btn.style.background = "var(--surface-2,var(--surface))";
-        btn.style.border = "2px dashed var(--muted)";
-      } else if (p.value === "rainbow") {
-        btn.style.background = "linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06)";
-        btn.style.border = "none";
+        btn.style.background = "var(--bg-elevated)";
+        btn.style.border = "2px dashed var(--text-muted)";
       } else {
-        const color = BORDER_COLORS[i];
-        btn.style.background = color.startsWith("var") ? "var(--coral)" : color;
+        btn.style.background = p.swatch;
         btn.style.border = "none";
       }
       btn.addEventListener("click", () => {

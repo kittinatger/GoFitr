@@ -1661,7 +1661,7 @@ textarea { resize: vertical; font-family: inherit; }
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  box-shadow: 0 0 0 3px var(--bg-card);
+  /* box-shadow applied by JS to create gap + optional colour ring */
 }
 .profile-avatar {
   width: 72px;
