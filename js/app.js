@@ -1443,6 +1443,83 @@
     });
   }
 
+  function renderStatistics() {
+    const el = document.getElementById("statistics-content");
+    if (!el) return;
+
+    const workouts = data.workouts || [];
+    const unit = data.unit || "kg";
+
+    // Overview
+    const totalWorkouts = workouts.length;
+    const users = getUsers();
+    const userRec = users[currentUser];
+    const joinedDate = userRec && userRec.createdAt
+      ? new Date(userRec.createdAt).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" })
+      : (workouts.length ? new Date(workouts.reduce((a,b) => a.date < b.date ? a : b).date).toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" }) : "—");
+
+    const exerciseCounts = {};
+    let totalVolume = 0, totalReps = 0;
+    workouts.forEach(w => {
+      exerciseCounts[w.exercise] = (exerciseCounts[w.exercise] || 0) + 1;
+      (w.sets || []).forEach(s => {
+        totalReps += (s.reps || 0);
+        totalVolume += (s.reps || 0) * (s.weight || 0);
+      });
+    });
+    const favoriteExercise = Object.entries(exerciseCounts).sort((a,b) => b[1]-a[1])[0];
+    const avgVolume = totalWorkouts ? (totalVolume / totalWorkouts) : 0;
+    const avgReps = totalWorkouts ? Math.round(totalReps / totalWorkouts) : 0;
+
+    // Workout ratio: days with workouts / days since first workout
+    let workoutRatioHtml = `<div class="stat-coming-soon">Workout Ratio <span class="coming-soon-tag">Soon</span></div>`;
+    if (workouts.length >= 2) {
+      const dates = new Set(workouts.map(w => w.date));
+      const first = new Date(workouts.reduce((a,b) => a.date < b.date ? a : b).date);
+      const daysSince = Math.max(1, Math.round((Date.now() - first) / 86400000));
+      const ratio = ((dates.size / daysSince) * 100).toFixed(1);
+      workoutRatioHtml = `<div class="stat-row"><span class="stat-label">Workout Ratio</span><span class="stat-value">${ratio}%</span></div>`;
+    }
+
+    const exerciseRows = Object.entries(exerciseCounts)
+      .sort((a,b) => b[1]-a[1])
+      .map(([name, count]) => `<div class="stat-row"><span class="stat-label">${name}</span><span class="stat-value">${count}</span></div>`)
+      .join("");
+
+    el.innerHTML = `
+      <div class="panel">
+        <div class="panel-header"><h2>Overview</h2></div>
+        <div class="stat-row"><span class="stat-label">Joined</span><span class="stat-value">${joinedDate}</span></div>
+        <div class="stat-row"><span class="stat-label">Total Workouts</span><span class="stat-value">${totalWorkouts}</span></div>
+        <div class="stat-row"><span class="stat-label">Favorite Exercise</span><span class="stat-value">${favoriteExercise ? favoriteExercise[0] : "—"}</span></div>
+        <div class="stat-row"><span class="stat-label">Total Nutrition Logs</span><span class="stat-value">${(data.nutrition || []).length}</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Chronometry</h2></div>
+        <div class="stat-coming-soon">Average Workout Duration <span class="coming-soon-tag">Soon</span></div>
+        <div class="stat-coming-soon">Longest Workout Duration <span class="coming-soon-tag">Soon</span></div>
+        ${workoutRatioHtml}
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Metrics</h2></div>
+        <div class="stat-row"><span class="stat-label">Total Volume</span><span class="stat-value">${Math.round(totalVolume).toLocaleString()} ${unit}</span></div>
+        <div class="stat-row"><span class="stat-label">Average Volume</span><span class="stat-value">${avgVolume.toFixed(1)} ${unit}</span></div>
+        <div class="stat-row"><span class="stat-label">Total Reps</span><span class="stat-value">${totalReps.toLocaleString()}</span></div>
+        <div class="stat-row"><span class="stat-label">Average Reps</span><span class="stat-value">${avgReps}</span></div>
+      </div>
+      ${exerciseRows ? `<div class="panel">
+        <div class="panel-header"><h2>Exercise Counter</h2></div>
+        ${exerciseRows}
+      </div>` : ""}
+    `;
+  }
+
+  document.getElementById("statistics-row").addEventListener("click", () => {
+    renderStatistics();
+    showView("statistics");
+  });
+  document.getElementById("statistics-back").addEventListener("click", () => showView("settings"));
+
   document.querySelectorAll('input[name="unit"]').forEach(radio => {
     radio.addEventListener("change", (e) => {
       if (e.target.checked) {

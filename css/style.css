@@ -1522,6 +1522,14 @@ textarea { resize: vertical; font-family: inherit; }
   .set-row { grid-template-columns: 24px 1fr 1fr auto; }
 }
 
+/* Statistics */
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: var(--text-muted); font-size: 0.9rem; }
+.stat-value { font-weight: 600; font-size: 0.9rem; text-align: right; }
+.stat-coming-soon { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; color: var(--text-muted); font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); opacity: 0.5; }
+.stat-coming-soon:last-child { border-bottom: none; }
+
 /* Connected accounts */
 .connected-accounts-list { display: flex; flex-direction: column; margin-top: 12px; }
 .connected-account-row {
