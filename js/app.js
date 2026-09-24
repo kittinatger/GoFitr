@@ -1605,27 +1605,278 @@
   }
 
   // ---------- Profile sub-page ----------
-  function renderProfile() {
-    const users = getUsers();
-    const userRec = users[currentUser] || {};
-    const displayName = userRec.displayName || userRec.username || currentUser;
-    const username = userRec.username || currentUser;
-    const bio = userRec.bio || "";
-    const avatar = userRec.avatar || null;
+  const BORDER_PRESETS = [
+    { label: "Default",  value: "none" },
+    { label: "Blue",     value: "3px solid #2196f3" },
+    { label: "Gold",     value: "3px solid #FFD700" },
+    { label: "Coral",    value: "3px solid var(--coral)" },
+    { label: "Green",    value: "3px solid #4caf50" },
+    { label: "Purple",   value: "3px solid #9c27b0" },
+    { label: "White",    value: "3px solid #ffffff" },
+    { label: "Rainbow",  value: "3px solid transparent", extra: "background: linear-gradient(var(--surface),var(--surface)) padding-box, linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06) border-box;" },
+  ];
+  const BORDER_COLORS  = ["none","#2196f3","#FFD700","var(--coral)","#4caf50","#9c27b0","#ffffff","rainbow"];
 
-    document.getElementById("profile-username-display").value = username;
-    document.getElementById("profile-display-name").value = displayName;
-    document.getElementById("profile-bio").value = bio;
+  const BANNER_PRESETS = [
+    { label: "Blue",    value: "linear-gradient(135deg,#1a237e,#42a5f5)" },
+    { label: "Sunset",  value: "linear-gradient(135deg,#f06,#fa0)" },
+    { label: "Forest",  value: "linear-gradient(135deg,#1b5e20,#66bb6a)" },
+    { label: "Dusk",    value: "linear-gradient(135deg,#4a148c,#f06292)" },
+    { label: "Ocean",   value: "linear-gradient(135deg,#006064,#00e5ff)" },
+    { label: "Lava",    value: "linear-gradient(135deg,#bf360c,#ffcc02)" },
+    { label: "Night",   value: "linear-gradient(135deg,#212121,#546e7a)" },
+    { label: "Aurora",  value: "linear-gradient(135deg,#00695c,#7e57c2,#42a5f5)" },
+  ];
+
+  const TITLE_COLORS = ["#4caf50","#2196f3","#FFD700","var(--coral)","#9c27b0","#ff5722","#00bcd4","#e91e63"];
+
+  // Holds pending changes until Save is clicked
+  let profileDraft = {};
+
+  function profileApplyToCard(rec) {
+    const displayName = rec.displayName || rec.username || currentUser;
+    const username    = rec.username || currentUser;
     document.getElementById("profile-card-name").textContent = displayName;
     document.getElementById("profile-card-username").textContent = "@" + username;
 
+    // Avatar
     const avatarEl = document.getElementById("profile-avatar-display");
-    if (avatar) {
-      avatarEl.innerHTML = `<img src="${avatar}" alt="Avatar">`;
+    if (rec.avatar) {
+      avatarEl.innerHTML = `<img src="${rec.avatar}" alt="Avatar">`;
     } else {
-      avatarEl.innerHTML = (displayName[0] || "?").toUpperCase();
+      avatarEl.textContent = (displayName[0] || "?").toUpperCase();
+    }
+
+    // Border
+    const wrapEl = document.getElementById("profile-avatar-wrap");
+    if (rec.border && rec.border !== "none") {
+      if (rec.border === "rainbow") {
+        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--surface);background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06) border-box;border:3px solid transparent;box-sizing:border-box;`;
+      } else {
+        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--surface);border:${rec.border};box-sizing:border-box;`;
+      }
+    } else {
+      wrapEl.style.cssText = "width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--surface);";
+    }
+
+    // Banner
+    const bannerEl = document.getElementById("profile-banner-display");
+    if (rec.banner) {
+      if (rec.banner.startsWith("data:")) {
+        bannerEl.style.background = `url(${rec.banner}) center/cover no-repeat`;
+      } else {
+        bannerEl.style.background = rec.banner;
+      }
+    } else {
+      bannerEl.style.background = "var(--accent)";
+    }
+
+    // Title
+    const titleEl = document.getElementById("profile-card-title");
+    if (rec.title && rec.title.text) {
+      titleEl.textContent = rec.title.text;
+      titleEl.style.color = rec.title.color || "var(--accent)";
+      titleEl.style.display = "";
+    } else {
+      titleEl.style.display = "none";
     }
   }
+
+  function renderProfile() {
+    const users = getUsers();
+    const userRec = users[currentUser] || {};
+    profileDraft = {};
+
+    document.getElementById("profile-username-input").value = userRec.username || currentUser;
+    document.getElementById("profile-display-name").value  = userRec.displayName || userRec.username || currentUser;
+    document.getElementById("profile-bio").value           = userRec.bio || "";
+    document.getElementById("profile-username-hint").textContent = "";
+
+    // If there's a saved title text, populate the title input
+    if (userRec.title && userRec.title.text) {
+      document.getElementById("profile-title-text").value = userRec.title.text;
+    } else {
+      document.getElementById("profile-title-text").value = "";
+    }
+
+    profileApplyToCard(userRec);
+    profileBuildSwatches(userRec);
+    profileClosePicker();
+  }
+
+  function profileBuildSwatches(userRec) {
+    // Border swatches
+    const borderContainer = document.getElementById("profile-border-swatches");
+    borderContainer.innerHTML = "";
+    BORDER_PRESETS.forEach((p, i) => {
+      const btn = document.createElement("button");
+      btn.className = "profile-swatch" + (((profileDraft.border ?? userRec.border) === p.value) ? " selected" : "");
+      btn.title = p.label;
+      if (p.value === "none") {
+        btn.style.background = "var(--surface-2,var(--surface))";
+        btn.style.border = "2px dashed var(--muted)";
+      } else if (p.value === "rainbow") {
+        btn.style.background = "linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06)";
+        btn.style.border = "none";
+      } else {
+        const color = BORDER_COLORS[i];
+        btn.style.background = color.startsWith("var") ? "var(--coral)" : color;
+        btn.style.border = "none";
+      }
+      btn.addEventListener("click", () => {
+        profileDraft.border = p.value;
+        const merged = Object.assign({}, getUsers()[currentUser] || {}, profileDraft);
+        profileApplyToCard(merged);
+        profileBuildSwatches(merged);
+      });
+      borderContainer.appendChild(btn);
+    });
+
+    // Banner swatches
+    const bannerContainer = document.getElementById("profile-banner-swatches");
+    bannerContainer.innerHTML = "";
+    BANNER_PRESETS.forEach(p => {
+      const btn = document.createElement("button");
+      btn.className = "profile-banner-swatch" + (((profileDraft.banner ?? userRec.banner) === p.value) ? " selected" : "");
+      btn.title = p.label;
+      btn.style.background = p.value;
+      btn.style.border = "2px solid transparent";
+      btn.addEventListener("click", () => {
+        profileDraft.banner = p.value;
+        const merged = Object.assign({}, getUsers()[currentUser] || {}, profileDraft);
+        profileApplyToCard(merged);
+        profileBuildSwatches(merged);
+      });
+      bannerContainer.appendChild(btn);
+    });
+
+    // Title color swatches
+    const titleColorContainer = document.getElementById("profile-title-colors");
+    titleColorContainer.innerHTML = "";
+    const currentTitleColor = profileDraft.title?.color ?? userRec.title?.color ?? TITLE_COLORS[0];
+    TITLE_COLORS.forEach(color => {
+      const btn = document.createElement("button");
+      btn.className = "profile-swatch" + (currentTitleColor === color ? " selected" : "");
+      btn.title = color;
+      btn.style.background = color.startsWith("var") ? "var(--coral)" : color;
+      btn.style.border = "none";
+      btn.addEventListener("click", () => {
+        if (!profileDraft.title) profileDraft.title = { text: "", color: TITLE_COLORS[0] };
+        profileDraft.title.color = color;
+        const text = document.getElementById("profile-title-text").value.trim();
+        profileDraft.title.text = text;
+        const merged = Object.assign({}, getUsers()[currentUser] || {}, profileDraft);
+        profileApplyToCard(merged);
+        profileBuildSwatches(merged);
+      });
+      titleColorContainer.appendChild(btn);
+    });
+  }
+
+  function profileClosePicker() {
+    ["picture","title","border","banner"].forEach(k => {
+      document.getElementById("profile-picker-" + k).style.display = "none";
+      document.getElementById("profile-" + k + "-btn").classList.remove("active");
+    });
+  }
+
+  function profileTogglePicker(key) {
+    const picker = document.getElementById("profile-picker-" + key);
+    const isOpen = picker.style.display !== "none";
+    profileClosePicker();
+    if (!isOpen) {
+      picker.style.display = "flex";
+      document.getElementById("profile-" + key + "-btn").classList.add("active");
+    }
+  }
+
+  document.getElementById("profile-picture-btn").addEventListener("click", () => profileTogglePicker("picture"));
+  document.getElementById("profile-title-btn").addEventListener("click",   () => profileTogglePicker("title"));
+  document.getElementById("profile-border-btn").addEventListener("click",  () => profileTogglePicker("border"));
+  document.getElementById("profile-banner-btn").addEventListener("click",  () => profileTogglePicker("banner"));
+
+  // Picture picker actions
+  document.getElementById("profile-avatar-upload-btn").addEventListener("click", () => document.getElementById("profile-avatar-file").click());
+  document.getElementById("profile-avatar-clear-btn").addEventListener("click", () => {
+    profileDraft.avatar = null;
+    const avatarEl = document.getElementById("profile-avatar-display");
+    const users = getUsers();
+    const userRec = Object.assign({}, users[currentUser] || {}, profileDraft);
+    const dn = userRec.displayName || userRec.username || currentUser;
+    avatarEl.textContent = (dn[0] || "?").toUpperCase();
+    avatarEl.innerHTML = (dn[0] || "?").toUpperCase();
+  });
+  document.getElementById("profile-avatar-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { toast("Image must be under 3 MB"); e.target.value = ""; return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      profileDraft.avatar = ev.target.result;
+      const merged = Object.assign({}, getUsers()[currentUser] || {}, profileDraft);
+      profileApplyToCard(merged);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  });
+
+  // Banner upload
+  document.getElementById("profile-banner-upload-btn").addEventListener("click", () => document.getElementById("profile-banner-file").click());
+  document.getElementById("profile-banner-clear-btn").addEventListener("click", () => {
+    profileDraft.banner = null;
+    document.getElementById("profile-banner-display").style.background = "var(--accent)";
+    profileBuildSwatches(Object.assign({}, getUsers()[currentUser] || {}, profileDraft));
+  });
+  document.getElementById("profile-banner-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { toast("Image must be under 3 MB"); e.target.value = ""; return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      profileDraft.banner = ev.target.result;
+      document.getElementById("profile-banner-display").style.background = `url(${ev.target.result}) center/cover no-repeat`;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  });
+
+  // Title text live preview
+  document.getElementById("profile-title-text").addEventListener("input", (e) => {
+    const text = e.target.value.trim();
+    if (!profileDraft.title) profileDraft.title = { text: "", color: TITLE_COLORS[0] };
+    profileDraft.title.text = text;
+    const merged = Object.assign({}, getUsers()[currentUser] || {}, profileDraft);
+    profileApplyToCard(merged);
+  });
+
+  // Display name live preview
+  document.getElementById("profile-display-name").addEventListener("input", (e) => {
+    const val = e.target.value.trim();
+    const userRec = getUsers()[currentUser] || {};
+    document.getElementById("profile-card-name").textContent = val || userRec.username || currentUser;
+    const avatarEl = document.getElementById("profile-avatar-display");
+    if (!avatarEl.querySelector("img") && !(profileDraft.avatar)) {
+      avatarEl.textContent = (val[0] || (userRec.username || "?")[0]).toUpperCase();
+    }
+  });
+
+  // Username hint (validate on input)
+  document.getElementById("profile-username-input").addEventListener("input", (e) => {
+    const val = e.target.value.trim().toLowerCase();
+    const hintEl = document.getElementById("profile-username-hint");
+    if (!val) { hintEl.textContent = ""; return; }
+    if (!/^[a-z0-9_]{3,30}$/.test(val)) {
+      hintEl.textContent = "3–30 chars, letters, numbers, underscores only.";
+      hintEl.style.color = "var(--coral)";
+    } else if (val !== (getUsers()[currentUser]?.username || currentUser)) {
+      const taken = !!getUsers()[val];
+      hintEl.textContent = taken ? "Username already taken." : "Username available.";
+      hintEl.style.color = taken ? "var(--coral)" : "#4caf50";
+    } else {
+      hintEl.textContent = "";
+    }
+    document.getElementById("profile-card-username").textContent = "@" + val;
+  });
 
   document.getElementById("profile-row").addEventListener("click", () => {
     renderProfile();
@@ -1633,59 +1884,70 @@
   });
   document.getElementById("profile-back").addEventListener("click", () => showView("settings"));
 
-  document.getElementById("profile-save").addEventListener("click", () => {
-    const displayName = document.getElementById("profile-display-name").value.trim();
-    const bio = document.getElementById("profile-bio").value.trim();
+  document.getElementById("profile-save").addEventListener("click", async () => {
+    const newUsername  = document.getElementById("profile-username-input").value.trim().toLowerCase();
+    const displayName  = document.getElementById("profile-display-name").value.trim();
+    const bio          = document.getElementById("profile-bio").value.trim();
+    const titleText    = document.getElementById("profile-title-text").value.trim();
+
+    // Validate username
+    if (!newUsername || !/^[a-z0-9_]{3,30}$/.test(newUsername)) {
+      toast("Invalid username — 3–30 chars, letters/numbers/underscores."); return;
+    }
+
     const users = getUsers();
-    if (!users[currentUser]) return;
-    users[currentUser].displayName = displayName || users[currentUser].username;
-    users[currentUser].bio = bio;
+    const oldKey = currentUser;
+    const oldRec = users[oldKey] || {};
+
+    // Username change?
+    if (newUsername !== oldKey) {
+      if (users[newUsername]) { toast("Username already taken."); return; }
+      // Migrate: copy record under new key
+      users[newUsername] = Object.assign({}, oldRec, { username: newUsername });
+      delete users[oldKey];
+      // Migrate data
+      const oldDataRaw = localStorage.getItem(`gofitr_data_${oldKey}`);
+      if (oldDataRaw) {
+        localStorage.setItem(`gofitr_data_${newUsername}`, oldDataRaw);
+        localStorage.removeItem(`gofitr_data_${oldKey}`);
+      }
+      saveUsers(users);
+      // Update session key & currentUser
+      setSession(newUsername);
+      currentUser = newUsername;
+    }
+
+    // Save all fields
+    const rec = users[currentUser] || users[newUsername] || {};
+    rec.username    = newUsername;
+    rec.displayName = displayName || newUsername;
+    rec.bio         = bio;
+
+    // Title
+    if (titleText) {
+      const titleColor = profileDraft.title?.color ?? oldRec.title?.color ?? TITLE_COLORS[0];
+      rec.title = { text: titleText, color: titleColor };
+    } else {
+      rec.title = null;
+    }
+
+    // Avatar / border / banner from draft
+    if ("avatar" in profileDraft) rec.avatar = profileDraft.avatar;
+    if ("border" in profileDraft) rec.border = profileDraft.border;
+    if ("banner" in profileDraft) rec.banner = profileDraft.banner;
+
+    users[currentUser] = rec;
     saveUsers(users);
-    // Update header name
-    const shownName = users[currentUser].displayName;
+    profileDraft = {};
+
+    // Update Settings header
+    const shownName = rec.displayName;
     document.getElementById("account-username").textContent = shownName;
     const accUn = document.getElementById("accounts-username");
     if (accUn) accUn.textContent = shownName;
-    // Refresh card
-    document.getElementById("profile-card-name").textContent = shownName;
+
     toast("Profile saved");
     showView("settings");
-  });
-
-  document.getElementById("profile-avatar-btn").addEventListener("click", () => {
-    document.getElementById("profile-avatar-file").click();
-  });
-
-  document.getElementById("profile-avatar-file").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast("Image must be under 2 MB"); e.target.value = ""; return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result;
-      const users = getUsers();
-      if (!users[currentUser]) return;
-      users[currentUser].avatar = dataUrl;
-      saveUsers(users);
-      const avatarEl = document.getElementById("profile-avatar-display");
-      avatarEl.innerHTML = `<img src="${dataUrl}" alt="Avatar">`;
-      toast("Photo updated");
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  });
-
-  // Live card preview as user types display name
-  document.getElementById("profile-display-name").addEventListener("input", (e) => {
-    const val = e.target.value.trim();
-    const users = getUsers();
-    const userRec = users[currentUser] || {};
-    document.getElementById("profile-card-name").textContent = val || userRec.username || currentUser;
-    // Update avatar initial if no photo
-    const avatarEl = document.getElementById("profile-avatar-display");
-    if (!avatarEl.querySelector("img")) {
-      avatarEl.textContent = (val[0] || (userRec.username || "?")[0]).toUpperCase();
-    }
   });
 
   document.getElementById("statistics-row").addEventListener("click", () => {

@@ -1634,24 +1634,31 @@ textarea { resize: vertical; font-family: inherit; }
 .import-app-tag--connect { background: #fff3e0; color: #e65100; }
 
 /* ---- Profile page ---- */
-.profile-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: var(--surface);
-  border-radius: var(--radius);
-}
-.profile-avatar-btn {
+.profile-hero {
   position: relative;
+  background: var(--surface);
+}
+.profile-banner {
+  width: 100%;
+  height: 110px;
+  background: var(--accent);
+  background-size: cover;
+  background-position: center;
+  transition: background 0.2s;
+}
+.profile-hero-body {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 0 16px 16px;
+  margin-top: -32px;
+}
+.profile-avatar-wrap {
   flex-shrink: 0;
   width: 72px;
   height: 72px;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
   border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--surface);
 }
 .profile-avatar {
   width: 72px;
@@ -1665,28 +1672,23 @@ textarea { resize: vertical; font-family: inherit; }
   font-weight: 700;
   color: #fff;
   overflow: hidden;
+  box-sizing: border-box;
 }
 .profile-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+  display: block;
 }
-.profile-avatar-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  opacity: 0;
-  transition: opacity 0.15s;
+.profile-hero-info { flex: 1; min-width: 0; padding-bottom: 2px; }
+.profile-card-title {
+  margin: 0 0 1px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
-.profile-avatar-btn:hover .profile-avatar-overlay,
-.profile-avatar-btn:focus .profile-avatar-overlay { opacity: 1; }
-.profile-card-info { flex: 1; min-width: 0; }
 .profile-card-name {
   margin: 0;
   font-size: 1.05rem;
@@ -1697,6 +1699,62 @@ textarea { resize: vertical; font-family: inherit; }
 }
 .profile-card-username {
   margin: 2px 0 0;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--muted);
 }
+.profile-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.profile-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.profile-action-btn:hover { opacity: 0.85; }
+.profile-action-btn.active { outline: 2px solid var(--ink); outline-offset: 2px; }
+.profile-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+.profile-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.profile-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+.profile-swatch:hover { transform: scale(1.15); }
+.profile-swatch.selected { border-color: var(--ink); transform: scale(1.1); }
+.profile-banner-swatch {
+  width: 48px;
+  height: 30px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.profile-banner-swatch:hover { transform: scale(1.08); }
+.profile-banner-swatch.selected { border-color: var(--ink); }
