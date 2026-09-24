@@ -636,51 +636,32 @@
         <h1>Import Data</h1>
       </header>
       <div class="view-content">
-        <div class="panel">
-          <div class="panel-header"><h2>Restore Backup</h2></div>
-          <p class="subtitle">Restore a GoFitr JSON backup file.</p>
-          <div class="form-actions" style="justify-content:flex-start; gap:12px; margin-top:8px;">
-            <button class="btn btn-ghost" id="import-btn">Import Backup (JSON)</button>
-            <input type="file" id="import-file" accept="application/json" style="display:none;">
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h2>Import from Strong</h2></div>
-          <p class="subtitle">Export your workout history as a CSV from the Strong app, then select it below.</p>
-          <ol class="subtitle" style="padding-left:18px; margin-top:8px; line-height:1.8;">
-            <li>In Strong, go to Profile → Settings → Export</li>
-            <li>Save the CSV file to your device</li>
-            <li>Tap the button below and select the file</li>
-          </ol>
-          <div class="form-actions" style="justify-content:flex-start; margin-top:12px;">
-            <button class="btn btn-ghost" id="import-strong-btn">Import from Strong</button>
+        <p class="settings-section-label" style="margin-top:0;">From another app</p>
+        <div class="import-app-grid">
+          <button class="import-app-card" id="import-strong-btn">
+            <img class="import-app-icon" src="img/strong.png" alt="Strong">
+            <span class="import-app-name">Strong</span>
             <input type="file" id="import-strong-file" accept=".csv" style="display:none;">
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h2>Import from Hevy</h2></div>
-          <p class="subtitle">Export your workout history as a CSV from the Hevy app, then select it below.</p>
-          <ol class="subtitle" style="padding-left:18px; margin-top:8px; line-height:1.8;">
-            <li>In Hevy, go to Profile → Settings → Export Workouts (CSV)</li>
-            <li>Save the CSV file to your device</li>
-            <li>Tap the button below and select the file</li>
-          </ol>
-          <div class="form-actions" style="justify-content:flex-start; margin-top:12px;">
-            <button class="btn btn-ghost" id="import-hevy-btn">Import from Hevy</button>
+          </button>
+          <button class="import-app-card" id="import-hevy-btn">
+            <img class="import-app-icon" src="img/hevy.png" alt="Hevy">
+            <span class="import-app-name">Hevy</span>
             <input type="file" id="import-hevy-file" accept=".csv" style="display:none;">
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h2>Import from Liftoff</h2></div>
-          <p class="subtitle">Export your workout history as a CSV from the Liftoff app, then select it below.</p>
-          <ol class="subtitle" style="padding-left:18px; margin-top:8px; line-height:1.8;">
-            <li>In Liftoff, go to Settings → Import Data → Export Data</li>
-            <li>Save the CSV file to your device</li>
-            <li>Tap the button below and select the file</li>
-          </ol>
-          <div class="form-actions" style="justify-content:flex-start; margin-top:12px;">
-            <button class="btn btn-ghost" id="import-liftoff-btn">Import from Liftoff</button>
+          </button>
+          <button class="import-app-card" id="import-liftoff-btn">
+            <img class="import-app-icon" src="img/liftoff.png" alt="Liftoff">
+            <span class="import-app-name">Liftoff</span>
             <input type="file" id="import-liftoff-file" accept=".csv" style="display:none;">
+          </button>
+        </div>
+        <p class="subtitle" style="margin-top:4px; margin-bottom:20px;">Export your workout history as CSV from the app, then tap to import. Duplicates are skipped automatically.</p>
+
+        <p class="settings-section-label">GoFitr backup</p>
+        <div class="panel">
+          <p class="subtitle">Restore a GoFitr JSON backup file exported from this app.</p>
+          <div class="form-actions" style="justify-content:flex-start; gap:12px; margin-top:8px;">
+            <button class="btn btn-ghost" id="import-btn">Restore Backup (JSON)</button>
+            <input type="file" id="import-file" accept="application/json" style="display:none;">
           </div>
         </div>
       </div>

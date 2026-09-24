@@ -1573,3 +1573,39 @@ textarea { resize: vertical; font-family: inherit; }
 .settings-row-label { flex: 1; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
 .settings-row-arrow { color: var(--text-muted); font-size: 1.2rem; }
 .settings-row-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 20px; }
+
+/* Import app cards */
+.import-app-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.import-app-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 12px;
+  cursor: pointer;
+  width: calc(33.33% - 8px);
+  min-width: 88px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.import-app-card:active {
+  background: var(--hover-bg, rgba(0,0,0,0.06));
+}
+.import-app-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+.import-app-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
