@@ -191,9 +191,25 @@
   }
 
   // ---------- Navigation ----------
+  const MAIN_VIEWS = new Set(["dashboard","history","progress","weight","nutrition","settings"]);
+  let _prevView = null;
+
   function showView(view) {
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    document.getElementById("view-" + view).classList.add("active");
+    const prev = _prevView;
+    const goingDeep = !MAIN_VIEWS.has(view);
+    const comingBack = prev && !MAIN_VIEWS.has(prev) && MAIN_VIEWS.has(view);
+    const subToSub   = prev && !MAIN_VIEWS.has(prev) && !MAIN_VIEWS.has(view);
+    const animClass  = comingBack               ? "anim-slide-left"
+                     : (goingDeep || subToSub)  ? "anim-slide-right"
+                     : "anim-fade";
+    _prevView = view;
+
+    document.querySelectorAll(".view").forEach(v => {
+      v.classList.remove("active","anim-slide-right","anim-slide-left","anim-fade");
+    });
+    const el = document.getElementById("view-" + view);
+    el.classList.add("active", animClass);
+
     document.querySelectorAll(".nav-btn").forEach(b => {
       b.classList.toggle("active", b.dataset.view === view);
     });
@@ -1652,7 +1668,11 @@
   ];
 
   function applyTheme(id) {
-    document.documentElement.setAttribute("data-theme", id || "lime-dark");
+    const html = document.documentElement;
+    html.classList.add("theme-transitioning");
+    html.setAttribute("data-theme", id || "lime-dark");
+    clearTimeout(applyTheme._t);
+    applyTheme._t = setTimeout(() => html.classList.remove("theme-transitioning"), 420);
   }
 
   function resolveTheme() {

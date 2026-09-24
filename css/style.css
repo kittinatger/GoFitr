@@ -257,6 +257,104 @@ textarea {
   to { transform: rotate(360deg); }
 }
 
+/* ── Additional keyframes ─────────────────────────────────────────────── */
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(44px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes navTabPop {
+  0%   { transform: scale(0.78); }
+  55%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@keyframes checkPop {
+  0%   { transform: scale(0); opacity: 0; }
+  70%  { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes sectionFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Directional view transitions ────────────────────────────────────── */
+/* Override the default viewIn with direction-specific variants */
+.view.active.anim-slide-right { animation: slideInFromRight 0.3s var(--ease) both; }
+.view.active.anim-slide-left  { animation: slideInFromLeft  0.26s var(--ease) both; }
+.view.active.anim-fade        { animation: viewIn 0.38s var(--ease) both; }
+
+/* ── Theme color crossfade (class toggled briefly by applyTheme) ──────── */
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition:
+    background-color 0.38s var(--ease),
+    border-color 0.32s var(--ease),
+    color 0.28s var(--ease) !important;
+}
+
+/* ── Nav tab pop on activation ───────────────────────────────────────── */
+.nav-btn { transition: background 0.18s var(--ease), color 0.18s var(--ease), transform 0.14s var(--ease); }
+.nav-btn.active { animation: navTabPop 0.3s var(--ease) both; }
+
+/* ── Press states on all tappable elements ───────────────────────────── */
+.settings-row {
+  transition: background 0.12s var(--ease), transform 0.1s var(--ease);
+}
+.settings-row:not(.settings-row-disabled):active {
+  transform: scale(0.982);
+  background: rgba(255,255,255,0.07) !important;
+}
+
+.page-back-btn {
+  transition: color 0.18s var(--ease), border-color 0.18s var(--ease),
+              background 0.18s var(--ease), transform 0.12s var(--ease);
+}
+.page-back-btn:active { transform: scale(0.86) !important; }
+
+.profile-action-btn {
+  transition: background 0.18s var(--ease), border-color 0.18s var(--ease),
+              transform 0.13s var(--ease) !important;
+}
+.profile-action-btn:active { transform: scale(0.9) !important; }
+
+.social-icon-btn {
+  transition: border-color 0.18s var(--ease), transform 0.14s var(--ease);
+}
+
+/* Workout + weight + food cards press */
+.workout-card:active,
+.food-item:active,
+.weight-row:active { transform: scale(0.985) !important; }
+
+/* ── Checkmark pop (theme selection) ────────────────────────────────── */
+.theme-check.visible { animation: checkPop 0.28s var(--ease) both; }
+
+/* ── Section stagger inside sub-page .view-content ──────────────────── */
+/* Each direct child (a wrapper div containing a panel or label) fades up */
+.view.active .view-content > *:nth-child(1) { animation: sectionFadeUp 0.32s var(--ease) 0.04s both; }
+.view.active .view-content > *:nth-child(2) { animation: sectionFadeUp 0.32s var(--ease) 0.09s both; }
+.view.active .view-content > *:nth-child(3) { animation: sectionFadeUp 0.32s var(--ease) 0.14s both; }
+.view.active .view-content > *:nth-child(4) { animation: sectionFadeUp 0.32s var(--ease) 0.19s both; }
+.view.active .view-content > *:nth-child(5) { animation: sectionFadeUp 0.32s var(--ease) 0.24s both; }
+.view.active .view-content > *:nth-child(6) { animation: sectionFadeUp 0.32s var(--ease) 0.29s both; }
+.view.active .view-content > *:nth-child(7) { animation: sectionFadeUp 0.32s var(--ease) 0.34s both; }
+.view.active .view-content > *:nth-child(n+8) { animation: sectionFadeUp 0.32s var(--ease) 0.38s both; }
+
+/* ── Input focus glow ────────────────────────────────────────────────── */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lime) 18%, transparent);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
