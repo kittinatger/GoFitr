@@ -227,6 +227,7 @@
     });
     const el = document.getElementById("view-" + view);
     el.classList.add("active", animClass);
+    el.scrollTop = 0;
 
     document.querySelectorAll(".nav-btn").forEach(b => {
       b.classList.toggle("active", b.dataset.view === view);
