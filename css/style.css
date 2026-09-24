@@ -1609,3 +1609,13 @@ textarea { resize: vertical; font-family: inherit; }
   font-weight: 600;
   color: var(--text);
 }
+.import-app-card--soon {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+.import-app-icon--white-bg {
+  background: #fff;
+  padding: 6px;
+  box-sizing: border-box;
+}
