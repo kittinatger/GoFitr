@@ -1817,6 +1817,57 @@ textarea { resize: vertical; font-family: inherit; }
 .units-seg-btn { padding: 6px 14px; border-radius: 12px; border: none; background: var(--bg-elevated); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.18s, color 0.18s; }
 .units-seg-btn.active { background: var(--lime); color: var(--ink); }
 
+/* Disclaimer modal (first-login) */
+.disclaimer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0,0,0,0.72);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s var(--ease);
+}
+.disclaimer-modal-overlay.show { opacity: 1; pointer-events: auto; }
+.disclaimer-modal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 28px 24px;
+  max-width: 360px;
+  width: 100%;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  box-shadow: var(--shadow-lift);
+  transform: scale(0.92) translateY(12px);
+  transition: transform 0.3s var(--ease);
+}
+.disclaimer-modal-overlay.show .disclaimer-modal-card { transform: scale(1) translateY(0); }
+.disclaimer-modal-icon { display: flex; justify-content: center; margin-bottom: 14px; color: var(--lime); }
+.disclaimer-modal-title { font-size: 1.15rem; font-weight: 700; text-align: center; margin: 0 0 14px; }
+.disclaimer-modal-body { font-size: 0.88rem; line-height: 1.55; color: var(--text-muted); margin: 0 0 10px; }
+
+/* Contextual disclaimer banners */
+.disclaimer-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(215,255,61,0.06);
+  border: 1px solid rgba(215,255,61,0.18);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.disclaimer-banner--standalone {
+  margin: 12px 16px 8px;
+}
+.disclaimer-banner-icon { flex-shrink: 0; width: 15px; height: 15px; margin-top: 2px; color: var(--lime); opacity: 0.7; }
+
 /* Mini calendar */
 .mini-cal { background: var(--bg-card); border-radius: var(--radius-sm); padding: 16px; }
 .mini-cal-header { text-align: center; font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 12px; }

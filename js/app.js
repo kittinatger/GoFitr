@@ -74,6 +74,7 @@
     macroDisplay: "g",
     dateFormat: "dmy",
     timeFormat: "24h",
+    healthDisclaimerShown: false,
   });
 
   let currentUser = null;
@@ -1898,6 +1899,11 @@
       container.appendChild(wrap);
     });
 
+    const note = document.createElement("div");
+    note.style.cssText = "padding:0 16px 8px;";
+    note.innerHTML = `<div class="disclaimer-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="disclaimer-banner-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Blood glucose and body measurements logged here are personal records only and are not interpreted medically. Consult your healthcare provider if readings concern you.</span></div>`;
+    container.appendChild(note);
+
     const spacer = document.createElement("div");
     spacer.style.height = "16px";
     container.appendChild(spacer);
@@ -1974,6 +1980,33 @@
     calWrap.style.cssText = "padding:16px;";
     calWrap.innerHTML = buildMiniCal(current);
     container.appendChild(calWrap);
+  }
+
+  function renderHealthDisclaimer() {
+    const container = document.getElementById("health-disclaimer-content");
+    if (!container) return;
+    container.innerHTML = `
+      <div class="view-content">
+        <div class="panel" style="margin-bottom:16px;">
+          <p style="font-size:1rem;font-weight:700;margin:0 0 10px;">Health &amp; Medical Disclaimer</p>
+          <p class="subtitle" style="margin:0 0 10px;">Last updated: September 2026</p>
+          <p class="subtitle" style="margin:0 0 12px;">GoFitr is a general-purpose fitness and nutrition tracking tool designed for informational and personal record-keeping purposes only. It is <strong>not</strong> a medical device, clinical tool, or substitute for professional medical advice.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Not Medical Advice.</strong> Nothing in GoFitr — including calorie estimates, macro targets, weight trends, blood glucose readings, or any other data — constitutes medical advice, diagnosis, or treatment. Always consult a qualified healthcare professional before making changes to your diet, exercise routine, or health management plan.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Calorie &amp; Nutrition Data.</strong> Calorie and nutrient values are estimates based on publicly available food databases. Individual metabolism, preparation methods, and portion sizes vary. Do not use GoFitr as your sole source of nutritional guidance, especially if you have a medical condition such as diabetes, an eating disorder, heart disease, or kidney disease.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Exercise &amp; Physical Activity.</strong> Exercise tracking is for logging purposes only. Consult a doctor or certified fitness professional before beginning any new exercise programme, particularly if you have cardiovascular conditions, joint problems, or any chronic illness.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Blood Glucose &amp; Health Metrics.</strong> Any health metrics you log (blood glucose, body measurements, etc.) are personal records for your reference only. GoFitr does not analyse, interpret, or flag these values medically. If your readings are outside normal ranges, contact your healthcare provider immediately.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Weight Management.</strong> Weight goals set in GoFitr are personal targets only. Extremely low-calorie diets or aggressive weight-loss strategies can be dangerous. Seek professional guidance for any medically supervised weight-management programme.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Data Accuracy.</strong> GoFitr relies on data you enter manually. We cannot guarantee the accuracy of third-party food databases. Always cross-reference critical nutritional information with verified sources.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Emergency Situations.</strong> GoFitr is not designed for emergency health situations. If you are experiencing a medical emergency, call your local emergency services immediately.</p>
+          <p class="subtitle" style="margin:0 0 12px;"><strong>Age Restriction.</strong> GoFitr is intended for users aged 16 and over. If you are younger, please use the app only with parental or guardian supervision.</p>
+          <p class="subtitle" style="margin:0;">By using GoFitr you acknowledge that you have read and understood this disclaimer and agree to use the app at your own risk.</p>
+        </div>
+        <div class="panel" style="margin-bottom:16px;">
+          <p style="font-weight:600;margin:0 0 6px;">Questions or Concerns?</p>
+          <p class="subtitle" style="margin:0;">If you have questions about your health data or GoFitr's features, contact us at <a href="mailto:kittinatg@gmail.com" style="color:var(--lime);">kittinatg@gmail.com</a>.</p>
+        </div>
+      </div>
+    `;
   }
 
   function renderOtherPrefs() {
@@ -2443,6 +2476,14 @@
   document.getElementById("calendar-back").addEventListener("click", () => showView("settings"));
   document.getElementById("other-prefs-row").addEventListener("click", () => { renderOtherPrefs(); showView("other-prefs"); });
   document.getElementById("other-prefs-back").addEventListener("click", () => showView("settings"));
+  document.getElementById("health-disclaimer-row").addEventListener("click", () => { renderHealthDisclaimer(); showView("health-disclaimer"); });
+  document.getElementById("health-disclaimer-back").addEventListener("click", () => showView("settings"));
+
+  document.getElementById("disclaimer-modal-accept").addEventListener("click", () => {
+    data.healthDisclaimerShown = true;
+    saveData();
+    document.getElementById("disclaimer-modal").classList.remove("show");
+  });
 
   function goalInputHandler(field, inputId) {
     document.getElementById(inputId).addEventListener("change", (e) => {
@@ -2606,6 +2647,10 @@
     renderSettings();
     nutritionViewDate = todayStr();
     renderNutrition();
+
+    if (!data.healthDisclaimerShown) {
+      setTimeout(() => document.getElementById("disclaimer-modal").classList.add("show"), 400);
+    }
   }
 
   function setAuthMode(mode) {
