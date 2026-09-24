@@ -1636,19 +1636,18 @@ textarea { resize: vertical; font-family: inherit; }
 /* ---- Profile page ---- */
 .profile-hero {
   position: relative;
-  background: var(--surface);
+  background: var(--bg-card);
 }
 .profile-banner {
   width: 100%;
   height: 110px;
-  background: linear-gradient(135deg, var(--accent), #42a5f5);
+  background: linear-gradient(135deg, #1a237e, #42a5f5);
   background-size: cover;
   background-position: center;
   transition: background 0.2s;
 }
 .profile-banner--none {
-  background: var(--surface-2, var(--surface));
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--bg-elevated) !important;
 }
 .profile-hero-body {
   display: flex;
@@ -1662,19 +1661,19 @@ textarea { resize: vertical; font-family: inherit; }
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  box-shadow: 0 0 0 3px var(--surface);
+  box-shadow: 0 0 0 3px var(--bg-card);
 }
 .profile-avatar {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--lime);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.6rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -1697,6 +1696,7 @@ textarea { resize: vertical; font-family: inherit; }
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1704,7 +1704,7 @@ textarea { resize: vertical; font-family: inherit; }
 .profile-card-username {
   margin: 2px 0 0;
   font-size: 0.82rem;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .profile-action-grid {
   display: grid;
@@ -1718,19 +1718,20 @@ textarea { resize: vertical; font-family: inherit; }
   justify-content: center;
   gap: 7px;
   padding: 10px 14px;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 99px;
   font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.profile-action-btn:hover { background: var(--surface-2, var(--surface)); }
+.profile-action-btn svg { stroke: var(--text); }
+.profile-action-btn:hover { background: var(--bg-card); border-color: var(--border-strong); }
 .profile-action-btn.active {
-  background: var(--surface-2, var(--surface));
-  border-color: var(--ink);
+  background: var(--bg-card);
+  border-color: var(--text);
 }
 .profile-picker {
   display: flex;
@@ -1754,7 +1755,7 @@ textarea { resize: vertical; font-family: inherit; }
   transition: transform 0.1s;
 }
 .profile-swatch:hover { transform: scale(1.15); }
-.profile-swatch.selected { border-color: var(--ink); transform: scale(1.1); }
+.profile-swatch.selected { border-color: var(--text); transform: scale(1.1); }
 .profile-banner-swatch {
   width: 48px;
   height: 30px;
@@ -1765,4 +1766,4 @@ textarea { resize: vertical; font-family: inherit; }
   transition: transform 0.1s;
 }
 .profile-banner-swatch:hover { transform: scale(1.08); }
-.profile-banner-swatch.selected { border-color: var(--ink); transform: scale(1.05); }
+.profile-banner-swatch.selected { border-color: var(--text); transform: scale(1.05); }

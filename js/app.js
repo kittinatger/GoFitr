@@ -1659,26 +1659,26 @@
     const wrapEl = document.getElementById("profile-avatar-wrap");
     if (rec.border && rec.border !== "none") {
       if (rec.border === "rainbow") {
-        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--surface);background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06) border-box;border:3px solid transparent;box-sizing:border-box;`;
+        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--bg-card);background:linear-gradient(var(--bg-card),var(--bg-card)) padding-box,linear-gradient(135deg,#f06,#fa0,#0f9,#09f,#f06) border-box;border:3px solid transparent;box-sizing:border-box;`;
       } else {
-        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--surface);border:${rec.border};box-sizing:border-box;`;
+        wrapEl.style.cssText = `width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--bg-card);border:${rec.border};box-sizing:border-box;`;
       }
     } else {
-      wrapEl.style.cssText = "width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--surface);";
+      wrapEl.style.cssText = "width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px var(--bg-card);";
     }
 
     // Banner
     const bannerEl = document.getElementById("profile-banner-display");
     if (rec.banner) {
-      bannerEl.classList.remove("profile-banner--none");
       if (rec.banner.startsWith("data:")) {
         bannerEl.style.background = `url(${rec.banner}) center/cover no-repeat`;
       } else {
         bannerEl.style.background = rec.banner;
       }
+      bannerEl.classList.remove("profile-banner--none");
     } else {
+      bannerEl.style.removeProperty("background");
       bannerEl.classList.add("profile-banner--none");
-      bannerEl.style.background = "";
     }
 
     // Title
@@ -1850,8 +1850,8 @@
   document.getElementById("profile-banner-clear-btn").addEventListener("click", () => {
     profileDraft.banner = null;
     const bannerEl = document.getElementById("profile-banner-display");
+    bannerEl.style.removeProperty("background");
     bannerEl.classList.add("profile-banner--none");
-    bannerEl.style.background = "";
     profileBuildSwatches(Object.assign({}, getUsers()[currentUser] || {}, profileDraft));
   });
   document.getElementById("profile-banner-file").addEventListener("change", (e) => {
