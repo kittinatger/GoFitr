@@ -54,7 +54,7 @@
     savedFoods: [],  // { id, name, brand, kcal100, protein100, carbs100, fat100, savedAt }
     savedMeals: [],  // { id, name, items: [{name, calories, protein, carbs, fat}], createdAt }
     theme: "lime-dark",
-    themeAuto: false,
+    themeAuto: true,
     themeDark: "lime-dark",
     themeLight: "lime-light",
   });
@@ -1610,12 +1610,27 @@
 
   // ---------- Profile sub-page ----------
   // ── Theme catalogue ────────────────────────────────────────────────────
-  // Each entry: { id, name, bg (swatch left), accent (swatch right), isLight, category }
+  // THEME_FAMILIES: shown when Auto is ON — picking one sets both dark+light slots.
+  // Special themes have no light variant; picking one sets both slots to the dark id.
+  const THEME_FAMILIES = [
+    { id:"lime",       name:"Lime",        dark:"lime-dark",       light:"lime-light",      bg:"#0b0c08", accent:"#d7ff3d", category:"Color Themes" },
+    { id:"cherry",     name:"Cherry",      dark:"cherry-dark",     light:"cherry-light",    bg:"#100808", accent:"#ff4d6d", category:"Color Themes" },
+    { id:"blueberry",  name:"Blueberry",   dark:"blueberry-dark",  light:"blueberry-light", bg:"#080b12", accent:"#7b9fff", category:"Color Themes" },
+    { id:"aqua",       name:"Aqua",        dark:"aqua-dark",       light:"aqua-light",      bg:"#08100f", accent:"#00e5c8", category:"Color Themes" },
+    { id:"amber",      name:"Amber",       dark:"amber-dark",      light:"amber-light",     bg:"#100d04", accent:"#ffb800", category:"Color Themes" },
+    { id:"rose",       name:"Rose",        dark:"rose-dark",       light:"rose-light",      bg:"#100810", accent:"#ff70c0", category:"Color Themes" },
+    { id:"grape",      name:"Grape",       dark:"grape-dark",      light:"grape-light",     bg:"#0c0810", accent:"#c084fc", category:"Color Themes" },
+    { id:"mono",       name:"Monochrome",  dark:"mono-dark",       light:"mono-light",      bg:"#0a0a0a", accent:"#e0e0e0", category:"Color Themes" },
+    { id:"retro",      name:"Retro",       dark:"retro",           light:"retro",           bg:"#1a1800", accent:"#f5d000", category:"Special" },
+    { id:"neon",       name:"Neon Rider",  dark:"neon",            light:"neon",            bg:"#0a0015", accent:"#ff00ff", category:"Special" },
+    { id:"midnight",   name:"Midnight",    dark:"midnight",        light:"midnight",        bg:"#050508", accent:"#00b4ff", category:"Special" },
+    { id:"forest",     name:"Forest",      dark:"forest",          light:"forest",          bg:"#080f08", accent:"#70e060", category:"Special" },
+  ];
+
+  // THEMES: shown when Auto is OFF — individual dark/light choices.
   const THEMES = [
-    // Default
-    { id:"lime-dark",       name:"Lime Dark",       bg:"#0b0c08", accent:"#d7ff3d", category:"Default" },
-    { id:"lime-light",      name:"Lime Light",      bg:"#f5f8e8", accent:"#8aaa00", isLight:true, category:"Default" },
-    // Color Themes
+    { id:"lime-dark",       name:"Lime Dark",       bg:"#0b0c08", accent:"#d7ff3d", category:"Color Themes" },
+    { id:"lime-light",      name:"Lime Light",      bg:"#f5f8e8", accent:"#8aaa00", isLight:true, category:"Color Themes" },
     { id:"cherry-dark",     name:"Cherry Dark",     bg:"#100808", accent:"#ff4d6d", category:"Color Themes" },
     { id:"cherry-light",    name:"Cherry Light",    bg:"#fff0f0", accent:"#cc1a35", isLight:true, category:"Color Themes" },
     { id:"blueberry-dark",  name:"Blueberry Dark",  bg:"#080b12", accent:"#7b9fff", category:"Color Themes" },
@@ -1630,7 +1645,6 @@
     { id:"grape-light",     name:"Grape Light",     bg:"#f5f0ff", accent:"#7c22d0", isLight:true, category:"Color Themes" },
     { id:"mono-dark",       name:"Monochrome Dark", bg:"#0a0a0a", accent:"#e0e0e0", category:"Color Themes" },
     { id:"mono-light",      name:"Monochrome Light",bg:"#f5f5f5", accent:"#333333", isLight:true, category:"Color Themes" },
-    // Special
     { id:"retro",    name:"Retro",      bg:"#1a1800", accent:"#f5d000", category:"Special" },
     { id:"neon",     name:"Neon Rider", bg:"#0a0015", accent:"#ff00ff", category:"Special" },
     { id:"midnight", name:"Midnight",   bg:"#050508", accent:"#00b4ff", category:"Special" },
@@ -1647,13 +1661,45 @@
     return (h >= 6 && h < 20) ? (data.themeLight || "lime-light") : (data.themeDark || "lime-dark");
   }
 
+  function buildThemeSwatch(id, bg, accent, isLight) {
+    const stroke = isLight ? ` stroke="#ccc" stroke-width="1"` : "";
+    return `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+      <clipPath id="lh-${id}"><path d="M18,18 m-18,0 a18,18 0 0,1 36,0 z"/></clipPath>
+      <clipPath id="rh-${id}"><path d="M18,18 m-18,0 a18,18 0 0,0 36,0 z"/></clipPath>
+      <circle cx="18" cy="18" r="18" clip-path="url(#lh-${id})" fill="${bg}"/>
+      <circle cx="18" cy="18" r="18" clip-path="url(#rh-${id})" fill="${accent}"/>
+      <circle cx="18" cy="18" r="17.5" fill="none"${stroke}/>
+    </svg>`;
+  }
+
+  function buildThemeRows(items, isActiveFn, onClickFn, container) {
+    const panelEl = document.createElement("div");
+    panelEl.className = "panel panel-rows";
+    items.forEach((item, idx) => {
+      if (idx > 0) {
+        const div = document.createElement("div");
+        div.className = "settings-row-divider";
+        panelEl.appendChild(div);
+      }
+      const row = document.createElement("div");
+      row.className = "settings-row";
+      row.style.cursor = "pointer";
+      const isActive = isActiveFn(item);
+      row.innerHTML = `
+        <span class="settings-row-icon theme-swatch">${buildThemeSwatch(item.id, item.bg, item.accent, item.isLight)}</span>
+        <span class="settings-row-label">${item.name}</span>
+        <svg class="theme-check ${isActive ? "visible" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      row.addEventListener("click", () => onClickFn(item));
+      panelEl.appendChild(row);
+    });
+    container.appendChild(panelEl);
+  }
+
   function renderThemes() {
     const container = document.getElementById("themes-content");
     container.innerHTML = "";
 
-    const activeId = resolveTheme();
-
-    // Auto toggle row
+    // Auto toggle
     const autoSection = document.createElement("div");
     autoSection.style.cssText = "padding:16px 16px 0;";
     const autoPanel = document.createElement("div");
@@ -1670,75 +1716,53 @@
       </label>`;
     autoSection.appendChild(autoPanel);
     container.appendChild(autoSection);
-
     document.getElementById("theme-auto-toggle").addEventListener("change", (e) => {
       data.themeAuto = e.target.checked;
+      // When switching to manual, seed data.theme from current resolved theme
+      if (!data.themeAuto) data.theme = resolveTheme();
       saveData();
       applyTheme(resolveTheme());
-      // Re-render to update checkmarks
       renderThemes();
     });
 
-    // Theme sections
-    const categories = ["Default", "Color Themes", "Special"];
-    for (const cat of categories) {
-      const items = THEMES.filter(t => t.category === cat);
-      const sec = document.createElement("div");
-      sec.style.cssText = "padding:16px 16px 0;";
-      sec.innerHTML = `<p class="settings-section-label" style="margin-bottom:8px;">${cat}</p>`;
-      const panelEl = document.createElement("div");
-      panelEl.className = "panel panel-rows";
-
-      items.forEach((theme, idx) => {
-        if (idx > 0) {
-          const div = document.createElement("div");
-          div.className = "settings-row-divider";
-          panelEl.appendChild(div);
-        }
-        const row = document.createElement("div");
-        row.className = "settings-row";
-        row.style.cursor = "pointer";
-
-        // Determine if this theme is "active" for checkmark purposes
-        let isActive = false;
-        if (data.themeAuto) {
-          isActive = theme.id === data.themeDark || theme.id === data.themeLight;
-        } else {
-          isActive = theme.id === (data.theme || "lime-dark");
-        }
-
-        // Split circle swatch SVG
-        const stroke = theme.isLight ? ` stroke="#ccc" stroke-width="1"` : "";
-        const swatchSvg = `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-          <clipPath id="lh-${theme.id}"><path d="M18,18 m-18,0 a18,18 0 0,1 36,0 z"/></clipPath>
-          <clipPath id="rh-${theme.id}"><path d="M18,18 m-18,0 a18,18 0 0,0 36,0 z"/></clipPath>
-          <circle cx="18" cy="18" r="18" clip-path="url(#lh-${theme.id})" fill="${theme.bg}"/>
-          <circle cx="18" cy="18" r="18" clip-path="url(#rh-${theme.id})" fill="${theme.accent}"/>
-          <circle cx="18" cy="18" r="17.5" fill="none"${stroke}/>
-        </svg>`;
-
-        row.innerHTML = `
-          <span class="settings-row-icon theme-swatch">${swatchSvg}</span>
-          <span class="settings-row-label">${theme.name}</span>
-          <svg class="theme-check ${isActive ? "visible" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-
-        row.addEventListener("click", () => {
-          if (data.themeAuto) {
-            if (theme.isLight) { data.themeLight = theme.id; }
-            else { data.themeDark = theme.id; }
-          } else {
-            data.theme = theme.id;
-          }
-          saveData();
-          applyTheme(resolveTheme());
-          renderThemes();
-        });
-
-        panelEl.appendChild(row);
-      });
-
-      sec.appendChild(panelEl);
-      container.appendChild(sec);
+    if (data.themeAuto) {
+      // AUTO mode: show theme families (one row per colour family)
+      // Active = family whose dark matches data.themeDark
+      const isActiveFn = (f) => f.dark === (data.themeDark || "lime-dark");
+      const onClickFn = (f) => {
+        data.themeDark  = f.dark;
+        data.themeLight = f.light;
+        saveData();
+        applyTheme(resolveTheme());
+        renderThemes();
+      };
+      const categories = ["Color Themes", "Special"];
+      for (const cat of categories) {
+        const items = THEME_FAMILIES.filter(f => f.category === cat);
+        const sec = document.createElement("div");
+        sec.style.cssText = "padding:16px 16px 0;";
+        sec.innerHTML = `<p class="settings-section-label" style="margin-bottom:8px;">${cat}</p>`;
+        buildThemeRows(items, isActiveFn, onClickFn, sec);
+        container.appendChild(sec);
+      }
+    } else {
+      // MANUAL mode: show all individual dark/light themes
+      const isActiveFn = (t) => t.id === (data.theme || "lime-dark");
+      const onClickFn = (t) => {
+        data.theme = t.id;
+        saveData();
+        applyTheme(t.id);
+        renderThemes();
+      };
+      const categories = ["Color Themes", "Special"];
+      for (const cat of categories) {
+        const items = THEMES.filter(t => t.category === cat);
+        const sec = document.createElement("div");
+        sec.style.cssText = "padding:16px 16px 0;";
+        sec.innerHTML = `<p class="settings-section-label" style="margin-bottom:8px;">${cat}</p>`;
+        buildThemeRows(items, isActiveFn, onClickFn, sec);
+        container.appendChild(sec);
+      }
     }
 
     // Disclaimer
