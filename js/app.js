@@ -43,6 +43,9 @@
     bodyWeight: [], // { id, date, weight }
     nutrition: [],  // { id, date, meal, name, calories, protein, carbs, fat }
     calorieGoal: 2000,
+    proteinGoal: 0,
+    carbsGoal: 0,
+    fatGoal: 0,
     unit: "kg",
     customFoods: [], // { id, name, kcal100, protein100, carbs100, fat100, createdAt }
     savedFoods: [],  // { id, name, brand, kcal100, protein100, carbs100, fat100, savedAt }
@@ -192,6 +195,7 @@
     if (view === "progress") renderProgress();
     if (view === "weight") renderWeight();
     if (view === "nutrition") renderNutrition();
+    if (view === "settings") renderSettings();
     if (view === "log") prepLogForm();
   }
 
@@ -702,9 +706,15 @@
     const goal = data.calorieGoal || 2000;
     document.getElementById("stat-calories").textContent = Math.round(totalCalories);
     document.getElementById("calorie-ring-label").textContent = `of ${goal} kcal`;
-    document.getElementById("stat-protein").innerHTML = `${Math.round(totalProtein)}<span class="stat-unit">g</span>`;
-    document.getElementById("stat-carbs").innerHTML = `${Math.round(totalCarbs)}<span class="stat-unit">g</span>`;
-    document.getElementById("stat-fat").innerHTML = `${Math.round(totalFat)}<span class="stat-unit">g</span>`;
+
+    function macroHtml(value, goalVal) {
+      const rounded = Math.round(value);
+      if (goalVal > 0) return `${rounded}<span class="stat-unit">/ ${goalVal}g</span>`;
+      return `${rounded}<span class="stat-unit">g</span>`;
+    }
+    document.getElementById("stat-protein").innerHTML = macroHtml(totalProtein, data.proteinGoal);
+    document.getElementById("stat-carbs").innerHTML   = macroHtml(totalCarbs,   data.carbsGoal);
+    document.getElementById("stat-fat").innerHTML     = macroHtml(totalFat,     data.fatGoal);
 
     const ring = document.getElementById("calorie-ring");
     const circumference = 2 * Math.PI * 52;
@@ -1341,19 +1351,16 @@
     }
   });
 
-  document.getElementById("calorie-goal-input").addEventListener("change", (e) => {
-    const value = parseFloat(e.target.value);
-    data.calorieGoal = isNaN(value) || value <= 0 ? 2000 : value;
-    e.target.value = data.calorieGoal;
-    saveData();
-    toast("Calorie goal updated");
-  });
 
   // ---------- Settings ----------
-  function syncUnitRadios() {
+  function renderSettings() {
     document.querySelectorAll('input[name="unit"]').forEach(radio => {
       radio.checked = radio.value === data.unit;
     });
+    document.getElementById("calorie-goal-input").value = data.calorieGoal || 2000;
+    document.getElementById("protein-goal-input").value = data.proteinGoal || 0;
+    document.getElementById("carbs-goal-input").value = data.carbsGoal || 0;
+    document.getElementById("fat-goal-input").value = data.fatGoal || 0;
   }
 
   document.querySelectorAll('input[name="unit"]').forEach(radio => {
@@ -1365,6 +1372,19 @@
       }
     });
   });
+
+  function goalInputHandler(field, inputId) {
+    document.getElementById(inputId).addEventListener("change", (e) => {
+      const value = parseFloat(e.target.value);
+      data[field] = isNaN(value) || value < 0 ? 0 : value;
+      e.target.value = data[field];
+      saveData();
+    });
+  }
+  goalInputHandler("calorieGoal", "calorie-goal-input");
+  goalInputHandler("proteinGoal", "protein-goal-input");
+  goalInputHandler("carbsGoal", "carbs-goal-input");
+  goalInputHandler("fatGoal", "fat-goal-input");
 
   document.getElementById("export-btn").addEventListener("click", () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -1401,7 +1421,7 @@
   });
 
   document.getElementById("clear-btn").addEventListener("click", async () => {
-    const ok = await showConfirm("This will permanently delete all workouts and body weight entries. Continue?");
+    const ok = await showConfirm("This will permanently delete all your data (workouts, nutrition logs, body weight, custom foods, saved meals). Continue?");
     if (!ok) return;
     data = defaultData();
     saveData();
@@ -1432,9 +1452,8 @@
     document.getElementById("sets-container").innerHTML = "";
     addSetRow();
     prepLogForm();
-    syncUnitRadios();
+    renderSettings();
     nutritionViewDate = todayStr();
-    document.getElementById("calorie-goal-input").value = data.calorieGoal || 2000;
     renderNutrition();
   }
 
