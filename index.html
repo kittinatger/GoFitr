@@ -380,14 +380,61 @@
         <p class="subtitle">Preferences and data management</p>
       </header>
 
-      <div class="panel">
-        <div class="panel-header"><h2>Account</h2></div>
-        <p class="subtitle">Logged in as <strong id="account-username"></strong></p>
-        <div class="form-actions" style="justify-content:flex-start;">
-          <button class="btn btn-ghost" id="logout-btn">Log Out</button>
+      <!-- Enjoying GoFitr? -->
+      <p class="settings-section-label">Enjoying GoFitr?</p>
+      <div class="panel panel-rows">
+        <a class="settings-row" href="https://github.com/KittinatG/GoFitr" target="_blank" rel="noopener">
+          <span class="settings-row-icon">⭐</span> <span class="settings-row-label">Star on GitHub</span>
+          <span class="settings-row-arrow">›</span>
+        </a>
+        <a class="settings-row" href="mailto:timelabs.2023@gmail.com?subject=GoFitr%20Feedback" target="_blank" rel="noopener">
+          <span class="settings-row-icon">📢</span> <span class="settings-row-label">Send Feedback</span>
+          <span class="settings-row-arrow">›</span>
+        </a>
+      </div>
+
+      <!-- User -->
+      <p class="settings-section-label">User</p>
+      <div class="panel panel-rows">
+        <div class="settings-row settings-row-disabled">
+          <span class="settings-row-icon">👤</span>
+          <span class="settings-row-label">Profile <span class="coming-soon-tag">Soon</span></span>
+          <span class="settings-row-arrow">›</span>
         </div>
       </div>
 
+      <div class="panel">
+        <div class="panel-header"><h2>Account</h2></div>
+        <p class="subtitle">Logged in as <strong id="account-username"></strong></p>
+        <div class="form-actions" style="justify-content:flex-start;gap:12px;">
+          <button class="btn btn-ghost" id="change-password-btn">Change Password</button>
+          <button class="btn btn-ghost" id="logout-btn">Log Out</button>
+        </div>
+        <div id="change-password-form" style="display:none;margin-top:16px;">
+          <div class="form-row">
+            <div class="form-field grow">
+              <label for="cp-current">Current password</label>
+              <input type="password" id="cp-current" autocomplete="current-password">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field grow">
+              <label for="cp-new">New password</label>
+              <input type="password" id="cp-new" autocomplete="new-password">
+            </div>
+            <div class="form-field grow">
+              <label for="cp-confirm">Confirm</label>
+              <input type="password" id="cp-confirm" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-actions" style="justify-content:flex-start;">
+            <button class="btn btn-primary" id="change-password-submit">Update Password</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferences -->
+      <p class="settings-section-label">Preferences</p>
       <div class="panel">
         <div class="panel-header"><h2>Units</h2></div>
         <div class="radio-group">
@@ -397,7 +444,61 @@
       </div>
 
       <div class="panel">
-        <div class="panel-header"><h2>Nutrition Goals</h2></div>
+        <div class="panel-header"><h2>Week Starts On</h2></div>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="weekStart" value="monday" checked> Monday</label>
+          <label class="radio-option"><input type="radio" name="weekStart" value="sunday"> Sunday</label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Meal Labels</h2></div>
+        <p class="subtitle">Rename your meal slots. Leave blank to keep the default name.</p>
+        <div class="form-row">
+          <div class="form-field grow">
+            <label for="meal-label-breakfast">Breakfast</label>
+            <input type="text" id="meal-label-breakfast" placeholder="Breakfast" maxlength="30">
+          </div>
+          <div class="form-field grow">
+            <label for="meal-label-lunch">Lunch</label>
+            <input type="text" id="meal-label-lunch" placeholder="Lunch" maxlength="30">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field grow">
+            <label for="meal-label-dinner">Dinner</label>
+            <input type="text" id="meal-label-dinner" placeholder="Dinner" maxlength="30">
+          </div>
+          <div class="form-field grow">
+            <label for="meal-label-snacks">Snacks</label>
+            <input type="text" id="meal-label-snacks" placeholder="Snacks" maxlength="30">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-rows">
+        <div class="settings-row settings-row-disabled">
+          <span class="settings-row-icon">🎨</span>
+          <span class="settings-row-label">Themes <span class="coming-soon-tag">Soon</span></span>
+          <span class="settings-row-arrow">›</span>
+        </div>
+        <div class="settings-row-divider"></div>
+        <div class="settings-row settings-row-disabled">
+          <span class="settings-row-icon">🌐</span>
+          <span class="settings-row-label">Language <span class="coming-soon-tag">Soon</span></span>
+          <span class="settings-row-arrow">›</span>
+        </div>
+        <div class="settings-row-divider"></div>
+        <div class="settings-row settings-row-disabled">
+          <span class="settings-row-icon">🔔</span>
+          <span class="settings-row-label">Notifications <span class="coming-soon-tag">Soon</span></span>
+          <span class="settings-row-arrow">›</span>
+        </div>
+      </div>
+
+      <!-- Nutrition Goals -->
+      <p class="settings-section-label">Nutrition Goals</p>
+      <div class="panel">
         <p class="subtitle">Daily targets — leave macros at 0 to skip tracking them.</p>
         <div class="form-row">
           <div class="form-field grow">
@@ -419,10 +520,34 @@
             <input type="number" id="fat-goal-input" min="0" step="1">
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-field grow">
+            <label for="weight-goal-input" id="weight-goal-label">Target body weight (kg)</label>
+            <input type="number" id="weight-goal-input" min="0" step="0.5">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field grow" style="opacity:0.5;">
+            <label>Water goal (ml) <span class="coming-soon-tag">Soon</span></label>
+            <input type="number" disabled placeholder="e.g. 2500" min="0" step="100">
+          </div>
+          <div class="form-field grow" style="opacity:0.5;">
+            <label>Fiber goal (g) <span class="coming-soon-tag">Soon</span></label>
+            <input type="number" disabled placeholder="e.g. 30" min="0" step="1">
+          </div>
+        </div>
+        <div class="panel-rows" style="margin-top:8px;">
+          <div class="settings-row settings-row-disabled" style="padding:10px 0;">
+            <span class="settings-row-icon">🧮</span>
+            <span class="settings-row-label">TDEE Calculator <span class="coming-soon-tag">Soon</span></span>
+            <span class="settings-row-arrow">›</span>
+          </div>
+        </div>
       </div>
 
+      <!-- Data -->
+      <p class="settings-section-label">Data</p>
       <div class="panel">
-        <div class="panel-header"><h2>Data</h2></div>
         <p class="subtitle">Everything is stored locally in your browser — nothing leaves your device. Export regularly as a backup.</p>
         <div class="form-actions" style="justify-content:flex-start; gap:12px;">
           <button class="btn btn-ghost" id="export-btn">Export Data (JSON)</button>
@@ -431,6 +556,43 @@
           <button class="btn btn-danger" id="clear-btn">Clear All Data</button>
         </div>
       </div>
+
+      <!-- Resources -->
+      <p class="settings-section-label">Resources</p>
+      <div class="panel panel-rows">
+        <a class="settings-row" href="https://github.com/KittinatG/GoFitr#readme" target="_blank" rel="noopener">
+          <span class="settings-row-icon">❓</span> <span class="settings-row-label">Help &amp; FAQ</span>
+          <span class="settings-row-arrow">›</span>
+        </a>
+        <div class="settings-row-divider"></div>
+        <a class="settings-row" href="https://github.com/KittinatG/GoFitr/releases" target="_blank" rel="noopener">
+          <span class="settings-row-icon">🆕</span> <span class="settings-row-label">What's New</span>
+          <span class="settings-row-arrow">›</span>
+        </a>
+      </div>
+
+      <!-- Legal -->
+      <p class="settings-section-label">Legal</p>
+      <div class="panel panel-rows">
+        <a class="settings-row" href="https://github.com/KittinatG/GoFitr/blob/master/PRIVACY.md" target="_blank" rel="noopener">
+          <span class="settings-row-icon">🔒</span> <span class="settings-row-label">Privacy Policy</span>
+          <span class="settings-row-arrow">›</span>
+        </a>
+        <div class="settings-row-divider"></div>
+        <a class="settings-row" href="https://github.com/KittinatG/GoFitr/blob/master/TERMS.md" target="_blank" rel="noopener">
+          <span class="settings-row-icon">📄</span> <span class="settings-row-label">Terms of Use</span>
+          <span class="settings-row-arrow">›</span>
+        </a>
+      </div>
+
+      <!-- About -->
+      <p class="settings-section-label">About</p>
+      <div class="panel">
+        <p style="margin:0;font-weight:600;">GoFitr</p>
+        <p class="subtitle" style="margin-top:4px;">Your nutrition &amp; fitness tracker. All data stays on your device.</p>
+        <p class="subtitle" style="margin-top:8px;">Version 1.0 · 5000+ foods · Open source</p>
+      </div>
+
     </section>
 
     <section id="view-food" class="view">

@@ -1521,3 +1521,31 @@ textarea { resize: vertical; font-family: inherit; }
 @media (max-width: 480px) {
   .set-row { grid-template-columns: 24px 1fr 1fr auto; }
 }
+
+/* Settings sections */
+.settings-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 20px 0 6px 4px;
+  margin: 0;
+}
+.panel-rows { padding: 0; overflow: hidden; }
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.settings-row:hover { background: rgba(255,255,255,0.04); }
+.settings-row-disabled { opacity: 0.45; cursor: default; pointer-events: none; }
+.settings-row-icon { font-size: 1.1rem; width: 24px; text-align: center; flex-shrink: 0; }
+.settings-row-label { flex: 1; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.settings-row-arrow { color: var(--text-muted); font-size: 1.2rem; }
+.settings-row-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 20px; }

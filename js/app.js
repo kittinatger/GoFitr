@@ -46,7 +46,10 @@
     proteinGoal: 0,
     carbsGoal: 0,
     fatGoal: 0,
+    weightGoal: 0,
     unit: "kg",
+    weekStart: "monday",
+    mealNames: { Breakfast: "", Lunch: "", Dinner: "", Snacks: "" },
     customFoods: [], // { id, name, kcal100, protein100, carbs100, fat100, createdAt }
     savedFoods: [],  // { id, name, brand, kcal100, protein100, carbs100, fat100, savedAt }
     savedMeals: [],  // { id, name, items: [{name, calories, protein, carbs, fat}], createdAt }
@@ -309,7 +312,8 @@
   function startOfWeek(d) {
     const date = new Date(d);
     const day = date.getDay();
-    const diff = (day === 0 ? -6 : 1) - day; // Monday start
+    const offset = (data.weekStart === "sunday") ? 0 : 1;
+    const diff = (day === 0 ? -7 + offset : offset) - day;
     date.setDate(date.getDate() + diff);
     date.setHours(0, 0, 0, 0);
     return date;
@@ -1353,14 +1357,31 @@
 
 
   // ---------- Settings ----------
+  function displayMealName(meal) {
+    return (data.mealNames && data.mealNames[meal]) || meal;
+  }
+
   function renderSettings() {
     document.querySelectorAll('input[name="unit"]').forEach(radio => {
       radio.checked = radio.value === data.unit;
+    });
+    document.querySelectorAll('input[name="weekStart"]').forEach(radio => {
+      radio.checked = radio.value === (data.weekStart || "monday");
     });
     document.getElementById("calorie-goal-input").value = data.calorieGoal || 2000;
     document.getElementById("protein-goal-input").value = data.proteinGoal || 0;
     document.getElementById("carbs-goal-input").value = data.carbsGoal || 0;
     document.getElementById("fat-goal-input").value = data.fatGoal || 0;
+    document.getElementById("weight-goal-input").value = data.weightGoal || 0;
+    document.getElementById("weight-goal-label").textContent = `Target body weight (${data.unit || "kg"})`;
+    const mn = data.mealNames || {};
+    ["Breakfast","Lunch","Dinner","Snacks"].forEach(m => {
+      const el = document.getElementById(`meal-label-${m.toLowerCase()}`);
+      if (el) el.value = mn[m] || "";
+    });
+    // Show change-password button only for local accounts
+    const cpBtn = document.getElementById("change-password-btn");
+    if (cpBtn) cpBtn.style.display = (authMode === "local") ? "" : "none";
   }
 
   document.querySelectorAll('input[name="unit"]').forEach(radio => {
@@ -1385,6 +1406,55 @@
   goalInputHandler("proteinGoal", "protein-goal-input");
   goalInputHandler("carbsGoal", "carbs-goal-input");
   goalInputHandler("fatGoal", "fat-goal-input");
+  goalInputHandler("weightGoal", "weight-goal-input");
+
+  // Week start
+  document.querySelectorAll('input[name="weekStart"]').forEach(radio => {
+    radio.addEventListener("change", (e) => {
+      if (e.target.checked) {
+        data.weekStart = e.target.value;
+        saveData();
+        toast(`Week starts on ${e.target.value === "sunday" ? "Sunday" : "Monday"}`);
+      }
+    });
+  });
+
+  // Meal label inputs
+  ["Breakfast","Lunch","Dinner","Snacks"].forEach(meal => {
+    const el = document.getElementById(`meal-label-${meal.toLowerCase()}`);
+    if (!el) return;
+    el.addEventListener("change", () => {
+      if (!data.mealNames) data.mealNames = {};
+      data.mealNames[meal] = el.value.trim();
+      saveData();
+    });
+  });
+
+  // Change password
+  document.getElementById("change-password-btn").addEventListener("click", () => {
+    const section = document.getElementById("change-password-form");
+    section.style.display = section.style.display === "none" ? "" : "none";
+  });
+  document.getElementById("change-password-submit").addEventListener("click", async () => {
+    const currentPw = document.getElementById("cp-current").value;
+    const newPw = document.getElementById("cp-new").value;
+    const confirmPw = document.getElementById("cp-confirm").value;
+    if (!currentPw || !newPw) { toast("Fill in all fields"); return; }
+    if (newPw !== confirmPw) { toast("Passwords do not match"); return; }
+    if (newPw.length < 6) { toast("Password must be at least 6 characters"); return; }
+    const users = getUsers();
+    const user = users[currentUser];
+    if (!user) { toast("Account not found"); return; }
+    const hash = await hashPassword(currentPw, user.salt);
+    if (hash !== user.hash) { toast("Current password is incorrect"); return; }
+    users[currentUser].hash = await hashPassword(newPw, user.salt);
+    saveUsers(users);
+    document.getElementById("change-password-form").style.display = "none";
+    document.getElementById("cp-current").value = "";
+    document.getElementById("cp-new").value = "";
+    document.getElementById("cp-confirm").value = "";
+    toast("Password changed");
+  });
 
   document.getElementById("export-btn").addEventListener("click", () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
