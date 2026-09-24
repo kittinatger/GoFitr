@@ -684,6 +684,8 @@
     });
 
     MEALS.forEach(meal => {
+      const heading = document.querySelector(`[data-meal-heading="${meal}"]`);
+      if (heading) heading.textContent = displayMealName(meal);
       const list = document.querySelector(`.food-list[data-meal-list="${meal}"]`);
       const mealEntries = entries.filter(e => e.meal === meal);
       if (mealEntries.length === 0) {
