@@ -2317,6 +2317,15 @@
     currentUser = userKey;
     authMode = meta.mode || "local";
     data = loadData();
+    // One-time migration: set auto+lime for all existing accounts
+    if (!data.themeMigrated) {
+      data.themeAuto   = true;
+      data.themeDark   = "lime-dark";
+      data.themeLight  = "lime-light";
+      data.theme       = "lime-dark";
+      data.themeMigrated = true;
+      saveData();
+    }
     applyTheme(resolveTheme());
     charts = { progress: null, weight: null };
 
