@@ -1638,11 +1638,10 @@
     // For Clerk users strip the "clerk:" prefix from the storage key
     let usernameLabel = rec.username || currentUser;
     if (usernameLabel.startsWith("clerk:")) {
-      const clerkUser = window.Clerk?.user;
-      usernameLabel = clerkUser?.username
-        || clerkUser?.primaryEmailAddress?.emailAddress?.split("@")[0]
-        || clerkUser?.fullName
-        || "social";
+      // Always use stored username (never leak email/phone from Clerk)
+      usernameLabel = rec.username && !rec.username.startsWith("clerk:")
+        ? rec.username
+        : (getUsers()[currentUser]?.username || "user");
     }
     document.getElementById("profile-card-name").textContent = displayName;
     document.getElementById("profile-card-username").textContent = "@" + usernameLabel;
@@ -1706,16 +1705,11 @@
     const usernameHint  = document.getElementById("profile-username-hint");
 
     if (isClerk) {
-      // For Clerk users show the Clerk display name as username; editing not supported
-      const clerkUser = window.Clerk?.user;
-      const clerkHandle = clerkUser?.username
-        || clerkUser?.primaryEmailAddress?.emailAddress
-        || clerkUser?.fullName
-        || "Clerk user";
-      usernameInput.value    = clerkHandle;
-      usernameInput.disabled = true;
-      usernameInput.style.opacity = "0.5";
-      usernameHint.textContent = "Username is managed by your social account.";
+      // Show the stored random username; Clerk users can change it freely
+      usernameInput.value    = userRec.username || generateRandomUsername();
+      usernameInput.disabled = false;
+      usernameInput.style.opacity = "1";
+      usernameHint.textContent = "This username is not linked to your social account.";
       usernameHint.style.color = "var(--muted)";
     } else {
       usernameInput.value    = userRec.username || currentUser;
@@ -1921,12 +1915,14 @@
     const oldKey = currentUser;
     const oldRec = users[oldKey] || {};
 
+    const newUsernameRaw = document.getElementById("profile-username-input").value.trim();
+    const newUsername = newUsernameRaw.toLowerCase();
+    if (!newUsername || !/^[a-z0-9_]{3,30}$/.test(newUsername)) {
+      toast("Invalid username — 3–30 chars, letters/numbers/underscores."); return;
+    }
+
     if (!isClerk) {
-      // Validate and possibly migrate username
-      const newUsername = document.getElementById("profile-username-input").value.trim().toLowerCase();
-      if (!newUsername || !/^[a-z0-9_]{3,30}$/.test(newUsername)) {
-        toast("Invalid username — 3–30 chars, letters/numbers/underscores."); return;
-      }
+      // Local users: username is the storage key — must migrate if changed
       if (newUsername !== oldKey) {
         if (users[newUsername]) { toast("Username already taken."); return; }
         users[newUsername] = Object.assign({}, oldRec, { username: newUsername });
@@ -1944,7 +1940,7 @@
 
     // Save all fields
     const rec = users[currentUser] || {};
-    if (!isClerk) rec.username = currentUser;
+    rec.username = isClerk ? newUsername : currentUser;
     rec.displayName = displayName || rec.username || currentUser;
     rec.bio         = bio;
 
@@ -2467,12 +2463,30 @@
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
   })();
 
+  function generateRandomUsername() {
+    const adj = ["Agile","Bold","Brave","Calm","Cool","Daring","Elite","Epic","Fast","Fierce",
+                 "Flash","Iron","Lean","Mighty","Noble","Power","Quick","Sharp","Sleek","Solid",
+                 "Swift","Ultra","Wild","Zen"];
+    const ani = ["Bear","Cheetah","Cobra","Crane","Eagle","Falcon","Fox","Hawk","Jaguar","Lion",
+                 "Lynx","Panda","Panther","Penguin","Phoenix","Raven","Shark","Tiger","Viper","Wolf"];
+    const a = adj[Math.floor(Math.random() * adj.length)];
+    const b = ani[Math.floor(Math.random() * ani.length)];
+    const n = Math.floor(Math.random() * 90) + 10;
+    return a + b + n;
+  }
+
   function bootClerkUser(user) {
-    const displayName = user.fullName
-      || (user.primaryEmailAddress && user.primaryEmailAddress.emailAddress)
-      || user.username
-      || user.id;
-    bootApp("clerk:" + user.id, { mode: "clerk", displayName });
+    const displayName = user.fullName || user.username || "GoFitr User";
+    const key = "clerk:" + user.id;
+    // On first sign-in, assign a random privacy-safe username
+    const users = getUsers();
+    if (!users[key] || !users[key].username) {
+      if (!users[key]) users[key] = {};
+      users[key].username = generateRandomUsername();
+      users[key].displayName = users[key].displayName || displayName;
+      saveUsers(users);
+    }
+    bootApp(key, { mode: "clerk", displayName });
   }
 
   // ---------- Init ----------

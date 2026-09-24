@@ -764,8 +764,21 @@
               <input type="text" id="profile-display-name" maxlength="50" placeholder="Your name">
             </div>
             <div class="form-field">
-              <label for="profile-bio">Bio <span style="color:var(--muted);font-weight:400;">(Max: 200)</span></label>
+              <label for="profile-bio">Bio <span style="color:var(--text-muted);font-weight:400;">(Max: 200)</span></label>
               <textarea id="profile-bio" maxlength="200" rows="3" placeholder="Staying motivated!" style="resize:vertical;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Privacy disclaimer -->
+        <div style="padding:0 16px 24px;">
+          <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;gap:10px;align-items:flex-start;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div>
+              <p style="font-size:0.75rem;color:var(--text-muted);line-height:1.5;margin:0;">
+                <strong style="color:var(--text);font-weight:600;">Privacy reminder</strong><br>
+                Your username, display name, profile picture, and banner may be visible to others. Avoid using your real name, phone number, or any personal information you don't want shared. Your social account email is <strong style="color:var(--text);">never</strong> used or shown here.
+              </p>
             </div>
           </div>
         </div>
