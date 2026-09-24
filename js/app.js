@@ -1471,9 +1471,6 @@
       const el = document.getElementById(`meal-label-${m.toLowerCase()}`);
       if (el) el.value = mn[m] || "";
     });
-    // Show change-password button only for local accounts
-    const cpBtn = document.getElementById("change-password-btn");
-    if (cpBtn) cpBtn.style.display = (authMode === "local") ? "" : "none";
     renderConnectedAccounts();
   }
 
@@ -1486,6 +1483,12 @@
   async function renderConnectedAccounts() {
     const list = document.getElementById("connected-accounts-list");
     if (!list) return;
+
+    const cpSection = document.getElementById("change-password-section");
+    const cpPanel = document.getElementById("change-password-panel");
+    const showCp = authMode === "local";
+    if (cpSection) cpSection.style.display = showCp ? "" : "none";
+    if (cpPanel) cpPanel.style.display = showCp ? "" : "none";
 
     if (authMode === "local") {
       list.innerHTML = `<div class="connected-account-row connected-account-row--active">
@@ -1658,11 +1661,7 @@
     });
   });
 
-  // Change password
-  document.getElementById("change-password-btn").addEventListener("click", () => {
-    const section = document.getElementById("change-password-form");
-    section.style.display = section.style.display === "none" ? "" : "none";
-  });
+  // Change password (in Accounts sub-page)
   document.getElementById("change-password-submit").addEventListener("click", async () => {
     const currentPw = document.getElementById("cp-current").value;
     const newPw = document.getElementById("cp-new").value;
@@ -1677,7 +1676,6 @@
     if (hash !== user.hash) { toast("Current password is incorrect"); return; }
     users[currentUser].hash = await hashPassword(newPw, user.salt);
     saveUsers(users);
-    document.getElementById("change-password-form").style.display = "none";
     document.getElementById("cp-current").value = "";
     document.getElementById("cp-new").value = "";
     document.getElementById("cp-confirm").value = "";
@@ -1783,8 +1781,10 @@
     document.getElementById("app-shell").classList.remove("hidden");
 
     const users = getUsers();
-    document.getElementById("account-username").textContent =
-      meta.displayName || (users[userKey] && users[userKey].username) || userKey;
+    const displayName = meta.displayName || (users[userKey] && users[userKey].username) || userKey;
+    document.getElementById("account-username").textContent = displayName;
+    const accUn = document.getElementById("accounts-username");
+    if (accUn) accUn.textContent = displayName;
 
     document.getElementById("sets-container").innerHTML = "";
     addSetRow();
@@ -1906,6 +1906,28 @@
     document.getElementById("signup-form").reset();
     setAuthMode("login");
     showAuthScreen();
+  });
+
+  document.getElementById("delete-account-btn").addEventListener("click", async () => {
+    const ok = await showConfirm("Permanently delete your account and all data? This cannot be undone.");
+    if (!ok) return;
+    if (authMode === "clerk" && window.Clerk && window.Clerk.user) {
+      try { await window.Clerk.user.delete(); } catch (e) { /* ignore */ }
+    }
+    const users = getUsers();
+    if (currentUser && users[currentUser]) {
+      delete users[currentUser];
+      saveUsers(users);
+    }
+    try { localStorage.removeItem(`gofitr_data_${currentUser}`); } catch (e) { /* ignore */ }
+    clearSession();
+    currentUser = null;
+    authMode = null;
+    document.getElementById("login-form").reset();
+    document.getElementById("signup-form").reset();
+    setAuthMode("login");
+    showAuthScreen();
+    toast("Account deleted");
   });
 
   // ---------- Pull to refresh ----------

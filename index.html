@@ -424,33 +424,7 @@
       </div>
 
       <div class="panel">
-        <div class="panel-header"><h2>Account</h2></div>
-        <p class="subtitle">Logged in as <strong id="account-username"></strong></p>
-        <div class="form-actions" style="justify-content:flex-start;gap:12px;">
-          <button class="btn btn-ghost" id="change-password-btn">Change Password</button>
-          <button class="btn btn-ghost" id="logout-btn">Log Out</button>
-        </div>
-        <div id="change-password-form" style="display:none;margin-top:16px;">
-          <div class="form-row">
-            <div class="form-field grow">
-              <label for="cp-current">Current password</label>
-              <input type="password" id="cp-current" autocomplete="current-password">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-field grow">
-              <label for="cp-new">New password</label>
-              <input type="password" id="cp-new" autocomplete="new-password">
-            </div>
-            <div class="form-field grow">
-              <label for="cp-confirm">Confirm</label>
-              <input type="password" id="cp-confirm" autocomplete="new-password">
-            </div>
-          </div>
-          <div class="form-actions" style="justify-content:flex-start;">
-            <button class="btn btn-primary" id="change-password-submit">Update Password</button>
-          </div>
-        </div>
+        <p style="margin:0;">Signed in as <strong id="account-username"></strong></p>
       </div>
 
       <!-- Preferences -->
@@ -714,10 +688,59 @@
         <h1>Accounts</h1>
       </header>
       <div class="view-content">
-        <p class="subtitle" style="margin-bottom:16px;">Link social accounts to sign in with a single tap. Connected accounts are tied to your GoFitr profile.</p>
+
+        <p class="settings-section-label" style="margin-top:0;">Connected accounts</p>
+        <p class="subtitle" style="margin-bottom:12px;">Link social accounts to sign in with a single tap.</p>
         <div class="panel">
           <div id="connected-accounts-list" class="connected-accounts-list"></div>
         </div>
+
+        <p class="settings-section-label" id="change-password-section" style="display:none;">Security</p>
+        <div class="panel" id="change-password-panel" style="display:none;">
+          <div class="panel-header"><h2>Change Password</h2></div>
+          <div class="form-row">
+            <div class="form-field grow">
+              <label for="cp-current">Current password</label>
+              <input type="password" id="cp-current" autocomplete="current-password">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field grow">
+              <label for="cp-new">New password</label>
+              <input type="password" id="cp-new" autocomplete="new-password">
+            </div>
+            <div class="form-field grow">
+              <label for="cp-confirm">Confirm</label>
+              <input type="password" id="cp-confirm" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-actions" style="justify-content:flex-start; margin-top:4px;">
+            <button class="btn btn-primary" id="change-password-submit">Update Password</button>
+          </div>
+        </div>
+
+        <p class="settings-section-label">Session</p>
+        <div class="panel">
+          <p class="subtitle">You are signed in as <strong id="accounts-username"></strong>.</p>
+          <div class="form-actions" style="justify-content:flex-start; margin-top:8px;">
+            <button class="btn btn-ghost" id="logout-btn">Log Out</button>
+          </div>
+        </div>
+
+        <p class="settings-section-label">Danger zone</p>
+        <div class="panel" style="border:1.5px solid var(--coral);">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <svg style="flex-shrink:0;margin-top:2px;color:var(--coral);" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <div>
+              <p style="margin:0;font-weight:600;">Delete Account</p>
+              <p class="subtitle" style="margin-top:4px;">Permanently deletes your account and all data. This cannot be undone.</p>
+            </div>
+          </div>
+          <div class="form-actions" style="justify-content:flex-start;margin-top:12px;">
+            <button class="btn btn-danger" id="delete-account-btn">Delete My Account</button>
+          </div>
+        </div>
+
       </div>
     </section>
 
