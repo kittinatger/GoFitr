@@ -59,6 +59,9 @@
     themeLight: "lime-light",
     showMacroCards: true,
     compactFoodList: false,
+    heightUnit: "cm",
+    distanceUnit: "km",
+    sex: "male",
   });
 
   let currentUser = null;
@@ -1796,42 +1799,57 @@
     if (!container) return;
     container.innerHTML = "";
 
-    const current = data.unit || "kg";
-    const options = [
-      { value: "kg", label: "Kilograms", sub: "kg" },
-      { value: "lb", label: "Pounds", sub: "lb" },
-    ];
+    function makeSegRow(label, key, opts) {
+      const row = document.createElement("div");
+      row.className = "units-row";
+      const lbl = document.createElement("span");
+      lbl.className = "units-row-label";
+      lbl.textContent = label;
+      const seg = document.createElement("div");
+      seg.className = "units-seg";
+      opts.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "units-seg-btn" + (data[key] === opt.value ? " active" : "");
+        btn.textContent = opt.label;
+        btn.addEventListener("click", () => {
+          data[key] = opt.value;
+          saveData();
+          const unitsVal = document.getElementById("units-row-value");
+          if (unitsVal) unitsVal.textContent = data.unit || "kg";
+          if (key === "unit") renderWeight();
+          renderUnits();
+        });
+        seg.appendChild(btn);
+      });
+      row.appendChild(lbl);
+      row.appendChild(seg);
+      return row;
+    }
 
-    const sec = document.createElement("div");
-    sec.style.cssText = "padding:16px 16px 0;";
-    sec.innerHTML = `<p class="settings-section-label" style="margin-top:0;margin-bottom:8px;">Weight Unit</p>`;
     const panel = document.createElement("div");
-    panel.className = "panel panel-rows";
-    options.forEach((opt, i) => {
+    panel.className = "panel";
+    panel.style.cssText = "display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;";
+    const rows = [
+      { label: "Weight Units", key: "unit",         opts: [{value:"kg",label:"Kg"},{value:"lb",label:"Lbs"}] },
+      { label: "Height Units", key: "heightUnit",   opts: [{value:"cm",label:"Cm"},{value:"in",label:"In"}] },
+      { label: "Distance Units",key:"distanceUnit", opts: [{value:"km",label:"Km"},{value:"mi",label:"Mi"}] },
+      { label: "Sex",           key: "sex",         opts: [{value:"male",label:"Male"},{value:"female",label:"Female"}] },
+    ];
+    rows.forEach((r, i) => {
       if (i > 0) {
         const div = document.createElement("div");
         div.className = "settings-row-divider";
+        div.style.margin = "0 20px";
         panel.appendChild(div);
       }
-      const row = document.createElement("div");
-      row.className = "settings-row";
-      row.style.cursor = "pointer";
-      const checked = opt.value === current;
-      row.innerHTML = `
-        <span class="settings-row-label" style="font-weight:${checked ? 600 : 400};">${opt.label} <span style="color:var(--text-muted);font-weight:400;">(${opt.sub})</span></span>
-        <svg class="theme-check ${checked ? "visible" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-      row.addEventListener("click", () => {
-        data.unit = opt.value;
-        saveData();
-        const unitsVal = document.getElementById("units-row-value");
-        if (unitsVal) unitsVal.textContent = opt.value;
-        renderUnits();
-        renderWeight();
-      });
-      panel.appendChild(row);
+      panel.appendChild(makeSegRow(r.label, r.key, r.opts));
     });
-    sec.appendChild(panel);
-    container.appendChild(sec);
+
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "padding:16px;";
+    wrap.appendChild(panel);
+    container.appendChild(wrap);
   }
 
   function renderCalendar() {
