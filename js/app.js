@@ -294,10 +294,13 @@
     let items = activeMuscleFiler === "All" ? db : db.filter(e => e.muscle === activeMuscleFiler);
     if (query) items = items.filter(e => e.name.toLowerCase().includes(query));
 
+    const infoIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+
     const customRow = query && !items.find(e => e.name.toLowerCase() === query)
-      ? `<button type="button" class="exercise-row exercise-row--custom" data-name="${escapeHtml(query)}">`
+      ? `<div class="exercise-row exercise-row--custom">`
+        + `<button type="button" class="exercise-row-select" data-name="${escapeHtml(query)}">`
         + `<div class="exercise-row-info"><span class="exercise-row-name">Use "${escapeHtml(query)}"</span>`
-        + `<span class="exercise-row-muscle">Custom exercise</span></div></button>`
+        + `<span class="exercise-row-muscle">Custom exercise</span></div></button></div>`
       : "";
 
     let html = customRow;
@@ -308,25 +311,54 @@
         html += `<div class="exercise-letter-header">${letter}</div>`;
         lastLetter = letter;
       }
-      html += `<button type="button" class="exercise-row" data-name="${escapeHtml(ex.name)}">`
+      html += `<div class="exercise-row">`
+        + `<button type="button" class="exercise-row-select" data-name="${escapeHtml(ex.name)}">`
         + `<div class="exercise-row-info"><span class="exercise-row-name">${escapeHtml(ex.name)}</span>`
-        + `<span class="exercise-row-muscle">${escapeHtml(ex.muscle)}</span></div></button>`;
+        + `<span class="exercise-row-muscle">${escapeHtml(ex.muscle)}</span></div></button>`
+        + `<button type="button" class="exercise-row-info-btn" data-name="${escapeHtml(ex.name)}" title="About this exercise">${infoIcon}</button>`
+        + `</div>`;
     }
     if (!html) html = `<p class="empty-state" style="padding:24px 16px;">No exercises found.</p>`;
 
     const list = document.getElementById("exercise-picker-list");
     list.innerHTML = html;
-    list.querySelectorAll(".exercise-row").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const name = btn.dataset.name;
-        document.getElementById("log-exercise").value = name;
-        const lbl = document.getElementById("exercise-picker-label");
-        lbl.textContent = name;
-        lbl.classList.remove("exercise-picker-placeholder");
-        showView("log");
+    list.querySelectorAll(".exercise-row-select").forEach(btn => {
+      btn.addEventListener("click", () => selectExercise(btn.dataset.name));
+    });
+    list.querySelectorAll(".exercise-row-info-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const ex = (window.GOFITR_EXERCISE_DATABASE || []).find(e => e.name === btn.dataset.name)
+          || { name: btn.dataset.name, muscle: "Custom", equipment: "—", desc: "" };
+        showExerciseInfo(ex);
       });
     });
   }
+
+  function selectExercise(name) {
+    document.getElementById("log-exercise").value = name;
+    const lbl = document.getElementById("exercise-picker-label");
+    lbl.textContent = name;
+    lbl.classList.remove("exercise-picker-placeholder");
+    document.getElementById("exercise-info-overlay").classList.remove("show");
+    showView("log");
+  }
+
+  function showExerciseInfo(ex) {
+    document.getElementById("exercise-info-name").textContent = ex.name;
+    document.getElementById("exercise-info-muscle").textContent = ex.muscle;
+    document.getElementById("exercise-info-equipment").textContent = ex.equipment;
+    document.getElementById("exercise-info-desc").textContent = ex.desc || "";
+    document.getElementById("exercise-info-select").onclick = () => selectExercise(ex.name);
+    document.getElementById("exercise-info-overlay").classList.add("show");
+  }
+
+  document.getElementById("exercise-info-close").addEventListener("click", () => {
+    document.getElementById("exercise-info-overlay").classList.remove("show");
+  });
+  document.getElementById("exercise-info-overlay").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove("show");
+  });
 
   document.getElementById("exercise-picker-trigger").addEventListener("click", () => {
     activeMuscleFiler = "All";
