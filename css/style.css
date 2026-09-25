@@ -1004,7 +1004,8 @@ textarea { resize: vertical; font-family: inherit; }
   text-align: left;
   transition: background 0.1s;
 }
-.exercise-row-select:active { background: var(--bg-elevated); }
+.exercise-row-select:hover { background: var(--bg-elevated); }
+.exercise-row-select:active { background: color-mix(in srgb, var(--bg-elevated) 80%, var(--lime) 20%); }
 .exercise-row-info { display: flex; flex-direction: column; gap: 2px; }
 .exercise-row-name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
 .exercise-row-muscle { font-size: 0.78rem; color: var(--text-muted); }
@@ -1019,10 +1020,12 @@ textarea { resize: vertical; font-family: inherit; }
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color 0.15s, background 0.15s;
   margin-right: 4px;
+  border-radius: 50%;
 }
-.exercise-row-info-btn:active { color: var(--lime); }
+.exercise-row-info-btn:hover { color: var(--lime); background: color-mix(in srgb, var(--lime) 10%, transparent); }
+.exercise-row-info-btn:active { color: var(--lime); background: color-mix(in srgb, var(--lime) 20%, transparent); }
 
 /* Exercise info page */
 .exercise-info-content { padding: 20px 16px 32px; display: flex; flex-direction: column; gap: 24px; }
