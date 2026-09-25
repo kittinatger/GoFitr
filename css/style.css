@@ -918,6 +918,19 @@ textarea { resize: vertical; font-family: inherit; }
   scrollbar-width: none;
 }
 .exercise-muscle-chips::-webkit-scrollbar { display: none; }
+.muscle-chip-section {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  opacity: 0.55;
+  align-self: center;
+  padding: 0 2px 0 6px;
+  pointer-events: none;
+  user-select: none;
+}
 .exercise-equip-chips {
   display: flex;
   gap: 6px;
