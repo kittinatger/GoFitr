@@ -2500,6 +2500,36 @@
   goalInputHandler("fatGoal", "fat-goal-input");
   goalInputHandler("weightGoal", "weight-goal-input");
 
+  // Nutrition page quick-edit macro goals
+  document.getElementById("nutrition-edit-goals-btn").addEventListener("click", () => {
+    document.getElementById("mg-calories").value = data.calorieGoal || 2000;
+    document.getElementById("mg-protein").value  = data.proteinGoal || 0;
+    document.getElementById("mg-carbs").value    = data.carbsGoal || 0;
+    document.getElementById("mg-fat").value      = data.fatGoal || 0;
+    document.getElementById("macro-goals-overlay").classList.add("show");
+  });
+  document.getElementById("macro-goals-cancel").addEventListener("click", () => {
+    document.getElementById("macro-goals-overlay").classList.remove("show");
+  });
+  document.getElementById("macro-goals-overlay").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove("show");
+  });
+  document.getElementById("macro-goals-save").addEventListener("click", () => {
+    const parse = (id, fallback) => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) || v < 0 ? fallback : v; };
+    data.calorieGoal = parse("mg-calories", 2000);
+    data.proteinGoal = parse("mg-protein", 0);
+    data.carbsGoal   = parse("mg-carbs", 0);
+    data.fatGoal     = parse("mg-fat", 0);
+    // sync settings inputs too
+    document.getElementById("calorie-goal-input").value = data.calorieGoal;
+    document.getElementById("protein-goal-input").value = data.proteinGoal;
+    document.getElementById("carbs-goal-input").value   = data.carbsGoal;
+    document.getElementById("fat-goal-input").value     = data.fatGoal;
+    saveData();
+    renderNutrition();
+    document.getElementById("macro-goals-overlay").classList.remove("show");
+  });
+
   // Change password (in Accounts sub-page)
   document.getElementById("change-password-submit").addEventListener("click", async () => {
     const currentPw = document.getElementById("cp-current").value;

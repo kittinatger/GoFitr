@@ -1868,6 +1868,48 @@ textarea { resize: vertical; font-family: inherit; }
 }
 .disclaimer-banner-icon { flex-shrink: 0; width: 15px; height: 15px; margin-top: 2px; color: var(--lime); opacity: 0.7; }
 
+/* Nutrition edit-goals button (on hero ring card) */
+.nutrition-edit-goals-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.15s, color 0.15s;
+}
+.nutrition-edit-goals-btn:active { background: rgba(255,255,255,0.14); color: var(--text); }
+
+/* Macro goals edit sheet rows */
+.macro-goals-rows { display: flex; flex-direction: column; gap: 12px; }
+.macro-goals-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.macro-goals-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+.macro-goals-label { flex: 1; font-size: 0.95rem; font-weight: 500; color: var(--text); }
+.macro-goals-input {
+  width: 90px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 8px 12px;
+  text-align: center;
+}
+.macro-goals-input:focus { outline: none; border-color: var(--lime); }
+
 /* Mini calendar */
 .mini-cal { background: var(--bg-card); border-radius: var(--radius-sm); padding: 16px; }
 .mini-cal-header { text-align: center; font-weight: 700; font-size: 1rem; color: var(--text); margin-bottom: 12px; }

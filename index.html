@@ -344,6 +344,10 @@
               <div class="ring-label" id="calorie-ring-label">of 2000 kcal</div>
             </div>
           </div>
+          <button type="button" id="nutrition-edit-goals-btn" class="nutrition-edit-goals-btn" title="Edit goals">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            Goal
+          </button>
         </div>
         <div class="stat-card stat-card--lime">
           <div class="stat-label">Protein</div>
@@ -1187,6 +1191,38 @@
 </div>
 
 <div id="toast" class="toast"></div>
+
+<div id="macro-goals-overlay" class="confirm-overlay">
+  <div class="confirm-dialog" style="max-width:360px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <button type="button" id="macro-goals-cancel" class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      <span style="font-weight:700;font-size:1rem;">Edit Macro Goals</span>
+      <button type="button" id="macro-goals-save" class="btn-icon" style="color:var(--lime);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+    </div>
+    <div class="macro-goals-rows">
+      <div class="macro-goals-row">
+        <span class="macro-goals-icon">🔥</span>
+        <span class="macro-goals-label">Calories</span>
+        <input type="number" id="mg-calories" class="macro-goals-input" min="0" step="50">
+      </div>
+      <div class="macro-goals-row">
+        <span class="macro-goals-icon">🥩</span>
+        <span class="macro-goals-label">Protein</span>
+        <input type="number" id="mg-protein" class="macro-goals-input" min="0" step="1">
+      </div>
+      <div class="macro-goals-row">
+        <span class="macro-goals-icon">🌾</span>
+        <span class="macro-goals-label">Carbs</span>
+        <input type="number" id="mg-carbs" class="macro-goals-input" min="0" step="1">
+      </div>
+      <div class="macro-goals-row">
+        <span class="macro-goals-icon">🥑</span>
+        <span class="macro-goals-label">Fat</span>
+        <input type="number" id="mg-fat" class="macro-goals-input" min="0" step="1">
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="confirm-overlay" class="confirm-overlay">
   <div class="confirm-dialog">
