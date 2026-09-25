@@ -340,7 +340,7 @@
     addSetRow();
     document.getElementById("log-date").value = todayStr();
     refreshExerciseOptions();
-    showView("nutrition");
+    showView("history");
   });
 
   // ---------- Dashboard ----------
