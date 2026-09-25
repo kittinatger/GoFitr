@@ -865,6 +865,108 @@ input:focus, select:focus, textarea:focus { border-color: var(--lime); }
 
 textarea { resize: vertical; font-family: inherit; }
 
+/* Exercise picker trigger */
+.exercise-picker-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  gap: 8px;
+}
+.exercise-picker-btn svg { flex-shrink: 0; color: var(--text-muted); }
+.exercise-picker-placeholder { color: var(--text-muted); }
+
+/* Exercise picker sub-page */
+.exercise-picker-search-wrap {
+  position: relative;
+  padding: 12px 16px 8px;
+}
+.exercise-picker-search-icon {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.exercise-picker-search {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 10px 16px 10px 40px;
+  box-sizing: border-box;
+}
+.exercise-picker-search:focus { outline: none; border-color: var(--lime); }
+.exercise-muscle-chips {
+  display: flex;
+  gap: 8px;
+  padding: 4px 16px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.exercise-muscle-chips::-webkit-scrollbar { display: none; }
+.exercise-muscle-chip {
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.exercise-muscle-chip.active {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: var(--ink);
+}
+.exercise-picker-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.exercise-letter-header {
+  padding: 8px 16px 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--lime);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.exercise-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  gap: 12px;
+  transition: background 0.1s;
+}
+.exercise-row:active { background: var(--bg-elevated); }
+.exercise-row--custom { background: color-mix(in srgb, var(--lime) 8%, transparent); }
+.exercise-row-info { display: flex; flex-direction: column; gap: 2px; }
+.exercise-row-name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.exercise-row-muscle { font-size: 0.78rem; color: var(--text-muted); }
+
 .sets-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin: 16px 0 8px; }
 
 .sets-container {

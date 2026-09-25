@@ -257,9 +257,6 @@
   function refreshExerciseOptions() {
     const names = allExerciseNames();
 
-    const datalist = document.getElementById("exercise-options");
-    datalist.innerHTML = names.map(n => `<option value="${escapeHtml(n)}">`).join("");
-
     const filterSel = document.getElementById("filter-exercise");
     const prevFilter = filterSel.value;
     filterSel.innerHTML = `<option value="">All exercises</option>` +
@@ -281,8 +278,75 @@
   // ---------- Log Workout ----------
   function prepLogForm() {
     document.getElementById("log-date").value = todayStr();
+    document.getElementById("log-exercise").value = "";
+    const lbl = document.getElementById("exercise-picker-label");
+    lbl.textContent = "Select exercise...";
+    lbl.classList.add("exercise-picker-placeholder");
     refreshExerciseOptions();
   }
+
+  // ---------- Exercise Picker ----------
+  let activeMuscleFiler = "All";
+
+  function renderExercisePicker() {
+    const db = (window.GOFITR_EXERCISE_DATABASE || []).slice().sort((a, b) => a.name.localeCompare(b.name));
+    const query = (document.getElementById("exercise-search").value || "").trim().toLowerCase();
+    let items = activeMuscleFiler === "All" ? db : db.filter(e => e.muscle === activeMuscleFiler);
+    if (query) items = items.filter(e => e.name.toLowerCase().includes(query));
+
+    const customRow = query && !items.find(e => e.name.toLowerCase() === query)
+      ? `<button type="button" class="exercise-row exercise-row--custom" data-name="${escapeHtml(query)}">`
+        + `<div class="exercise-row-info"><span class="exercise-row-name">Use "${escapeHtml(query)}"</span>`
+        + `<span class="exercise-row-muscle">Custom exercise</span></div></button>`
+      : "";
+
+    let html = customRow;
+    let lastLetter = null;
+    for (const ex of items) {
+      const letter = ex.name[0].toUpperCase();
+      if (letter !== lastLetter) {
+        html += `<div class="exercise-letter-header">${letter}</div>`;
+        lastLetter = letter;
+      }
+      html += `<button type="button" class="exercise-row" data-name="${escapeHtml(ex.name)}">`
+        + `<div class="exercise-row-info"><span class="exercise-row-name">${escapeHtml(ex.name)}</span>`
+        + `<span class="exercise-row-muscle">${escapeHtml(ex.muscle)}</span></div></button>`;
+    }
+    if (!html) html = `<p class="empty-state" style="padding:24px 16px;">No exercises found.</p>`;
+
+    const list = document.getElementById("exercise-picker-list");
+    list.innerHTML = html;
+    list.querySelectorAll(".exercise-row").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const name = btn.dataset.name;
+        document.getElementById("log-exercise").value = name;
+        const lbl = document.getElementById("exercise-picker-label");
+        lbl.textContent = name;
+        lbl.classList.remove("exercise-picker-placeholder");
+        showView("log");
+      });
+    });
+  }
+
+  document.getElementById("exercise-picker-trigger").addEventListener("click", () => {
+    activeMuscleFiler = "All";
+    document.getElementById("exercise-search").value = "";
+    document.querySelectorAll(".exercise-muscle-chip").forEach(c => c.classList.toggle("active", c.dataset.muscle === "All"));
+    renderExercisePicker();
+    showView("exercise-picker");
+  });
+
+  document.getElementById("exercise-picker-back").addEventListener("click", () => showView("log"));
+
+  document.getElementById("exercise-search").addEventListener("input", renderExercisePicker);
+
+  document.getElementById("exercise-muscle-chips").addEventListener("click", (e) => {
+    const chip = e.target.closest(".exercise-muscle-chip");
+    if (!chip) return;
+    activeMuscleFiler = chip.dataset.muscle;
+    document.querySelectorAll(".exercise-muscle-chip").forEach(c => c.classList.toggle("active", c === chip));
+    renderExercisePicker();
+  });
 
   function addSetRow(reps = "", weight = "") {
     const container = document.getElementById("sets-container");
@@ -338,8 +402,7 @@
     e.target.reset();
     document.getElementById("sets-container").innerHTML = "";
     addSetRow();
-    document.getElementById("log-date").value = todayStr();
-    refreshExerciseOptions();
+    prepLogForm();
     showView("history");
   });
 
