@@ -772,8 +772,9 @@
   // Nutrition, Dashboard, etc.) rather than centered popups — a fixed
   // centered overlay was unreliable on iPad Safari. Switching between them
   // just swaps which .view is active, same mechanism as the sidebar nav.
+  const FOOD_VIEWS = ["view-nutrition","view-food","view-food-detail","view-custom-food","view-meal-builder"];
   function showFoodPage(id) {
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    FOOD_VIEWS.forEach(v => document.getElementById(v).classList.remove("active"));
     document.getElementById(id).classList.add("active");
   }
 
