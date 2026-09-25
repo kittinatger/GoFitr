@@ -268,15 +268,24 @@
         </button>
         <h1 id="exercise-info-name"></h1>
       </header>
-      <div class="view-content" style="padding:20px 16px;">
-        <div class="exercise-info-badges" style="margin-bottom:20px;">
-          <span id="exercise-info-muscle" class="exercise-info-badge exercise-info-badge--muscle"></span>
-          <span id="exercise-info-equipment" class="exercise-info-badge exercise-info-badge--equip"></span>
+      <div class="view-content exercise-info-content">
+        <div class="exercise-info-section">
+          <p class="exercise-info-section-label">Primary Muscle</p>
+          <div id="exercise-info-muscles" class="exercise-info-cards"></div>
         </div>
-        <div class="panel" style="margin-bottom:16px;">
-          <p id="exercise-info-desc" class="exercise-info-desc"></p>
+        <div id="exercise-info-secondary-wrap" class="exercise-info-section">
+          <p class="exercise-info-section-label">Secondary Muscles</p>
+          <div id="exercise-info-secondary" class="exercise-info-cards"></div>
         </div>
-        <button type="button" id="exercise-info-select" class="btn btn-primary" style="width:100%;">Select Exercise</button>
+        <div class="exercise-info-section">
+          <p class="exercise-info-section-label">Equipment</p>
+          <div id="exercise-info-equip-cards" class="exercise-info-cards"></div>
+        </div>
+        <div class="exercise-info-section">
+          <p class="exercise-info-section-label">Instructions</p>
+          <ol id="exercise-info-steps" class="exercise-info-steps"></ol>
+        </div>
+        <button type="button" id="exercise-info-select" class="btn btn-primary exercise-info-select-btn">Select Exercise</button>
       </div>
     </section>
 
