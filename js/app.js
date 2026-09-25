@@ -26,15 +26,15 @@
     });
   }
 
-  const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>';
-  const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-  const ICON_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-  const ICON_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-3.22 4.44M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
-  const ICON_DUMBBELL = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="9" width="3" height="6" rx="1"/><rect x="20" y="9" width="3" height="6" rx="1"/><rect x="4" y="10" width="2" height="4"/><rect x="18" y="10" width="2" height="4"/><rect x="6" y="11" width="12" height="2"/></svg>';
-  const ICON_SCALE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>';
-  const ICON_FOOD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7c-1.2-1.8-3.2-2.6-5-2 0 2 1 3.6 2.8 4.6"></path><path d="M12 8.5c-4 0-6.8 3-6.8 6.8 0 3.7 2.6 6.7 5.6 6.7.9 0 1.6-.4 2.2-.4.6 0 1.3.4 2.2.4 3 0 5.6-3 5.6-6.7 0-3.1-1.9-5-4.4-5.9"></path></svg>';
-  const ICON_STAR_OUTLINE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
-  const ICON_STAR_FILLED = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+  const ICON_TRASH        = '<svg viewBox="0 0 24 24"><use href="#icon-trash"/></svg>';
+  const ICON_X            = '<svg viewBox="0 0 24 24"><use href="#icon-x"/></svg>';
+  const ICON_EYE          = '<svg viewBox="0 0 24 24"><use href="#icon-eye"/></svg>';
+  const ICON_EYE_OFF      = '<svg viewBox="0 0 24 24"><use href="#icon-eye-off"/></svg>';
+  const ICON_DUMBBELL     = '<svg viewBox="0 0 24 24"><use href="#icon-dumbbell"/></svg>';
+  const ICON_SCALE        = '<svg viewBox="0 0 24 24"><use href="#icon-scale"/></svg>';
+  const ICON_FOOD         = '<svg viewBox="0 0 24 24"><use href="#icon-food"/></svg>';
+  const ICON_STAR_OUTLINE = '<svg viewBox="0 0 24 24"><use href="#icon-star"/></svg>';
+  const ICON_STAR_FILLED  = '<svg viewBox="0 0 24 24"><use href="#icon-star-filled"/></svg>';
 
   const MEALS = ["Breakfast", "Lunch", "Dinner", "Snacks"];
 
@@ -294,7 +294,7 @@
     let items = activeMuscleFiler === "All" ? db : db.filter(e => e.muscle === activeMuscleFiler);
     if (query) items = items.filter(e => e.name.toLowerCase().includes(query));
 
-    const infoIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+    const infoIcon = `<svg width="16" height="16" viewBox="0 0 24 24"><use href="#icon-info-i"/></svg>`;
 
     const customRow = query && !items.find(e => e.name.toLowerCase() === query)
       ? `<div class="exercise-row exercise-row--custom">`
@@ -344,24 +344,24 @@
   }
 
   const MUSCLE_ICONS = {
-    Chest: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M8 14c0 0 4-2 7 0s3 6 5 7c2 1 5-5 7-7s7 0 7 0v8c0 0-5 2-7 1s-5-4-7-4-4 3-7 4-5-1-5-1z" fill="var(--lime)" opacity=".85"/></svg>`,
-    Back: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M20 8v24M13 12c0 0-3 4-3 8s3 8 3 8M27 12c0 0 3 4 3 8s-3 8-3 8M16 14h8M16 20h8M16 26h8" stroke="var(--lime)" stroke-width="2" stroke-linecap="round" opacity=".85"/></svg>`,
-    Shoulders: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><circle cx="12" cy="18" r="5" fill="var(--lime)" opacity=".85"/><circle cx="28" cy="18" r="5" fill="var(--lime)" opacity=".85"/><rect x="12" y="18" width="16" height="4" fill="var(--lime)" opacity=".85"/></svg>`,
-    Biceps: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M14 28c0 0-2-6 0-10s4-4 6-4 4 0 6 4 0 10 0 10" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".85"/><path d="M12 22c0 0 3-2 8-2s8 2 8 2" stroke="var(--lime)" stroke-width="2" stroke-linecap="round" opacity=".85"/></svg>`,
-    Triceps: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M15 12l-3 16h16l-3-16" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".85"/><path d="M15 12h10" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" opacity=".85"/></svg>`,
-    Legs: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M14 10v12l-2 10M26 10v12l2 10" stroke="var(--lime)" stroke-width="3" stroke-linecap="round" fill="none" opacity=".85"/><path d="M14 10h12" stroke="var(--lime)" stroke-width="3" stroke-linecap="round" opacity=".85"/></svg>`,
-    Glutes: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M12 28c0-5 3-10 8-10s8 5 8 10" fill="var(--lime)" opacity=".85"/><path d="M20 18c-5 0-8 5-8 10h16c0-5-3-10-8-10z" stroke="var(--lime)" stroke-width="1" fill="var(--lime)" opacity=".7"/></svg>`,
-    Calves: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M15 10c0 0-2 8 0 12s5 4 5 4-5 0-4 6" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".85"/><path d="M25 10c0 0 2 8 0 12s-5 4-5 4 5 0 4 6" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" fill="none" opacity=".85"/></svg>`,
-    Core: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><rect x="15" y="10" width="10" height="5" rx="2" fill="var(--lime)" opacity=".85"/><rect x="15" y="17" width="10" height="5" rx="2" fill="var(--lime)" opacity=".85"/><rect x="15" y="24" width="10" height="5" rx="2" fill="var(--lime)" opacity=".85"/></svg>`,
-    Cardio: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><path d="M8 20h4l3-7 4 14 3-9 2 3 4-1" stroke="var(--lime)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".85"/></svg>`,
+    Chest:     '<svg viewBox="0 0 40 40"><use href="#muscle-chest"/></svg>',
+    Back:      '<svg viewBox="0 0 40 40"><use href="#muscle-back"/></svg>',
+    Shoulders: '<svg viewBox="0 0 40 40"><use href="#muscle-shoulders"/></svg>',
+    Biceps:    '<svg viewBox="0 0 40 40"><use href="#muscle-biceps"/></svg>',
+    Triceps:   '<svg viewBox="0 0 40 40"><use href="#muscle-triceps"/></svg>',
+    Legs:      '<svg viewBox="0 0 40 40"><use href="#muscle-legs"/></svg>',
+    Glutes:    '<svg viewBox="0 0 40 40"><use href="#muscle-glutes"/></svg>',
+    Calves:    '<svg viewBox="0 0 40 40"><use href="#muscle-calves"/></svg>',
+    Core:      '<svg viewBox="0 0 40 40"><use href="#muscle-core"/></svg>',
+    Cardio:    '<svg viewBox="0 0 40 40"><use href="#muscle-cardio"/></svg>',
   };
   const EQUIP_ICONS = {
-    Barbell: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><rect x="4" y="17" width="32" height="6" rx="3" fill="var(--lime)" opacity=".85"/><rect x="4" y="14" width="6" height="12" rx="3" fill="var(--lime)"/><rect x="30" y="14" width="6" height="12" rx="3" fill="var(--lime)"/></svg>`,
-    Dumbbell: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><rect x="10" y="17" width="20" height="6" rx="3" fill="var(--lime)" opacity=".85"/><rect x="6" y="14" width="8" height="12" rx="3" fill="var(--lime)"/><rect x="26" y="14" width="8" height="12" rx="3" fill="var(--lime)"/></svg>`,
-    Cable: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><circle cx="28" cy="12" r="5" stroke="var(--lime)" stroke-width="2.5" fill="none" opacity=".85"/><path d="M24 16l-16 16" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" opacity=".85"/><circle cx="8" cy="32" r="3" fill="var(--lime)" opacity=".85"/></svg>`,
-    Machine: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><rect x="8" y="8" width="24" height="24" rx="4" stroke="var(--lime)" stroke-width="2.5" fill="none" opacity=".85"/><rect x="14" y="14" width="12" height="8" rx="2" fill="var(--lime)" opacity=".6"/><rect x="16" y="24" width="8" height="3" rx="1.5" fill="var(--lime)" opacity=".85"/></svg>`,
-    Bodyweight: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><circle cx="20" cy="10" r="4" fill="var(--lime)" opacity=".85"/><path d="M20 14v12" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round"/><path d="M12 20h16" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round"/><path d="M14 32l6-6 6 6" stroke="var(--lime)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`,
-    Other: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="10" fill="var(--elevated)"/><circle cx="20" cy="20" r="9" stroke="var(--lime)" stroke-width="2.5" fill="none" opacity=".85"/><path d="M20 15v6l4 2" stroke="var(--lime)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    Barbell:    '<svg viewBox="0 0 40 40"><use href="#equip-barbell"/></svg>',
+    Dumbbell:   '<svg viewBox="0 0 40 40"><use href="#equip-dumbbell"/></svg>',
+    Cable:      '<svg viewBox="0 0 40 40"><use href="#equip-cable"/></svg>',
+    Machine:    '<svg viewBox="0 0 40 40"><use href="#equip-machine"/></svg>',
+    Bodyweight: '<svg viewBox="0 0 40 40"><use href="#equip-bodyweight"/></svg>',
+    Other:      '<svg viewBox="0 0 40 40"><use href="#equip-other"/></svg>',
   };
 
   function makeInfoCard(icon, label) {
