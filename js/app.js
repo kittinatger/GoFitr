@@ -40,6 +40,7 @@
 
   const defaultData = () => ({
     workouts: [],   // { id, date: 'YYYY-MM-DD', exercise, sets: [{reps, weight}], notes }
+    routines: [],   // { id, name, exercises: [{name}] }
     bodyWeight: [], // { id, date, weight }
     nutrition: [],  // { id, date, meal, name, calories, protein, carbs, fat }
     calorieGoal: 2000,
@@ -238,7 +239,8 @@
     if (view === "weight") renderWeight();
     if (view === "nutrition") renderNutrition();
     if (view === "settings") renderSettings();
-    if (view === "log") prepLogForm();
+    if (view === "log") renderLogHub();
+    if (view === "quick-log") prepLogForm();
   }
 
   document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -288,6 +290,7 @@
   // ---------- Exercise Picker ----------
   let activeMuscleFiler = "All";
   let activeEquipFilter = "All";
+  let exercisePickerContext = "quick-log"; // "quick-log" | "routine" | "session"
 
   function renderExercisePicker() {
     const db = (window.GOFITR_EXERCISE_DATABASE || []).slice().sort((a, b) => a.name.localeCompare(b.name));
@@ -337,12 +340,38 @@
     });
   }
 
+  function openExercisePicker(context) {
+    exercisePickerContext = context || "quick-log";
+    activeMuscleFiler = "All";
+    activeEquipFilter = "All";
+    document.getElementById("exercise-search").value = "";
+    document.querySelectorAll(".exercise-muscle-chip").forEach(c => c.classList.toggle("active", c.dataset.muscle === "All"));
+    document.querySelectorAll(".exercise-equip-chip").forEach(c => c.classList.toggle("active", c.dataset.equip === "All"));
+    renderExercisePicker();
+    showView("exercise-picker");
+  }
+
   function selectExercise(name) {
+    if (exercisePickerContext === "routine") {
+      routineExercises.push({ name });
+      renderCreateRoutine();
+      showView("create-routine");
+      return;
+    }
+    if (exercisePickerContext === "session") {
+      if (activeSession) {
+        activeSession.exercises.push({ name, sets: [{ reps: "", weight: "" }], notes: "" });
+        renderSession();
+      }
+      showView("workout-session");
+      return;
+    }
+    // quick-log
     document.getElementById("log-exercise").value = name;
     const lbl = document.getElementById("exercise-picker-label");
     lbl.textContent = name;
     lbl.classList.remove("exercise-picker-placeholder");
-    showView("log");
+    showView("quick-log");
   }
 
   const MUSCLE_ICONS = {
@@ -420,17 +449,13 @@
 
   document.getElementById("exercise-info-back").addEventListener("click", () => showFoodPage("view-exercise-picker"));
 
-  document.getElementById("exercise-picker-trigger").addEventListener("click", () => {
-    activeMuscleFiler = "All";
-    activeEquipFilter = "All";
-    document.getElementById("exercise-search").value = "";
-    document.querySelectorAll(".exercise-muscle-chip").forEach(c => c.classList.toggle("active", c.dataset.muscle === "All"));
-    document.querySelectorAll(".exercise-equip-chip").forEach(c => c.classList.toggle("active", c.dataset.equip === "All"));
-    renderExercisePicker();
-    showView("exercise-picker");
-  });
+  document.getElementById("exercise-picker-trigger").addEventListener("click", () => openExercisePicker("quick-log"));
 
-  document.getElementById("exercise-picker-back").addEventListener("click", () => showView("log"));
+  document.getElementById("exercise-picker-back").addEventListener("click", () => {
+    if (exercisePickerContext === "routine") showView("create-routine");
+    else if (exercisePickerContext === "session") showView("workout-session");
+    else showView("quick-log");
+  });
 
   document.getElementById("exercise-search").addEventListener("input", renderExercisePicker);
 
@@ -505,8 +530,291 @@
     document.getElementById("sets-container").innerHTML = "";
     addSetRow();
     prepLogForm();
+    showView("log");
+  });
+
+  // ---------- Quick Log back ----------
+  document.getElementById("quick-log-back").addEventListener("click", () => showView("log"));
+
+  // ---------- Routines ----------
+  let routineExercises = [];
+  let editingRoutineId = null;
+
+  function renderLogHub() {
+    const list = document.getElementById("routines-list");
+    const routines = data.routines || [];
+    if (routines.length === 0) {
+      list.innerHTML = `<p class="empty-state" style="padding:16px;">No routines yet. Tap <strong>+ New</strong> to create one.</p>`;
+      return;
+    }
+    list.innerHTML = routines.map(r => {
+      const preview = r.exercises.slice(0, 3).map(e =>
+        `<div class="routine-ex-item">${escapeHtml(e.name)}</div>`
+      ).join("");
+      const more = r.exercises.length > 3
+        ? `<div class="routine-ex-item routine-ex-more">+ ${r.exercises.length - 3} more</div>` : "";
+      return `<div class="routine-card">
+        <div class="routine-card-header">
+          <span class="routine-card-name">${escapeHtml(r.name)}</span>
+          <div class="routine-card-actions">
+            <button class="routine-edit-btn icon-btn" data-id="${r.id}" title="Edit">
+              <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-edit"/></svg>
+            </button>
+            <button class="routine-delete-btn icon-btn" data-id="${r.id}" title="Delete">
+              <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-trash"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="routine-exercises-preview">${preview}${more}${r.exercises.length === 0 ? '<div class="routine-ex-item muted-text">No exercises yet</div>' : ''}</div>
+        <div class="routine-card-footer">
+          <span class="routine-count">${r.exercises.length} exercise${r.exercises.length !== 1 ? "s" : ""}</span>
+          <button class="btn btn-primary btn-sm routine-start-btn" data-id="${r.id}">Start</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    list.querySelectorAll(".routine-start-btn").forEach(btn => {
+      btn.addEventListener("click", () => startSessionFromRoutine(btn.dataset.id));
+    });
+    list.querySelectorAll(".routine-edit-btn").forEach(btn => {
+      btn.addEventListener("click", () => openEditRoutine(btn.dataset.id));
+    });
+    list.querySelectorAll(".routine-delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!confirm("Delete this routine?")) return;
+        data.routines = data.routines.filter(r => r.id !== btn.dataset.id);
+        saveData();
+        renderLogHub();
+      });
+    });
+  }
+
+  document.getElementById("new-routine-btn").addEventListener("click", () => {
+    editingRoutineId = null;
+    routineExercises = [];
+    document.getElementById("routine-name-input").value = "";
+    document.getElementById("create-routine-heading").textContent = "New Routine";
+    renderCreateRoutine();
+    showView("create-routine");
+  });
+
+  function openEditRoutine(id) {
+    const r = data.routines.find(r => r.id === id);
+    if (!r) return;
+    editingRoutineId = id;
+    routineExercises = r.exercises.map(e => ({ name: e.name }));
+    document.getElementById("routine-name-input").value = r.name;
+    document.getElementById("create-routine-heading").textContent = "Edit Routine";
+    renderCreateRoutine();
+    showView("create-routine");
+  }
+
+  function renderCreateRoutine() {
+    const list = document.getElementById("routine-exercises-list");
+    if (routineExercises.length === 0) {
+      list.innerHTML = `<p class="empty-state" style="padding:12px 16px;">No exercises yet.</p>`;
+      return;
+    }
+    list.innerHTML = routineExercises.map((e, i) => `
+      <div class="routine-ex-row">
+        <span class="routine-ex-num">${i + 1}</span>
+        <span class="routine-ex-name-text">${escapeHtml(e.name)}</span>
+        <button class="icon-btn routine-ex-del" data-i="${i}" title="Remove">
+          <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
+        </button>
+      </div>
+    `).join("");
+    list.querySelectorAll(".routine-ex-del").forEach(btn => {
+      btn.addEventListener("click", () => {
+        routineExercises.splice(Number(btn.dataset.i), 1);
+        renderCreateRoutine();
+      });
+    });
+  }
+
+  document.getElementById("create-routine-back").addEventListener("click", () => showView("log"));
+
+  document.getElementById("routine-add-exercise-btn").addEventListener("click", () => openExercisePicker("routine"));
+
+  document.getElementById("save-routine-btn").addEventListener("click", () => {
+    const name = document.getElementById("routine-name-input").value.trim();
+    if (!name) { toast("Enter a routine name"); return; }
+    if (!data.routines) data.routines = [];
+    if (editingRoutineId) {
+      const r = data.routines.find(r => r.id === editingRoutineId);
+      if (r) { r.name = name; r.exercises = routineExercises.slice(); }
+    } else {
+      data.routines.push({ id: uid(), name, exercises: routineExercises.slice() });
+    }
+    saveData();
+    toast(editingRoutineId ? "Routine updated" : "Routine saved");
+    showView("log");
+  });
+
+  // ---------- Workout Session ----------
+  let activeSession = null;
+
+  function startSessionFromRoutine(routineId) {
+    const r = (data.routines || []).find(r => r.id === routineId);
+    activeSession = {
+      date: todayStr(),
+      routineName: r ? r.name : "Workout",
+      exercises: r ? r.exercises.map(e => ({ name: e.name, sets: [{ reps: "", weight: "" }], notes: "" })) : []
+    };
+    document.getElementById("session-heading").textContent = activeSession.routineName;
+    document.getElementById("session-date").value = activeSession.date;
+    renderSession();
+    showView("workout-session");
+  }
+
+  function startEmptySession() {
+    activeSession = {
+      date: todayStr(),
+      routineName: "Workout",
+      exercises: []
+    };
+    document.getElementById("session-heading").textContent = "Workout";
+    document.getElementById("session-date").value = activeSession.date;
+    renderSession();
+    showView("workout-session");
+  }
+
+  function renderSession() {
+    const list = document.getElementById("session-exercises-list");
+    if (!activeSession || activeSession.exercises.length === 0) {
+      list.innerHTML = `<p class="empty-state" style="padding:20px 16px;">No exercises yet. Tap <strong>+ Add Exercise</strong>.</p>`;
+      return;
+    }
+    list.innerHTML = activeSession.exercises.map((ex, ei) => `
+      <div class="session-ex-card" data-ei="${ei}">
+        <div class="session-ex-header">
+          <span class="session-ex-name">${escapeHtml(ex.name)}</span>
+          <button class="icon-btn session-ex-remove" data-ei="${ei}" title="Remove exercise">
+            <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
+          </button>
+        </div>
+        <div class="session-sets-head"><span>Set</span><span>Reps</span><span>Weight (${data.unit})</span><span></span></div>
+        ${ex.sets.map((s, si) => `
+          <div class="session-set-row" data-ei="${ei}" data-si="${si}">
+            <span class="set-index">${si + 1}</span>
+            <input type="number" class="set-reps session-reps" value="${s.reps}" placeholder="0" min="0">
+            <input type="number" class="set-weight session-wt" value="${s.weight}" placeholder="0" min="0" step="0.5">
+            <button class="icon-btn session-set-del" data-ei="${ei}" data-si="${si}" title="Remove set">
+              <svg width="13" height="13" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
+            </button>
+          </div>
+        `).join("")}
+        <button class="btn btn-ghost btn-sm session-add-set" data-ei="${ei}">+ Add Set</button>
+        <input type="text" class="session-notes" placeholder="Notes..." value="${escapeHtml(ex.notes || "")}">
+      </div>
+    `).join("");
+
+    list.querySelectorAll(".session-ex-remove").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeSession.exercises.splice(Number(btn.dataset.ei), 1);
+        renderSession();
+      });
+    });
+    list.querySelectorAll(".session-add-set").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeSession.exercises[Number(btn.dataset.ei)].sets.push({ reps: "", weight: "" });
+        renderSession();
+      });
+    });
+    list.querySelectorAll(".session-set-del").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const ei = Number(btn.dataset.ei), si = Number(btn.dataset.si);
+        activeSession.exercises[ei].sets.splice(si, 1);
+        renderSession();
+      });
+    });
+    list.querySelectorAll(".session-set-row").forEach(row => {
+      const ei = Number(row.dataset.ei), si = Number(row.dataset.si);
+      row.querySelector(".session-reps").addEventListener("input", e => {
+        activeSession.exercises[ei].sets[si].reps = e.target.value;
+      });
+      row.querySelector(".session-wt").addEventListener("input", e => {
+        activeSession.exercises[ei].sets[si].weight = e.target.value;
+      });
+    });
+    list.querySelectorAll(".session-notes").forEach(inp => {
+      const ei = Number(inp.closest("[data-ei]").dataset.ei);
+      inp.addEventListener("input", e => { activeSession.exercises[ei].notes = e.target.value; });
+    });
+  }
+
+  document.getElementById("start-session-trigger").addEventListener("click", () => {
+    // Show routine picker or empty session — for now show log hub routines to pick
+    const routines = data.routines || [];
+    if (routines.length === 0) {
+      startEmptySession();
+    } else {
+      showView("choose-routine");
+      renderChooseRoutine();
+    }
+  });
+
+  document.getElementById("quick-log-trigger").addEventListener("click", () => {
+    prepLogForm();
+    showView("quick-log");
+  });
+
+  document.getElementById("session-add-exercise-btn").addEventListener("click", () => openExercisePicker("session"));
+
+  document.getElementById("session-cancel-btn").addEventListener("click", () => {
+    if (activeSession && activeSession.exercises.some(e => e.sets.some(s => s.reps))) {
+      if (!confirm("Discard this session?")) return;
+    }
+    activeSession = null;
+    showView("log");
+  });
+
+  document.getElementById("session-date").addEventListener("change", e => {
+    if (activeSession) activeSession.date = e.target.value;
+  });
+
+  document.getElementById("finish-session-btn").addEventListener("click", () => {
+    if (!activeSession) return;
+    const date = document.getElementById("session-date").value || todayStr();
+    let saved = 0;
+    activeSession.exercises.forEach(ex => {
+      const sets = ex.sets
+        .map(s => ({ reps: parseFloat(s.reps), weight: parseFloat(s.weight) || 0 }))
+        .filter(s => !isNaN(s.reps) && s.reps > 0);
+      if (sets.length > 0) {
+        data.workouts.push({ id: uid(), date, exercise: ex.name, sets, notes: ex.notes || "" });
+        saved++;
+      }
+    });
+    if (saved === 0) { toast("Log at least one set before finishing"); return; }
+    saveData();
+    toast(`${saved} exercise${saved > 1 ? "s" : ""} saved`);
+    activeSession = null;
     showView("history");
   });
+
+  // ---------- Choose Routine (modal-like sub-view) ----------
+  function renderChooseRoutine() {
+    const list = document.getElementById("choose-routine-list");
+    const routines = data.routines || [];
+    list.innerHTML = [
+      `<button class="choose-routine-row choose-routine-empty" id="choose-routine-empty">Start Empty Session</button>`
+    ].concat(routines.map(r => `
+      <button class="choose-routine-row" data-id="${r.id}">
+        <span class="choose-routine-name">${escapeHtml(r.name)}</span>
+        <span class="choose-routine-count">${r.exercises.length} exercise${r.exercises.length !== 1 ? "s" : ""}</span>
+      </button>
+    `)).join("");
+
+    list.querySelector("#choose-routine-empty").addEventListener("click", () => {
+      startEmptySession();
+    });
+    list.querySelectorAll("[data-id]").forEach(btn => {
+      btn.addEventListener("click", () => startSessionFromRoutine(btn.dataset.id));
+    });
+  }
+
+  document.getElementById("choose-routine-back").addEventListener("click", () => showView("log"));
 
   // ---------- Dashboard ----------
   function volumeOf(workout) {

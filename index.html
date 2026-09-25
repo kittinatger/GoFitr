@@ -17,6 +17,8 @@
   <symbol id="icon-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
   <symbol id="icon-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></symbol>
   <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></symbol>
+  <symbol id="icon-more-vertical" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
   <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
   <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
   <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
@@ -253,13 +255,44 @@
       </div>
     </section>
 
-    <!-- Log Workout -->
+    <!-- Log Hub -->
     <section id="view-log" class="view">
       <header class="view-header">
-        <h1>Log Workout</h1>
-        <p class="subtitle">Record today's session</p>
+        <h1>Workout</h1>
       </header>
 
+      <div class="log-hub-actions">
+        <button class="log-hub-card" id="quick-log-trigger">
+          <div class="log-hub-card-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24"><use href="#icon-plus"/></svg>
+          </div>
+          <span class="log-hub-card-title">Quick Log</span>
+          <span class="log-hub-card-sub">Single exercise</span>
+        </button>
+        <button class="log-hub-card" id="start-session-trigger">
+          <div class="log-hub-card-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24"><use href="#icon-play"/></svg>
+          </div>
+          <span class="log-hub-card-title">Start Session</span>
+          <span class="log-hub-card-sub">Full workout</span>
+        </button>
+      </div>
+
+      <div class="log-section-header">
+        <span class="log-section-title">My Routines</span>
+        <button class="btn btn-ghost btn-sm" id="new-routine-btn">+ New</button>
+      </div>
+      <div id="routines-list"></div>
+    </section>
+
+    <!-- Quick Log (single exercise) -->
+    <section id="view-quick-log" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="quick-log-back" aria-label="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-chevron-left"/></svg>
+        </button>
+        <h1>Quick Log</h1>
+      </header>
       <div class="panel">
         <form id="log-form">
           <div class="form-row">
@@ -291,6 +324,55 @@
           </div>
         </form>
       </div>
+    </section>
+
+    <!-- Create / Edit Routine -->
+    <section id="view-create-routine" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="create-routine-back" aria-label="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-chevron-left"/></svg>
+        </button>
+        <h1 id="create-routine-heading">New Routine</h1>
+      </header>
+      <div style="padding:0 16px 12px;">
+        <input type="text" id="routine-name-input" class="input-field" placeholder="Routine name..." style="width:100%;box-sizing:border-box;">
+      </div>
+      <div id="routine-exercises-list"></div>
+      <div style="padding:4px 16px 12px;">
+        <button type="button" class="btn btn-ghost" id="routine-add-exercise-btn" style="width:100%;">+ Add Exercise</button>
+      </div>
+      <div style="padding:0 16px 24px;">
+        <button type="button" class="btn btn-primary" id="save-routine-btn" style="width:100%;">Save Routine</button>
+      </div>
+    </section>
+
+    <!-- Workout Session -->
+    <section id="view-workout-session" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="session-cancel-btn" aria-label="Cancel">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-chevron-left"/></svg>
+        </button>
+        <h1 id="session-heading">Workout</h1>
+        <button type="button" class="btn btn-primary btn-sm" id="finish-session-btn">Finish</button>
+      </header>
+      <div style="padding:8px 16px 0;">
+        <input type="date" id="session-date" class="input-field" style="width:100%;box-sizing:border-box;">
+      </div>
+      <div id="session-exercises-list"></div>
+      <div style="padding:8px 16px 32px;">
+        <button type="button" class="btn btn-ghost" id="session-add-exercise-btn" style="width:100%;">+ Add Exercise</button>
+      </div>
+    </section>
+
+    <!-- Choose Routine -->
+    <section id="view-choose-routine" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="choose-routine-back" aria-label="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-chevron-left"/></svg>
+        </button>
+        <h1>Start Workout</h1>
+      </header>
+      <div id="choose-routine-list" style="padding:8px 0 32px;"></div>
     </section>
 
     <!-- Exercise Picker -->

@@ -2337,3 +2337,163 @@ textarea { resize: vertical; font-family: inherit; }
 }
 .profile-banner-swatch:hover { transform: scale(1.08); }
 .profile-banner-swatch.selected { border-color: var(--text); transform: scale(1.05); }
+
+/* ---- Log Hub ---- */
+.log-hub-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px 16px 8px;
+}
+.log-hub-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  text-align: left;
+}
+.log-hub-card:hover { background: var(--bg-elevated); border-color: var(--lime); transform: translateY(-1px); }
+.log-hub-card-icon { color: var(--lime); margin-bottom: 4px; }
+.log-hub-card-title { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.log-hub-card-sub { font-size: 0.78rem; color: var(--text-muted); }
+.log-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 8px;
+}
+.log-section-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+
+/* ---- Routine Cards ---- */
+.routine-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 16px 10px;
+  padding: 14px 14px 12px;
+  animation: fadeInUp 0.3s var(--ease) both;
+}
+.routine-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.routine-card-name { font-size: 0.97rem; font-weight: 700; color: var(--text); }
+.routine-card-actions { display: flex; gap: 4px; }
+.routine-exercises-preview { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+.routine-ex-item { font-size: 0.82rem; color: var(--text-muted); }
+.routine-ex-more { color: var(--lime); font-weight: 600; }
+.routine-card-footer { display: flex; align-items: center; justify-content: space-between; }
+.routine-count { font-size: 0.8rem; color: var(--text-muted); }
+
+/* ---- Create Routine / Exercise list ---- */
+.routine-ex-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.routine-ex-num { font-size: 0.8rem; color: var(--text-muted); min-width: 18px; }
+.routine-ex-name-text { flex: 1; font-size: 0.9rem; color: var(--text); }
+
+/* ---- Workout Session ---- */
+.session-ex-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 8px 16px;
+  padding: 12px 14px 8px;
+}
+.session-ex-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.session-ex-name { font-size: 0.95rem; font-weight: 700; color: var(--lime); }
+.session-sets-head {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr 28px;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 0 4px;
+}
+.session-set-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr 28px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.set-index { font-size: 0.8rem; color: var(--text-muted); text-align: center; }
+.session-set-row input[type="number"] {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 6px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.session-set-row input[type="number"]:focus { outline: none; border-color: var(--lime); }
+.session-add-set { margin: 6px 0 8px; font-size: 0.82rem; }
+.session-notes {
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  padding: 8px 0 4px;
+  margin-top: 4px;
+  outline: none;
+}
+.session-notes::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+/* ---- Choose Routine ---- */
+.choose-routine-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: background 0.12s;
+}
+.choose-routine-row:hover { background: var(--bg-card); }
+.choose-routine-empty { font-weight: 600; color: var(--lime); }
+.choose-routine-name { font-weight: 600; }
+.choose-routine-count { font-size: 0.8rem; color: var(--text-muted); }
+
+/* ---- Icon button (small ghost) ---- */
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.icon-btn:hover { color: var(--text); background: var(--bg-elevated); }
