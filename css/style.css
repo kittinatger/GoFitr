@@ -918,6 +918,32 @@ textarea { resize: vertical; font-family: inherit; }
   scrollbar-width: none;
 }
 .exercise-muscle-chips::-webkit-scrollbar { display: none; }
+.exercise-equip-chips {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.exercise-equip-chips::-webkit-scrollbar { display: none; }
+.exercise-equip-chip {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 4px 11px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.exercise-equip-chip.active {
+  background: var(--lime-dim);
+  border-color: var(--lime-dim);
+  color: var(--ink);
+}
 .exercise-muscle-chip {
   flex-shrink: 0;
   background: var(--bg-elevated);

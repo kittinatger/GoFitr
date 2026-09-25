@@ -287,11 +287,13 @@
 
   // ---------- Exercise Picker ----------
   let activeMuscleFiler = "All";
+  let activeEquipFilter = "All";
 
   function renderExercisePicker() {
     const db = (window.GOFITR_EXERCISE_DATABASE || []).slice().sort((a, b) => a.name.localeCompare(b.name));
     const query = (document.getElementById("exercise-search").value || "").trim().toLowerCase();
     let items = activeMuscleFiler === "All" ? db : db.filter(e => e.muscle === activeMuscleFiler);
+    if (activeEquipFilter !== "All") items = items.filter(e => e.equipment === activeEquipFilter);
     if (query) items = items.filter(e => e.name.toLowerCase().includes(query));
 
     const infoIcon = `<svg width="16" height="16" viewBox="0 0 24 24"><use href="#icon-info-i"/></svg>`;
@@ -356,12 +358,17 @@
     Cardio:    '<svg viewBox="0 0 40 40"><use href="#muscle-cardio"/></svg>',
   };
   const EQUIP_ICONS = {
-    Barbell:    '<svg viewBox="0 0 40 40"><use href="#equip-barbell"/></svg>',
-    Dumbbell:   '<svg viewBox="0 0 40 40"><use href="#equip-dumbbell"/></svg>',
-    Cable:      '<svg viewBox="0 0 40 40"><use href="#equip-cable"/></svg>',
-    Machine:    '<svg viewBox="0 0 40 40"><use href="#equip-machine"/></svg>',
-    Bodyweight: '<svg viewBox="0 0 40 40"><use href="#equip-bodyweight"/></svg>',
-    Other:      '<svg viewBox="0 0 40 40"><use href="#equip-other"/></svg>',
+    Barbell:        '<svg viewBox="0 0 40 40"><use href="#equip-barbell"/></svg>',
+    Dumbbell:       '<svg viewBox="0 0 40 40"><use href="#equip-dumbbell"/></svg>',
+    Kettlebell:     '<svg viewBox="0 0 40 40"><use href="#equip-other"/></svg>',
+    Cable:          '<svg viewBox="0 0 40 40"><use href="#equip-cable"/></svg>',
+    Machine:        '<svg viewBox="0 0 40 40"><use href="#equip-machine"/></svg>',
+    Bodyweight:     '<svg viewBox="0 0 40 40"><use href="#equip-bodyweight"/></svg>',
+    "Resistance Band": '<svg viewBox="0 0 40 40"><use href="#equip-other"/></svg>',
+    "Pull-Up Bar":  '<svg viewBox="0 0 40 40"><use href="#equip-bodyweight"/></svg>',
+    TRX:            '<svg viewBox="0 0 40 40"><use href="#equip-other"/></svg>',
+    Treadmill:      '<svg viewBox="0 0 40 40"><use href="#equip-machine"/></svg>',
+    Other:          '<svg viewBox="0 0 40 40"><use href="#equip-other"/></svg>',
   };
 
   function makeInfoCard(icon, label) {
@@ -398,8 +405,10 @@
 
   document.getElementById("exercise-picker-trigger").addEventListener("click", () => {
     activeMuscleFiler = "All";
+    activeEquipFilter = "All";
     document.getElementById("exercise-search").value = "";
     document.querySelectorAll(".exercise-muscle-chip").forEach(c => c.classList.toggle("active", c.dataset.muscle === "All"));
+    document.querySelectorAll(".exercise-equip-chip").forEach(c => c.classList.toggle("active", c.dataset.equip === "All"));
     renderExercisePicker();
     showView("exercise-picker");
   });
@@ -407,6 +416,14 @@
   document.getElementById("exercise-picker-back").addEventListener("click", () => showView("log"));
 
   document.getElementById("exercise-search").addEventListener("input", renderExercisePicker);
+
+  document.getElementById("exercise-equip-chips").addEventListener("click", (e) => {
+    const chip = e.target.closest(".exercise-equip-chip");
+    if (!chip) return;
+    activeEquipFilter = chip.dataset.equip;
+    document.querySelectorAll(".exercise-equip-chip").forEach(c => c.classList.toggle("active", c === chip));
+    renderExercisePicker();
+  });
 
   document.getElementById("exercise-muscle-chips").addEventListener("click", (e) => {
     const chip = e.target.closest(".exercise-muscle-chip");
