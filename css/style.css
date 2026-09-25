@@ -1894,7 +1894,6 @@ textarea { resize: vertical; font-family: inherit; }
   align-items: center;
   gap: 12px;
 }
-.macro-goals-icon { font-size: 1.2rem; width: 24px; text-align: center; }
 .macro-goals-label { flex: 1; font-size: 0.95rem; font-weight: 500; color: var(--text); }
 .macro-goals-input {
   width: 90px;
