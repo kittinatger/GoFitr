@@ -1217,3 +1217,4 @@ window.GOFITR_EXERCISE_DATABASE = [
     steps: ["Hold dumbbells in front of your thighs and hinge to the hang position.", "Explosively extend your hips and shrug, then catch the weights in a partial squat at shoulder height.", "Stand up and lower back to hang for the next rep."] },
   { name: "Dumbbell Push Press", muscle: "Front Delt", secondaryMuscles: ["Legs","Triceps"], equipment: "Dumbbell",
     steps: ["Hold dumbbells at shoulder height and dip your knees slightly.", "Drive your legs and use the momentum to press the dumbbells overhead.", "Lock out your arms fully and lower under control."] },
+];
