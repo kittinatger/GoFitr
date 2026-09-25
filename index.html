@@ -260,6 +260,26 @@
       <div id="exercise-picker-list" class="exercise-picker-list"></div>
     </section>
 
+    <!-- Exercise Info -->
+    <section id="view-exercise-info" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="exercise-info-back" aria-label="Back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h1 id="exercise-info-name"></h1>
+      </header>
+      <div class="view-content" style="padding:20px 16px;">
+        <div class="exercise-info-badges" style="margin-bottom:20px;">
+          <span id="exercise-info-muscle" class="exercise-info-badge exercise-info-badge--muscle"></span>
+          <span id="exercise-info-equipment" class="exercise-info-badge exercise-info-badge--equip"></span>
+        </div>
+        <div class="panel" style="margin-bottom:16px;">
+          <p id="exercise-info-desc" class="exercise-info-desc"></p>
+        </div>
+        <button type="button" id="exercise-info-select" class="btn btn-primary" style="width:100%;">Select Exercise</button>
+      </div>
+    </section>
+
     <!-- History -->
     <section id="view-history" class="view">
       <header class="view-header">
@@ -1222,24 +1242,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-
-<div id="exercise-info-overlay" class="exercise-info-overlay">
-  <div class="exercise-info-sheet">
-    <div class="exercise-info-handle"></div>
-    <div class="exercise-info-header">
-      <h2 id="exercise-info-name" class="exercise-info-title"></h2>
-      <button type="button" id="exercise-info-close" class="btn-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
-    <div class="exercise-info-badges">
-      <span id="exercise-info-muscle" class="exercise-info-badge exercise-info-badge--muscle"></span>
-      <span id="exercise-info-equipment" class="exercise-info-badge exercise-info-badge--equip"></span>
-    </div>
-    <p id="exercise-info-desc" class="exercise-info-desc"></p>
-    <button type="button" id="exercise-info-select" class="btn btn-primary" style="width:100%;margin-top:8px;">Select Exercise</button>
-  </div>
-</div>
 
 <div id="macro-goals-overlay" class="confirm-overlay">
   <div class="confirm-dialog" style="max-width:360px;">

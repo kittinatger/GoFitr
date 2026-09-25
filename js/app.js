@@ -340,7 +340,6 @@
     const lbl = document.getElementById("exercise-picker-label");
     lbl.textContent = name;
     lbl.classList.remove("exercise-picker-placeholder");
-    document.getElementById("exercise-info-overlay").classList.remove("show");
     showView("log");
   }
 
@@ -350,15 +349,10 @@
     document.getElementById("exercise-info-equipment").textContent = ex.equipment;
     document.getElementById("exercise-info-desc").textContent = ex.desc || "";
     document.getElementById("exercise-info-select").onclick = () => selectExercise(ex.name);
-    document.getElementById("exercise-info-overlay").classList.add("show");
+    showFoodPage("view-exercise-info");
   }
 
-  document.getElementById("exercise-info-close").addEventListener("click", () => {
-    document.getElementById("exercise-info-overlay").classList.remove("show");
-  });
-  document.getElementById("exercise-info-overlay").addEventListener("click", (e) => {
-    if (e.target === e.currentTarget) e.currentTarget.classList.remove("show");
-  });
+  document.getElementById("exercise-info-back").addEventListener("click", () => showFoodPage("view-exercise-picker"));
 
   document.getElementById("exercise-picker-trigger").addEventListener("click", () => {
     activeMuscleFiler = "All";
@@ -867,7 +861,7 @@
   // Nutrition, Dashboard, etc.) rather than centered popups — a fixed
   // centered overlay was unreliable on iPad Safari. Switching between them
   // just swaps which .view is active, same mechanism as the sidebar nav.
-  const FOOD_VIEWS = ["view-nutrition","view-food","view-food-detail","view-custom-food","view-meal-builder"];
+  const FOOD_VIEWS = ["view-nutrition","view-food","view-food-detail","view-custom-food","view-meal-builder","view-exercise-picker","view-exercise-info"];
   function showFoodPage(id) {
     FOOD_VIEWS.forEach(v => document.getElementById(v).classList.remove("active"));
     document.getElementById(id).classList.add("active");

@@ -985,52 +985,17 @@ textarea { resize: vertical; font-family: inherit; }
 }
 .exercise-row-info-btn:active { color: var(--lime); }
 
-/* Exercise info bottom sheet */
-.exercise-info-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 300;
-  display: flex;
-  align-items: flex-end;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-}
-.exercise-info-overlay.show { opacity: 1; pointer-events: all; }
-.exercise-info-sheet {
-  width: 100%;
-  background: var(--bg-card);
-  border-radius: 24px 24px 0 0;
-  padding: 12px 20px 36px;
-  transform: translateY(100%);
-  transition: transform 0.25s cubic-bezier(0.32,0.72,0,1);
-}
-.exercise-info-overlay.show .exercise-info-sheet { transform: translateY(0); }
-.exercise-info-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border-strong);
-  margin: 0 auto 16px;
-}
-.exercise-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.exercise-info-title { font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 0; }
-.exercise-info-badges { display: flex; gap: 8px; margin-bottom: 14px; }
+/* Exercise info page */
+.exercise-info-badges { display: flex; gap: 8px; flex-wrap: wrap; }
 .exercise-info-badge {
   font-size: 0.78rem;
   font-weight: 600;
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 20px;
 }
 .exercise-info-badge--muscle { background: color-mix(in srgb, var(--lime) 15%, transparent); color: var(--lime); }
 .exercise-info-badge--equip  { background: var(--bg-elevated); color: var(--text-muted); }
-.exercise-info-desc { font-size: 0.92rem; color: var(--text); line-height: 1.55; margin: 0 0 20px; }
+.exercise-info-desc { font-size: 0.95rem; color: var(--text); line-height: 1.6; margin: 0; }
 
 .sets-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin: 16px 0 8px; }
 
