@@ -792,6 +792,7 @@
 
   function closeFoodModal() {
     document.getElementById("view-food").classList.remove("active");
+    document.getElementById("all-foods-list").innerHTML = "";
     activeFoodMeal = null;
   }
 
@@ -1022,8 +1023,12 @@
       container.innerHTML = `<p class="empty-state" style="padding:14px 0;">No foods found.</p>`;
       return;
     }
-    container.innerHTML = items.map((item, i) => foodRowHtml(item, i)).join("");
-    wireFoodRows(container, items, { onSelect: (item) => showFoodDetail(item) });
+    const MAX = 50;
+    const shown = items.slice(0, MAX);
+    const overflow = items.length > MAX;
+    container.innerHTML = shown.map((item, i) => foodRowHtml(item, i)).join("") +
+      (overflow ? `<p class="empty-state" style="padding:10px 0;font-size:0.8rem;">Showing ${MAX} of ${items.length} — search to filter</p>` : "");
+    wireFoodRows(container, shown, { onSelect: (item) => showFoodDetail(item) });
   }
 
   document.querySelectorAll(".food-category-chip").forEach(chip => {
