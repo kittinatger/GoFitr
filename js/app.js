@@ -881,6 +881,138 @@
     el.textContent = `${gpsState.distanceKm.toFixed(2)} km · ${mm}:${String(ss).padStart(2, "0")}${p ? " · " + p : ""}${elev > 0 ? " · +" + elev + "m" : ""}`;
   }
 
+  // ---------- Bluetooth equipment (heart rate straps, FTMS treadmills/bikes) ----------
+  let bleState = null; // { ei, devices, timerInterval, startedAt, bpm, speedKmh, distanceKm, cadence, power, ftmsType }
+
+  const BLE_HR_SERVICE = "heart_rate";
+  const BLE_HR_CHAR = 0x2A37;
+  const BLE_FTMS_SERVICE = "fitness_machine";
+  const BLE_TREADMILL_CHAR = 0x2ACD;
+  const BLE_BIKE_CHAR = 0x2AD2;
+
+  async function connectBleDevice(ei) {
+    if (!navigator.bluetooth) { toast("Web Bluetooth isn't supported here — use Chrome or Edge"); return; }
+    try {
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [BLE_HR_SERVICE] }, { services: [BLE_FTMS_SERVICE] }],
+        optionalServices: [BLE_HR_SERVICE, BLE_FTMS_SERVICE]
+      });
+      const server = await device.gatt.connect();
+
+      if (!bleState || bleState.ei !== ei) {
+        if (bleState) stopBleTracking(false);
+        bleState = { ei, devices: [], startedAt: Date.now(), distanceKm: 0, speedKmh: 0, cadence: 0, power: 0, bpm: null };
+      }
+      bleState.devices.push(device);
+      device.addEventListener("gattserverdisconnected", () => {
+        toast((device.name || "Device") + " disconnected");
+      });
+
+      let connectedSomething = false;
+      try {
+        const hrService = await server.getPrimaryService(BLE_HR_SERVICE);
+        const hrChar = await hrService.getCharacteristic(BLE_HR_CHAR);
+        await hrChar.startNotifications();
+        hrChar.addEventListener("characteristicvaluechanged", onBleHrData);
+        connectedSomething = true;
+      } catch (e) { /* device has no heart_rate service */ }
+
+      try {
+        const ftmsService = await server.getPrimaryService(BLE_FTMS_SERVICE);
+        let char, type;
+        try { char = await ftmsService.getCharacteristic(BLE_BIKE_CHAR); type = "bike"; }
+        catch { char = await ftmsService.getCharacteristic(BLE_TREADMILL_CHAR); type = "treadmill"; }
+        await char.startNotifications();
+        char.addEventListener("characteristicvaluechanged", e => onBleFtmsData(e, type));
+        bleState.ftmsType = type;
+        connectedSomething = true;
+      } catch (e) { /* device has no fitness_machine service */ }
+
+      if (!connectedSomething) { toast("That device has no supported fitness service"); return; }
+      if (!bleState.timerInterval) bleState.timerInterval = setInterval(updateBleDisplay, 1000);
+      toast("Connected: " + (device.name || "device"));
+      renderSession();
+    } catch (e) {
+      if (e.name !== "NotFoundError") toast("Bluetooth error: " + e.message);
+    }
+  }
+
+  function onBleHrData(event) {
+    const v = event.target.value;
+    const flags = v.getUint8(0);
+    const bpm = (flags & 0x1) ? v.getUint16(1, true) : v.getUint8(1);
+    if (bleState) bleState.bpm = bpm;
+    updateBleDisplay();
+  }
+
+  function onBleFtmsData(event, type) {
+    if (!bleState) return;
+    const v = event.target.value;
+    const flags = v.getUint16(0, true);
+    let offset = 2;
+    const read16 = () => { const val = v.getUint16(offset, true); offset += 2; return val; };
+    const readS16 = () => { const val = v.getInt16(offset, true); offset += 2; return val; };
+    const read8 = () => { const val = v.getUint8(offset); offset += 1; return val; };
+    const read24 = () => { const b0 = v.getUint8(offset), b1 = v.getUint8(offset + 1), b2 = v.getUint8(offset + 2); offset += 3; return b0 | (b1 << 8) | (b2 << 16); };
+
+    if (type === "bike") {
+      if (!(flags & 0x1)) bleState.speedKmh = read16() * 0.01;
+      if (flags & 0x2) read16();
+      if (flags & 0x4) bleState.cadence = read16() * 0.5;
+      if (flags & 0x8) read16();
+      if (flags & 0x10) bleState.distanceKm = read24() / 1000;
+      if (flags & 0x20) readS16();
+      if (flags & 0x40) bleState.power = readS16();
+      if (flags & 0x80) readS16();
+      if (flags & 0x100) { read16(); read16(); read8(); }
+      if (flags & 0x200) bleState.bpm = read8();
+    } else {
+      if (!(flags & 0x1)) bleState.speedKmh = read16() * 0.01;
+      if (flags & 0x2) read16();
+      if (flags & 0x4) bleState.distanceKm = read24() / 1000;
+      if (flags & 0x8) { readS16(); readS16(); }
+      if (flags & 0x10) { read16(); read16(); }
+      if (flags & 0x20) read8();
+      if (flags & 0x40) read8();
+      if (flags & 0x80) { read16(); read16(); read8(); }
+      if (flags & 0x100) bleState.bpm = read8();
+    }
+    updateBleDisplay();
+  }
+
+  function updateBleDisplay() {
+    if (!bleState) return;
+    const el = document.getElementById("ble-live-stats");
+    if (!el) return;
+    const parts = [];
+    if (bleState.bpm) parts.push(bleState.bpm + " bpm");
+    if (bleState.speedKmh) parts.push(bleState.speedKmh.toFixed(1) + " km/h");
+    if (bleState.distanceKm) parts.push(bleState.distanceKm.toFixed(2) + " km");
+    if (bleState.cadence) parts.push(Math.round(bleState.cadence) + " rpm");
+    if (bleState.power) parts.push(bleState.power + " W");
+    el.textContent = parts.length ? parts.join(" · ") : "Waiting for data...";
+  }
+
+  function stopBleTracking(applyToSet) {
+    if (!bleState) return;
+    clearInterval(bleState.timerInterval);
+    bleState.devices.forEach(d => { try { if (d.gatt.connected) d.gatt.disconnect(); } catch (e) { /* already gone */ } });
+    const minutes = (Date.now() - bleState.startedAt) / 60000;
+    const ei = bleState.ei;
+    const km = bleState.distanceKm;
+    const bpm = bleState.bpm;
+    bleState = null;
+    if (applyToSet && activeSession && activeSession.exercises[ei]) {
+      const sets = activeSession.exercises[ei].sets;
+      const set = sets[0] || { reps: "", weight: "", distance: "", calories: "", done: false };
+      set.reps = minutes.toFixed(1);
+      if (km > 0) set.distance = km.toFixed(2);
+      if (bpm) set.avgHr = bpm;
+      sets[0] = set;
+    }
+    renderSession();
+  }
+
   function startSessionFromRoutine(routineId) {
     const r = (data.routines || []).find(r => r.id === routineId);
     activeSession = {
@@ -931,9 +1063,15 @@
           ? `<div class="gps-track-bar">
               ${gpsState && gpsState.ei === ei
                 ? `<span id="gps-live-stats" class="gps-live-stats">Tracking...</span><button type="button" class="btn btn-primary btn-sm gps-stop-btn" data-ei="${ei}">Stop</button>`
-                : `<button type="button" class="btn btn-ghost btn-sm gps-start-btn" data-ei="${ei}">
+                : bleState && bleState.ei === ei
+                ? `<span id="ble-live-stats" class="gps-live-stats">Connecting...</span><button type="button" class="btn btn-primary btn-sm ble-stop-btn" data-ei="${ei}">Stop</button>`
+                : `<button type="button" class="btn btn-ghost btn-sm gps-start-btn" data-ei="${ei}" style="flex:1;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><path d="M20.94 11A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/><circle cx="12" cy="12" r="3"/></svg>
-                    Start GPS Tracking
+                    GPS
+                   </button>
+                   <button type="button" class="btn btn-ghost btn-sm ble-connect-btn" data-ei="${ei}" style="flex:1;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+                    Connect Equipment
                    </button>`
               }
              </div>
@@ -998,6 +1136,7 @@
       btn.addEventListener("click", () => {
         const ei = Number(btn.dataset.ei);
         if (gpsState && gpsState.ei === ei) stopGpsTracking(false);
+        if (bleState && bleState.ei === ei) stopBleTracking(false);
         activeSession.exercises.splice(ei, 1);
         renderSession();
       });
@@ -1008,6 +1147,13 @@
     list.querySelectorAll(".gps-stop-btn").forEach(btn => {
       btn.addEventListener("click", () => stopGpsTracking(true));
     });
+    list.querySelectorAll(".ble-connect-btn").forEach(btn => {
+      btn.addEventListener("click", () => connectBleDevice(Number(btn.dataset.ei)));
+    });
+    list.querySelectorAll(".ble-stop-btn").forEach(btn => {
+      btn.addEventListener("click", () => stopBleTracking(true));
+    });
+    if (bleState) updateBleDisplay();
     if (gpsState) {
       updateGpsDisplay();
       // renderSession() just replaced #gps-map's DOM node, so any prior Leaflet
@@ -1098,6 +1244,7 @@
       if (!confirm("Discard this session?")) return;
     }
     if (gpsState) stopGpsTracking(false);
+    if (bleState) stopBleTracking(false);
     stopSessionTimer();
     activeSession = null;
     showView("log");
@@ -1110,6 +1257,7 @@
   document.getElementById("finish-session-btn").addEventListener("click", () => {
     if (!activeSession) return;
     if (gpsState) stopGpsTracking(true);
+    if (bleState) stopBleTracking(true);
     const date = document.getElementById("session-date").value || todayStr();
     let saved = 0;
     activeSession.exercises.forEach(ex => {
@@ -1119,7 +1267,8 @@
           weight: parseFloat(s.weight) || 0,
           distance: parseFloat(s.distance) || 0,
           calories: parseFloat(s.calories) || 0,
-          elevGain: parseFloat(s.elevGain) || 0
+          elevGain: parseFloat(s.elevGain) || 0,
+          avgHr: parseFloat(s.avgHr) || 0
         }))
         .filter(s => !isNaN(s.reps) && s.reps > 0);
       if (sets.length > 0) {
