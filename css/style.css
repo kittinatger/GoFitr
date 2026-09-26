@@ -2605,6 +2605,9 @@ textarea { resize: vertical; font-family: inherit; }
   background: var(--bg-elevated);
 }
 .gps-map .leaflet-control-attribution { display: none; }
+.gps-map--dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.8);
+}
 
 /* ---- Bluetooth equipment connect bar ---- */
 .gps-track-bar { gap: 8px; }

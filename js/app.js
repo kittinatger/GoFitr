@@ -801,19 +801,23 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  // All of these are free, key-less tile sources. "Dark" reuses standard OSM
+  // tiles with a CSS invert filter (see .gps-map--dark in style.css) since
+  // CARTO's raster basemaps now require a paid API key.
   const MAP_STYLES = {
-    dark:      { label: "Dark",      url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", maxZoom: 20, subdomains: "abcd" },
-    voyager:   { label: "Voyager",   url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", maxZoom: 20, subdomains: "abcd" },
+    dark:      { label: "Dark",      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", maxZoom: 19, subdomains: "abc", invert: true },
     osm:       { label: "Standard",  url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", maxZoom: 19, subdomains: "abc" },
+    terrain:   { label: "Terrain",   url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", maxZoom: 17, subdomains: "abc" },
     satellite: { label: "Satellite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", maxZoom: 19, subdomains: "" }
   };
-  const MAP_STYLE_ORDER = ["dark", "voyager", "osm", "satellite"];
+  const MAP_STYLE_ORDER = ["dark", "osm", "terrain", "satellite"];
 
   function initGpsMap(lat, lon) {
     if (typeof L === "undefined") return null;
     const mapEl = document.getElementById("gps-map");
     if (!mapEl) return null;
     const style = MAP_STYLES[data.mapStyle] || MAP_STYLES.dark;
+    mapEl.classList.toggle("gps-map--dark", !!style.invert);
     const map = L.map(mapEl, { zoomControl: false, attributionControl: false }).setView([lat, lon], 16);
     L.tileLayer(style.url, { maxZoom: style.maxZoom, subdomains: style.subdomains || "abc" }).addTo(map);
     const polyline = L.polyline([[lat, lon]], { color: "#d7ff3d", weight: 4 }).addTo(map);
