@@ -747,14 +747,29 @@
     "Deep Squat Hold", "Hollow Body Hold"
   ]);
   const CARRY_NAME_RE = /(Carry|'s Walk)$/i;
+  const EXTRA_CARDIO_NAMES = new Set(["Walking", "Hiking"]);
 
   // "cardio" = duration in minutes, "hold" = duration in seconds, "reps" = reps + weight
   function exerciseLogType(name) {
+    if (EXTRA_CARDIO_NAMES.has(name)) return "cardio";
     const meta = findExerciseMeta(name);
     if (meta && meta.muscle === "Cardio") return "cardio";
     if (HOLD_EXACT.has(name) || HOLD_NAME_RE.test(name) || CARRY_NAME_RE.test(name)) return "hold";
     return "reps";
   }
+
+  // Curated shortlist for the dedicated "Start Activity" flow (vs. the full
+  // exercise database, which has dozens of Cardio-tagged sport drills)
+  const QUICK_ACTIVITIES = [
+    { name: "Running",       icon: "M13 4l9 3-3 2-3-1-2 3 3 5-2 1-3-5-4 2v4H6v-5l5-3-2-3-3 1v-2l5-2z" },
+    { name: "Walking",       icon: "M13 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM9 21l2-6 2 1 1.5 3M11 10l-1 4 3 2 1 4M8 8l3 2" },
+    { name: "Cycling",       icon: "M5 17a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm14 0a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM5 19l4-8h5l3 5M9 11l2-4h3" },
+    { name: "Swimming",      icon: "M2 16c1.5 1.5 3 1.5 4.5 0s3-1.5 4.5 0 3 1.5 4.5 0 3-1.5 4.5 0M10 10l6-4 3 3-2 2M4 8l4-2" },
+    { name: "Rowing Machine", icon: "M3 20h18M5 20l3-10 8 2 3-4M8 10l-2 6M16 8l3 3" },
+    { name: "Elliptical",    icon: "M7 20l3-6 4 2 3-9M7 20l4-4 3 2M12 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" },
+    { name: "Stair Climber", icon: "M3 20h4v-4h4v-4h4v-4h4v-4" },
+    { name: "Jump Rope",     icon: "M3 8c3-6 15-6 18 0M6 10v10M18 10v10" }
+  ];
 
   function isCardioExercise(name) {
     return exerciseLogType(name) !== "reps";
@@ -769,10 +784,10 @@
     return `${whole}'${String(sec).padStart(2, "0")}"/km`;
   }
 
-  function startSessionTimer() {
+  function startSessionTimer(elId) {
     clearInterval(sessionTimerInterval);
     const startMs = Date.now() - (activeSession.elapsedMs || 0);
-    const el = document.getElementById("session-timer");
+    const el = document.getElementById(elId || "session-timer");
     function tick() {
       const s = Math.floor((Date.now() - startMs) / 1000);
       const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
@@ -831,9 +846,9 @@
     return v || "#d7ff3d";
   }
 
-  function initGpsMap(lat, lon) {
+  function initGpsMap(lat, lon, mapElId) {
     if (typeof L === "undefined") return null;
-    const mapEl = document.getElementById("gps-map");
+    const mapEl = document.getElementById(mapElId || "gps-map");
     if (!mapEl) return null;
     const style = MAP_STYLES[resolvedMapStyleKey()] || MAP_STYLES.dark;
     mapEl.classList.toggle("gps-map--dark", !!style.invert);
@@ -845,10 +860,18 @@
     return { map, polyline, marker };
   }
 
-  function startGpsTracking(ei) {
+  function startGpsTracking(ei, opts) {
     if (!navigator.geolocation) { toast("GPS is not available on this device/browser"); return; }
     if (gpsState) stopGpsTracking(false);
-    gpsState = { ei, points: [], startedAt: Date.now(), distanceKm: 0, elevGainM: 0, map: null, polyline: null, marker: null };
+    opts = opts || {};
+    gpsState = {
+      ei, points: [], startedAt: Date.now(), distanceKm: 0, elevGainM: 0,
+      map: null, polyline: null, marker: null,
+      mapElId: opts.mapElId || "gps-map",
+      statsElId: opts.statsElId || "gps-live-stats",
+      onUpdate: opts.onUpdate || null,
+      rerender: opts.rerender || (() => renderSession())
+    };
     gpsState.watchId = navigator.geolocation.watchPosition(
       pos => {
         const { latitude, longitude, altitude } = pos.coords;
@@ -862,7 +885,7 @@
         gpsState.points.push({ lat: latitude, lon: longitude, alt: altitude });
 
         if (!gpsState.map) {
-          const setup = initGpsMap(latitude, longitude);
+          const setup = initGpsMap(latitude, longitude, gpsState.mapElId);
           if (setup) Object.assign(gpsState, setup);
         } else {
           gpsState.polyline.addLatLng([latitude, longitude]);
@@ -878,7 +901,7 @@
       { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 }
     );
     gpsState.timerInterval = setInterval(updateGpsDisplay, 1000);
-    renderSession();
+    gpsState.rerender();
   }
 
   function stopGpsTracking(applyToSet) {
@@ -890,6 +913,7 @@
     const ei = gpsState.ei;
     const km = gpsState.distanceKm;
     const elevGain = Math.round(gpsState.elevGainM);
+    const rerender = gpsState.rerender;
     gpsState = null;
     if (applyToSet && activeSession && activeSession.exercises[ei]) {
       const sets = activeSession.exercises[ei].sets;
@@ -900,12 +924,13 @@
       sets[0] = set;
       if (elevGain > 0) toast(`Saved: ${km.toFixed(2)} km, +${elevGain}m elevation`);
     }
-    renderSession();
+    rerender();
   }
 
   function updateGpsDisplay() {
     if (!gpsState) return;
-    const el = document.getElementById("gps-live-stats");
+    if (gpsState.onUpdate) gpsState.onUpdate();
+    const el = document.getElementById(gpsState.statsElId);
     if (!el) return;
     const mins = (Date.now() - gpsState.startedAt) / 60000;
     const totalSec = Math.floor(mins * 60);
@@ -924,8 +949,9 @@
   const BLE_TREADMILL_CHAR = 0x2ACD;
   const BLE_BIKE_CHAR = 0x2AD2;
 
-  async function connectBleDevice(ei) {
+  async function connectBleDevice(ei, opts) {
     if (!navigator.bluetooth) { toast("Web Bluetooth isn't supported here — use Chrome or Edge"); return; }
+    opts = opts || {};
     try {
       const device = await navigator.bluetooth.requestDevice({
         filters: [{ services: [BLE_HR_SERVICE] }, { services: [BLE_FTMS_SERVICE] }],
@@ -935,7 +961,11 @@
 
       if (!bleState || bleState.ei !== ei) {
         if (bleState) stopBleTracking(false);
-        bleState = { ei, devices: [], startedAt: Date.now(), distanceKm: 0, speedKmh: 0, cadence: 0, power: 0, bpm: null };
+        bleState = {
+          ei, devices: [], startedAt: Date.now(), distanceKm: 0, speedKmh: 0, cadence: 0, power: 0, bpm: null,
+          statsElId: opts.statsElId || "ble-live-stats",
+          rerender: opts.rerender || (() => renderSession())
+        };
       }
       bleState.devices.push(device);
       device.addEventListener("gattserverdisconnected", () => {
@@ -965,7 +995,7 @@
       if (!connectedSomething) { toast("That device has no supported fitness service"); return; }
       if (!bleState.timerInterval) bleState.timerInterval = setInterval(updateBleDisplay, 1000);
       toast("Connected: " + (device.name || "device"));
-      renderSession();
+      bleState.rerender();
     } catch (e) {
       if (e.name !== "NotFoundError") toast("Bluetooth error: " + e.message);
     }
@@ -1016,7 +1046,7 @@
 
   function updateBleDisplay() {
     if (!bleState) return;
-    const el = document.getElementById("ble-live-stats");
+    const el = document.getElementById(bleState.statsElId);
     if (!el) return;
     const parts = [];
     if (bleState.bpm) parts.push(bleState.bpm + " bpm");
@@ -1035,6 +1065,7 @@
     const ei = bleState.ei;
     const km = bleState.distanceKm;
     const bpm = bleState.bpm;
+    const rerender = bleState.rerender;
     bleState = null;
     if (applyToSet && activeSession && activeSession.exercises[ei]) {
       const sets = activeSession.exercises[ei].sets;
@@ -1044,8 +1075,99 @@
       if (bpm) set.avgHr = bpm;
       sets[0] = set;
     }
-    renderSession();
+    rerender();
   }
+
+  // ---------- Dedicated "Start Activity" flow (cardio only) ----------
+  function renderChooseActivity() {
+    const list = document.getElementById("choose-activity-list");
+    list.innerHTML = QUICK_ACTIVITIES.map(a => `
+      <button class="activity-card" data-name="${escapeHtml(a.name)}">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${a.icon}"/></svg>
+        <span>${escapeHtml(a.name)}</span>
+      </button>
+    `).join("");
+    list.querySelectorAll(".activity-card").forEach(btn => {
+      btn.addEventListener("click", () => startLiveActivity(btn.dataset.name));
+    });
+  }
+
+  function liveActivityRerenderOpts() {
+    return { mapElId: "live-gps-map", statsElId: "live-activity-stats", rerender: () => {} };
+  }
+
+  function startLiveActivity(name) {
+    activeSession = {
+      date: todayStr(),
+      routineName: name,
+      exercises: [{ name, sets: [{ reps: "", weight: "", distance: "", calories: "", done: false }], notes: "" }],
+      elapsedMs: 0
+    };
+    document.getElementById("live-activity-name").textContent = name;
+    document.getElementById("live-activity-stats").textContent = "Tap Start GPS or Connect Equipment to begin";
+    document.getElementById("live-activity-notes").value = "";
+    showView("live-activity");
+    startSessionTimer("live-activity-timer");
+  }
+
+  document.getElementById("live-activity-gps-btn").addEventListener("click", () => {
+    if (gpsState) { stopGpsTracking(true); return; }
+    if (bleState) stopBleTracking(true);
+    startGpsTracking(0, { mapElId: "live-gps-map", statsElId: "live-activity-stats", rerender: () => {} });
+    document.getElementById("live-activity-gps-btn").textContent = "Stop GPS";
+  });
+
+  document.getElementById("live-activity-ble-btn").addEventListener("click", () => {
+    if (bleState) { stopBleTracking(true); return; }
+    if (gpsState) stopGpsTracking(true);
+    connectBleDevice(0, { statsElId: "live-activity-stats", rerender: () => {} });
+  });
+
+  document.getElementById("live-activity-notes").addEventListener("input", e => {
+    if (activeSession && activeSession.exercises[0]) activeSession.exercises[0].notes = e.target.value;
+  });
+
+  document.getElementById("live-activity-cancel-btn").addEventListener("click", () => {
+    const s = activeSession && activeSession.exercises[0] && activeSession.exercises[0].sets[0];
+    if (s && parseFloat(s.reps) > 0) {
+      if (!confirm("Discard this activity?")) return;
+    }
+    if (gpsState) stopGpsTracking(false);
+    if (bleState) stopBleTracking(false);
+    stopSessionTimer();
+    activeSession = null;
+    showView("log");
+  });
+
+  document.getElementById("live-activity-finish-btn").addEventListener("click", () => {
+    if (!activeSession) return;
+    if (gpsState) stopGpsTracking(true);
+    if (bleState) stopBleTracking(true);
+    const ex = activeSession.exercises[0];
+    const s = ex.sets[0];
+    const reps = parseFloat(s.reps);
+    if (isNaN(reps) || reps <= 0) { toast("Track some time before finishing"); return; }
+    data.workouts.push({
+      id: uid(),
+      date: activeSession.date,
+      exercise: ex.name,
+      sets: [{
+        reps,
+        weight: 0,
+        distance: parseFloat(s.distance) || 0,
+        calories: parseFloat(s.calories) || 0,
+        elevGain: parseFloat(s.elevGain) || 0,
+        avgHr: parseFloat(s.avgHr) || 0
+      }],
+      notes: ex.notes || ""
+    });
+    saveData();
+    toast(ex.name + " saved");
+    stopSessionTimer();
+    activeSession = null;
+    document.getElementById("live-activity-gps-btn").textContent = "Start GPS";
+    showView("history");
+  });
 
   function startSessionFromRoutine(routineId) {
     const r = (data.routines || []).find(r => r.id === routineId);
@@ -1265,6 +1387,12 @@
       renderChooseRoutine();
     }
   });
+
+  document.getElementById("start-activity-trigger").addEventListener("click", () => {
+    renderChooseActivity();
+    showView("choose-activity");
+  });
+  document.getElementById("choose-activity-back").addEventListener("click", () => showView("log"));
 
   document.getElementById("quick-log-trigger").addEventListener("click", () => {
     prepLogForm();

@@ -277,6 +277,13 @@
           <span class="log-hub-card-title">Start Session</span>
           <span class="log-hub-card-sub">Full workout</span>
         </button>
+        <button class="log-hub-card" id="start-activity-trigger">
+          <div class="log-hub-card-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15.5" cy="4.5" r="1.5" fill="currentColor" stroke="none"/><path d="M12.5 8l2 2.5-3.5 5-2.5-1.5M9 21l3-6.5 2.5 1.5 1.5-3M6.5 8.5L9 7"/></svg>
+          </div>
+          <span class="log-hub-card-title">Start Activity</span>
+          <span class="log-hub-card-sub">Run, ride, swim...</span>
+        </button>
       </div>
 
       <div class="log-section-header">
@@ -377,6 +384,46 @@
         <h1>Start Workout</h1>
       </header>
       <div id="choose-routine-list" style="padding:8px 0 32px;"></div>
+    </section>
+
+    <!-- Choose Activity (cardio) -->
+    <section id="view-choose-activity" class="view">
+      <header class="view-header view-header-back">
+        <button type="button" class="page-back-btn" id="choose-activity-back" aria-label="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-chevron-left"/></svg>
+        </button>
+        <h1>Start Activity</h1>
+      </header>
+      <div id="choose-activity-list" class="activity-grid"></div>
+    </section>
+
+    <!-- Live Activity (dedicated cardio tracking) -->
+    <section id="view-live-activity" class="view">
+      <header class="view-header view-header-back session-header">
+        <button type="button" class="page-back-btn" id="live-activity-cancel-btn" aria-label="Cancel">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
+        </button>
+        <div class="session-header-center">
+          <span id="live-activity-timer" class="session-timer">00:00</span>
+          <span id="live-activity-name" class="session-heading-sub">Running</span>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="live-activity-finish-btn">Finish</button>
+      </header>
+      <div id="live-gps-map" class="gps-map live-activity-map"></div>
+      <div id="live-activity-stats" class="live-activity-stats">Tap Start to begin tracking</div>
+      <div class="live-activity-actions">
+        <button type="button" class="btn btn-ghost" id="live-activity-gps-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M20.94 11A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/><circle cx="12" cy="12" r="3"/></svg>
+          Start GPS
+        </button>
+        <button type="button" class="btn btn-ghost" id="live-activity-ble-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
+          Connect Equipment
+        </button>
+      </div>
+      <div style="padding:4px 16px 32px;">
+        <input type="text" id="live-activity-notes" class="input-field" placeholder="Notes..." style="width:100%;box-sizing:border-box;">
+      </div>
     </section>
 
     <!-- Exercise Picker -->
