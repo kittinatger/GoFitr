@@ -2421,9 +2421,9 @@ textarea { resize: vertical; font-family: inherit; }
 .session-ex-name { font-size: 0.95rem; font-weight: 700; color: var(--lime); }
 .session-sets-head {
   display: grid;
-  grid-template-columns: 28px 1fr 1fr 28px;
-  gap: 8px;
-  font-size: 0.72rem;
+  grid-template-columns: 28px 52px 1fr 1fr 36px;
+  gap: 6px;
+  font-size: 0.7rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2431,23 +2431,42 @@ textarea { resize: vertical; font-family: inherit; }
 }
 .session-set-row {
   display: grid;
-  grid-template-columns: 28px 1fr 1fr 28px;
-  gap: 8px;
+  grid-template-columns: 28px 52px 1fr 1fr 36px;
+  gap: 6px;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  padding: 2px 0;
+  transition: background 0.15s;
 }
+.session-set-done { background: rgba(var(--lime-rgb, 163,184,20), 0.12); }
 .set-index { font-size: 0.8rem; color: var(--text-muted); text-align: center; }
+.set-prev { font-size: 0.78rem; color: var(--text-muted); text-align: center; }
 .session-set-row input[type="number"] {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
   font-size: 0.9rem;
-  padding: 6px 8px;
+  padding: 6px 6px;
   width: 100%;
   box-sizing: border-box;
+  text-align: center;
 }
 .session-set-row input[type="number"]:focus { outline: none; border-color: var(--lime); }
+.session-set-check {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.session-set-check:hover { border-color: var(--lime); color: var(--lime); }
+.session-set-check-done { background: var(--lime); border-color: var(--lime); color: var(--ink); }
 .session-add-set { margin: 6px 0 8px; font-size: 0.82rem; }
 .session-notes {
   width: 100%;
@@ -2497,3 +2516,30 @@ textarea { resize: vertical; font-family: inherit; }
   transition: color 0.15s, background 0.15s;
 }
 .icon-btn:hover { color: var(--text); background: var(--bg-elevated); }
+
+/* ---- Session header timer ---- */
+.session-header { gap: 0; }
+.session-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+.session-timer {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.session-heading-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.session-set-done { background: rgba(215,255,61,0.1); }

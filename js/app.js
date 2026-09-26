@@ -653,30 +653,62 @@
 
   // ---------- Workout Session ----------
   let activeSession = null;
+  let sessionTimerInterval = null;
+
+  function getPrevSets(exerciseName) {
+    const matches = (data.workouts || [])
+      .filter(w => w.exercise === exerciseName)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    return matches.length ? (matches[0].sets || []) : [];
+  }
+
+  function startSessionTimer() {
+    clearInterval(sessionTimerInterval);
+    const startMs = Date.now() - (activeSession.elapsedMs || 0);
+    const el = document.getElementById("session-timer");
+    function tick() {
+      const s = Math.floor((Date.now() - startMs) / 1000);
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      const pad = n => String(n).padStart(2, "0");
+      if (el) el.textContent = h > 0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+      if (activeSession) activeSession.elapsedMs = Date.now() - startMs;
+    }
+    tick();
+    sessionTimerInterval = setInterval(tick, 1000);
+  }
+
+  function stopSessionTimer() {
+    clearInterval(sessionTimerInterval);
+    sessionTimerInterval = null;
+  }
 
   function startSessionFromRoutine(routineId) {
     const r = (data.routines || []).find(r => r.id === routineId);
     activeSession = {
       date: todayStr(),
       routineName: r ? r.name : "Workout",
-      exercises: r ? r.exercises.map(e => ({ name: e.name, sets: [{ reps: "", weight: "" }], notes: "" })) : []
+      exercises: r ? r.exercises.map(e => ({ name: e.name, sets: [{ reps: "", weight: "", done: false }], notes: "" })) : [],
+      elapsedMs: 0
     };
     document.getElementById("session-heading").textContent = activeSession.routineName;
     document.getElementById("session-date").value = activeSession.date;
     renderSession();
     showView("workout-session");
+    startSessionTimer();
   }
 
   function startEmptySession() {
     activeSession = {
       date: todayStr(),
       routineName: "Workout",
-      exercises: []
+      exercises: [],
+      elapsedMs: 0
     };
     document.getElementById("session-heading").textContent = "Workout";
     document.getElementById("session-date").value = activeSession.date;
     renderSession();
     showView("workout-session");
+    startSessionTimer();
   }
 
   function renderSession() {
@@ -685,7 +717,9 @@
       list.innerHTML = `<p class="empty-state" style="padding:20px 16px;">No exercises yet. Tap <strong>+ Add Exercise</strong>.</p>`;
       return;
     }
-    list.innerHTML = activeSession.exercises.map((ex, ei) => `
+    list.innerHTML = activeSession.exercises.map((ex, ei) => {
+      const prev = getPrevSets(ex.name);
+      return `
       <div class="session-ex-card" data-ei="${ei}">
         <div class="session-ex-header">
           <span class="session-ex-name">${escapeHtml(ex.name)}</span>
@@ -693,21 +727,27 @@
             <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
           </button>
         </div>
-        <div class="session-sets-head"><span>Set</span><span>Reps</span><span>Weight (${data.unit})</span><span></span></div>
-        ${ex.sets.map((s, si) => `
-          <div class="session-set-row" data-ei="${ei}" data-si="${si}">
+        <div class="session-sets-head">
+          <span>Set</span><span>Prev</span><span>${data.unit}</span><span>Reps</span><span></span>
+        </div>
+        ${ex.sets.map((s, si) => {
+          const p = prev[si];
+          const prevText = p ? (p.weight > 0 ? `${p.weight}x${p.reps}` : `${p.reps}`) : "-";
+          return `
+          <div class="session-set-row${s.done ? " session-set-done" : ""}" data-ei="${ei}" data-si="${si}">
             <span class="set-index">${si + 1}</span>
-            <input type="number" class="set-reps session-reps" value="${s.reps}" placeholder="0" min="0">
-            <input type="number" class="set-weight session-wt" value="${s.weight}" placeholder="0" min="0" step="0.5">
-            <button class="icon-btn session-set-del" data-ei="${ei}" data-si="${si}" title="Remove set">
-              <svg width="13" height="13" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
+            <span class="set-prev">${prevText}</span>
+            <input type="number" class="session-wt" value="${s.weight}" placeholder="-" min="0" step="0.5">
+            <input type="number" class="session-reps" value="${s.reps}" placeholder="0" min="0">
+            <button class="session-set-check${s.done ? " session-set-check-done" : ""}" data-ei="${ei}" data-si="${si}" title="Mark done">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
-          </div>
-        `).join("")}
-        <button class="btn btn-ghost btn-sm session-add-set" data-ei="${ei}">+ Add Set</button>
+          </div>`;
+        }).join("")}
+        <button class="btn btn-ghost btn-sm session-add-set" data-ei="${ei}" style="width:100%;margin:6px 0 4px;">+ Add Set</button>
         <input type="text" class="session-notes" placeholder="Notes..." value="${escapeHtml(ex.notes || "")}">
-      </div>
-    `).join("");
+      </div>`;
+    }).join("");
 
     list.querySelectorAll(".session-ex-remove").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -717,14 +757,14 @@
     });
     list.querySelectorAll(".session-add-set").forEach(btn => {
       btn.addEventListener("click", () => {
-        activeSession.exercises[Number(btn.dataset.ei)].sets.push({ reps: "", weight: "" });
+        activeSession.exercises[Number(btn.dataset.ei)].sets.push({ reps: "", weight: "", done: false });
         renderSession();
       });
     });
-    list.querySelectorAll(".session-set-del").forEach(btn => {
+    list.querySelectorAll(".session-set-check").forEach(btn => {
       btn.addEventListener("click", () => {
         const ei = Number(btn.dataset.ei), si = Number(btn.dataset.si);
-        activeSession.exercises[ei].sets.splice(si, 1);
+        activeSession.exercises[ei].sets[si].done = !activeSession.exercises[ei].sets[si].done;
         renderSession();
       });
     });
@@ -765,6 +805,7 @@
     if (activeSession && activeSession.exercises.some(e => e.sets.some(s => s.reps))) {
       if (!confirm("Discard this session?")) return;
     }
+    stopSessionTimer();
     activeSession = null;
     showView("log");
   });
@@ -789,6 +830,7 @@
     if (saved === 0) { toast("Log at least one set before finishing"); return; }
     saveData();
     toast(`${saved} exercise${saved > 1 ? "s" : ""} saved`);
+    stopSessionTimer();
     activeSession = null;
     showView("history");
   });

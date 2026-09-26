@@ -348,11 +348,14 @@
 
     <!-- Workout Session -->
     <section id="view-workout-session" class="view">
-      <header class="view-header view-header-back">
+      <header class="view-header view-header-back session-header">
         <button type="button" class="page-back-btn" id="session-cancel-btn" aria-label="Cancel">
           <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-chevron-left"/></svg>
         </button>
-        <h1 id="session-heading">Workout</h1>
+        <div class="session-header-center">
+          <span id="session-timer" class="session-timer">00:00</span>
+          <span id="session-heading" class="session-heading-sub">Workout</span>
+        </div>
         <button type="button" class="btn btn-primary btn-sm" id="finish-session-btn">Finish</button>
       </header>
       <div style="padding:8px 16px 0;">
