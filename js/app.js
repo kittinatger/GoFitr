@@ -782,7 +782,16 @@
     { name: "Rugby - Play a Match", label: "Rugby", svg: '<ellipse cx="12" cy="12" rx="9" ry="6"/><path d="M4.5 12h15M9 9.5v5M12 9v6M15 9.5v5"/>' },
     { name: "American Football - Play a Game", label: "Am. Football", svg: '<ellipse cx="12" cy="12" rx="6" ry="9"/><path d="M12 4v16M9.5 9h5M9.5 12h5M9.5 15h5"/>' },
     { name: "Baseball - Play a Game", label: "Baseball", svg: '<circle cx="12" cy="12" r="9"/><path d="M6 6c3 3 3 9 0 12M18 6c-3 3-3 9 0 12"/>' },
-    { name: "Cricket - Play a Match", label: "Cricket", svg: '<circle cx="9" cy="9" r="4"/><path d="M13 13l6 6M17 17l3 1-1-3"/>' }
+    { name: "Cricket - Play a Match", label: "Cricket", svg: '<circle cx="9" cy="9" r="4"/><path d="M13 13l6 6M17 17l3 1-1-3"/>' },
+    { name: "Ice Hockey - Play a Game", label: "Ice Hockey", svg: '<rect x="3" y="10" width="18" height="3" rx="1"/><path d="M6 13v4l2 2M9 13v3M12 4v9M9 6l3-2 3 2"/>' },
+    { name: "Field Hockey - Play a Match", label: "Field Hockey", svg: '<circle cx="17" cy="6" r="2"/><path d="M8 21c0-6 1-9 4-12l2-2M6 15h7"/>' },
+    { name: "Handball - Play a Match", label: "Handball", svg: '<circle cx="12" cy="12" r="9"/><path d="M12 3v6M6 8l4 2M18 8l-4 2M12 15l-4 6M12 15l4 6"/>' },
+    { name: "Water Polo - Play a Match", label: "Water Polo", svg: '<circle cx="12" cy="8" r="4"/><path d="M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>' },
+    { name: "Lacrosse - Play a Match", label: "Lacrosse", svg: '<circle cx="12" cy="5" r="3"/><path d="M12 8v13M8 21h8M9 5h6"/>' },
+    { name: "Netball - Play a Match", label: "Netball", svg: '<circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="3"/>' },
+    { name: "Futsal - Play a Match", label: "Futsal", svg: '<circle cx="12" cy="12" r="9"/><path d="M12 8l2.5 1.8-1 3H10.5l-1-3z"/>' },
+    { name: "Badminton - Play a Match", label: "Badminton", svg: '<circle cx="8" cy="6" r="4" fill="none"/><path d="M11 9l7 11M16 18l2 2"/>' },
+    { name: "Table Tennis - Play a Match", label: "Table Tennis", svg: '<circle cx="8" cy="8" r="4" fill="none"/><circle cx="17" cy="17" r="1.4"/><path d="M11 11l4 4"/>' }
   ];
 
   function isCardioExercise(name) {
@@ -905,6 +914,122 @@
           { key: "maidens", label: "Maidens" }
         ]
       }
+    },
+    "Ice Hockey - Play a Game": {
+      positions: ["Skater", "Goalie"],
+      fields: {
+        Skater: [
+          { key: "goals", label: "Goals" },
+          { key: "assists", label: "Assists" },
+          { key: "shots", label: "Shots" },
+          { key: "hits", label: "Hits" },
+          { key: "penaltyMinutes", label: "Penalty Minutes" }
+        ],
+        Goalie: [
+          { key: "saves", label: "Saves" },
+          { key: "goalsAllowed", label: "Goals Allowed" },
+          { key: "shutout", label: "Shutout (0/1)" }
+        ]
+      }
+    },
+    "Field Hockey - Play a Match": {
+      positions: ["Outfield", "Goalkeeper"],
+      fields: {
+        Outfield: [
+          { key: "goals", label: "Goals" },
+          { key: "assists", label: "Assists" },
+          { key: "shots", label: "Shots" },
+          { key: "tackles", label: "Tackles" }
+        ],
+        Goalkeeper: [
+          { key: "saves", label: "Saves" },
+          { key: "goalsConceded", label: "Goals Conceded" }
+        ]
+      }
+    },
+    "Handball - Play a Match": {
+      positions: ["Outfield", "Goalkeeper"],
+      fields: {
+        Outfield: [
+          { key: "goals", label: "Goals" },
+          { key: "assists", label: "Assists" },
+          { key: "steals", label: "Steals" },
+          { key: "shots", label: "Shots" }
+        ],
+        Goalkeeper: [
+          { key: "saves", label: "Saves" },
+          { key: "goalsConceded", label: "Goals Conceded" }
+        ]
+      }
+    },
+    "Water Polo - Play a Match": {
+      positions: ["Outfield", "Goalkeeper"],
+      fields: {
+        Outfield: [
+          { key: "goals", label: "Goals" },
+          { key: "assists", label: "Assists" },
+          { key: "steals", label: "Steals" },
+          { key: "exclusionsDrawn", label: "Exclusions Drawn" }
+        ],
+        Goalkeeper: [
+          { key: "saves", label: "Saves" },
+          { key: "goalsConceded", label: "Goals Conceded" }
+        ]
+      }
+    },
+    "Lacrosse - Play a Match": {
+      positions: ["Attack/Midfield", "Goalie"],
+      fields: {
+        "Attack/Midfield": [
+          { key: "goals", label: "Goals" },
+          { key: "assists", label: "Assists" },
+          { key: "groundBalls", label: "Ground Balls" },
+          { key: "causedTurnovers", label: "Caused Turnovers" }
+        ],
+        Goalie: [
+          { key: "saves", label: "Saves" },
+          { key: "goalsAllowed", label: "Goals Allowed" }
+        ]
+      }
+    },
+    "Netball - Play a Match": {
+      fields: [
+        { key: "goals", label: "Goals" },
+        { key: "feeds", label: "Feeds/Assists" },
+        { key: "intercepts", label: "Intercepts" },
+        { key: "rebounds", label: "Rebounds" }
+      ]
+    },
+    "Futsal - Play a Match": {
+      positions: ["Outfield", "Goalkeeper"],
+      fields: {
+        Outfield: [
+          { key: "goals", label: "Goals" },
+          { key: "assists", label: "Assists" },
+          { key: "shots", label: "Shots" },
+          { key: "tackles", label: "Tackles" }
+        ],
+        Goalkeeper: [
+          { key: "saves", label: "Saves" },
+          { key: "goalsConceded", label: "Goals Conceded" }
+        ]
+      }
+    },
+    "Badminton - Play a Match": {
+      fields: [
+        { key: "setsWon", label: "Sets Won" },
+        { key: "setsLost", label: "Sets Lost" },
+        { key: "smashes", label: "Smashes" },
+        { key: "unforcedErrors", label: "Unforced Errors" }
+      ]
+    },
+    "Table Tennis - Play a Match": {
+      fields: [
+        { key: "setsWon", label: "Sets Won" },
+        { key: "setsLost", label: "Sets Lost" },
+        { key: "winners", label: "Winners" },
+        { key: "unforcedErrors", label: "Unforced Errors" }
+      ]
     }
   };
 
