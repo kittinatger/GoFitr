@@ -2543,3 +2543,16 @@ textarea { resize: vertical; font-family: inherit; }
   max-width: 140px;
 }
 .session-set-done { background: rgba(215,255,61,0.1); }
+
+/* ---- Sync badge ---- */
+.sync-badge {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.sync-ok { background: var(--lime); }
+.sync-syncing { background: #f5a623; animation: pulse 1s infinite; }
+.sync-fail { background: var(--coral); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }

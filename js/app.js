@@ -4,6 +4,43 @@
   const USERS_KEY = "gofitr_users_v1";
   const SESSION_KEY = "gofitr_session_v1";
 
+  // ---------- Supabase sync ----------
+  const SB_URL = "https://nusdpphyforkukldzjpb.supabase.co";
+  const SB_KEY = "sb_publishable_M3Vl0CQzDVHSsSiY-FxBpA_g3gq_iPH";
+
+  async function cloudFetch(username) {
+    try {
+      const res = await fetch(
+        `${SB_URL}/rest/v1/user_data?username=eq.${encodeURIComponent(username)}&select=data,updated_at`,
+        { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } }
+      );
+      const rows = await res.json();
+      return rows && rows.length ? rows[0] : null;
+    } catch { return null; }
+  }
+
+  async function cloudSave(username, payload) {
+    try {
+      await fetch(`${SB_URL}/rest/v1/user_data`, {
+        method: "POST",
+        headers: {
+          apikey: SB_KEY,
+          Authorization: `Bearer ${SB_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates"
+        },
+        body: JSON.stringify({ username, data: payload, updated_at: new Date().toISOString() })
+      });
+    } catch { /* silent — local data is safe */ }
+  }
+
+  function showSyncBadge(state) {
+    let badge = document.getElementById("sync-badge");
+    if (!badge) return;
+    badge.className = "sync-badge sync-" + state;
+    badge.title = state === "ok" ? "Synced" : state === "syncing" ? "Syncing..." : "Sync failed";
+  }
+
   // Google/Apple/GitHub go through Clerk (the publishable key is public,
   // safe to ship — it's paired with the script tag's
   // data-clerk-publishable-key in index.html).
@@ -150,6 +187,10 @@
 
   function saveData() {
     localStorage.setItem(storageKeyFor(currentUser), JSON.stringify(data));
+    if (currentUser) {
+      showSyncBadge("syncing");
+      cloudSave(currentUser, data).then(() => showSyncBadge("ok"));
+    }
   }
 
   function uid() {
@@ -3160,11 +3201,21 @@
     document.getElementById("auth-screen").classList.remove("hidden");
   }
 
-  function bootApp(userKey, meta) {
+  async function bootApp(userKey, meta) {
     meta = meta || {};
     currentUser = userKey;
     authMode = meta.mode || "local";
     data = loadData();
+
+    // Pull cloud data on login — cloud wins if it exists (cross-device sync)
+    showSyncBadge("syncing");
+    const cloud = await cloudFetch(userKey);
+    if (cloud && cloud.data && Object.keys(cloud.data).length > 0) {
+      const merged = Object.assign(defaultData(), cloud.data);
+      data = merged;
+      localStorage.setItem(storageKeyFor(currentUser), JSON.stringify(data));
+    }
+    showSyncBadge("ok");
     // One-time migration: set auto+lime for all existing accounts
     if (!data.themeMigrated) {
       data.themeAuto   = true;
