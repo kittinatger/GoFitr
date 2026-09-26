@@ -418,11 +418,13 @@
 
   function updateQuickLogUnitLabels() {
     const name = document.getElementById("log-exercise").value.trim();
-    const cardio = isCardioExercise(name);
+    const logType = exerciseLogType(name);
+    const cardio = logType !== "reps";
+    const placeholder = logType === "hold" ? "Duration (sec)" : logType === "cardio" ? "Duration (min)" : "Reps";
     document.querySelectorAll("#sets-container .set-row").forEach(row => {
       const repsInput = row.querySelector(".set-reps");
       const wtInput = row.querySelector(".set-weight");
-      if (repsInput) repsInput.placeholder = cardio ? "Duration (min)" : "Reps";
+      if (repsInput) repsInput.placeholder = placeholder;
       if (wtInput) wtInput.style.display = cardio ? "none" : "";
     });
   }
@@ -723,9 +725,24 @@
     return db.find(e => e.name === name);
   }
 
-  function isCardioExercise(name) {
+  const HOLD_NAME_RE = /(^|\s)(Hold|Hang)$/i;
+  const HOLD_EXACT = new Set([
+    "Plank", "Side Plank", "Reverse Plank", "Wall Sit", "Dead Hang",
+    "Copenhagen Plank", "Copenhagen Side Plank", "Side Plank (Long Hold)",
+    "Deep Squat Hold", "Hollow Body Hold"
+  ]);
+  const CARRY_NAME_RE = /(Carry|'s Walk)$/i;
+
+  // "cardio" = duration in minutes, "hold" = duration in seconds, "reps" = reps + weight
+  function exerciseLogType(name) {
     const meta = findExerciseMeta(name);
-    return !!meta && meta.muscle === "Cardio";
+    if (meta && meta.muscle === "Cardio") return "cardio";
+    if (HOLD_EXACT.has(name) || HOLD_NAME_RE.test(name) || CARRY_NAME_RE.test(name)) return "hold";
+    return "reps";
+  }
+
+  function isCardioExercise(name) {
+    return exerciseLogType(name) !== "reps";
   }
 
   function startSessionTimer() {
@@ -785,7 +802,10 @@
     }
     list.innerHTML = activeSession.exercises.map((ex, ei) => {
       const prev = getPrevSets(ex.name);
-      const cardio = isCardioExercise(ex.name);
+      const logType = exerciseLogType(ex.name);
+      const cardio = logType !== "reps";
+      const durLabel = logType === "hold" ? "Duration (sec)" : "Duration (min)";
+      const durSuffix = logType === "hold" ? "sec" : "min";
       return `
       <div class="session-ex-card" data-ei="${ei}">
         <div class="session-ex-header">
@@ -795,13 +815,13 @@
           </button>
         </div>
         ${cardio
-          ? `<div class="session-sets-head session-sets-head-cardio"><span>Set</span><span>Prev</span><span>Duration (min)</span><span></span></div>`
+          ? `<div class="session-sets-head session-sets-head-cardio"><span>Set</span><span>Prev</span><span>${durLabel}</span><span></span></div>`
           : `<div class="session-sets-head"><span>Set</span><span>Prev</span><span>${data.unit}</span><span>Reps</span><span></span></div>`
         }
         ${ex.sets.map((s, si) => {
           const p = prev[si];
           if (cardio) {
-            const prevText = p ? `${p.reps} min` : "-";
+            const prevText = p ? `${p.reps} ${durSuffix}` : "-";
             return `
             <div class="session-set-row session-set-row-cardio${s.done ? " session-set-done" : ""}" data-ei="${ei}" data-si="${si}">
               <span class="set-index">${si + 1}</span>
