@@ -788,6 +788,70 @@
     sessionTimerInterval = null;
   }
 
+  // ---------- Live GPS tracking ----------
+  let gpsState = null; // { ei, watchId, timerInterval, points, startedAt, distanceKm }
+
+  function haversineKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function startGpsTracking(ei) {
+    if (!navigator.geolocation) { toast("GPS is not available on this device/browser"); return; }
+    if (gpsState) stopGpsTracking(false);
+    gpsState = { ei, points: [], startedAt: Date.now(), distanceKm: 0 };
+    gpsState.watchId = navigator.geolocation.watchPosition(
+      pos => {
+        const { latitude, longitude } = pos.coords;
+        if (gpsState.points.length > 0) {
+          const last = gpsState.points[gpsState.points.length - 1];
+          gpsState.distanceKm += haversineKm(last.lat, last.lon, latitude, longitude);
+        }
+        gpsState.points.push({ lat: latitude, lon: longitude });
+      },
+      err => {
+        toast("GPS error: " + err.message + (location.protocol === "file:" ? " (needs HTTPS)" : ""));
+        stopGpsTracking(false);
+      },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 }
+    );
+    gpsState.timerInterval = setInterval(updateGpsDisplay, 1000);
+    renderSession();
+  }
+
+  function stopGpsTracking(applyToSet) {
+    if (!gpsState) return;
+    navigator.geolocation.clearWatch(gpsState.watchId);
+    clearInterval(gpsState.timerInterval);
+    const minutes = (Date.now() - gpsState.startedAt) / 60000;
+    const ei = gpsState.ei;
+    const km = gpsState.distanceKm;
+    gpsState = null;
+    if (applyToSet && activeSession && activeSession.exercises[ei]) {
+      const sets = activeSession.exercises[ei].sets;
+      const set = sets[0] || { reps: "", weight: "", distance: "", calories: "", done: false };
+      set.reps = minutes.toFixed(1);
+      set.distance = km.toFixed(2);
+      sets[0] = set;
+    }
+    renderSession();
+  }
+
+  function updateGpsDisplay() {
+    if (!gpsState) return;
+    const el = document.getElementById("gps-live-stats");
+    if (!el) return;
+    const mins = (Date.now() - gpsState.startedAt) / 60000;
+    const totalSec = Math.floor(mins * 60);
+    const mm = Math.floor(totalSec / 60), ss = totalSec % 60;
+    const p = pace(mins, gpsState.distanceKm);
+    el.textContent = `${gpsState.distanceKm.toFixed(2)} km · ${mm}:${String(ss).padStart(2, "0")}${p ? " · " + p : ""}`;
+  }
+
   function startSessionFromRoutine(routineId) {
     const r = (data.routines || []).find(r => r.id === routineId);
     activeSession = {
@@ -834,6 +898,18 @@
             <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
           </button>
         </div>
+        ${logType === "cardio"
+          ? `<div class="gps-track-bar">
+              ${gpsState && gpsState.ei === ei
+                ? `<span id="gps-live-stats" class="gps-live-stats">Tracking...</span><button type="button" class="btn btn-primary btn-sm gps-stop-btn" data-ei="${ei}">Stop</button>`
+                : `<button type="button" class="btn btn-ghost btn-sm gps-start-btn" data-ei="${ei}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><path d="M20.94 11A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Start GPS Tracking
+                   </button>`
+              }
+             </div>`
+          : ""
+        }
         ${logType === "cardio"
           ? `<div class="session-sets-head session-sets-head-run"><span>Set</span><span>Min</span><span>Km</span><span>Kcal</span><span></span></div>`
           : logType === "hold"
@@ -890,10 +966,19 @@
 
     list.querySelectorAll(".session-ex-remove").forEach(btn => {
       btn.addEventListener("click", () => {
-        activeSession.exercises.splice(Number(btn.dataset.ei), 1);
+        const ei = Number(btn.dataset.ei);
+        if (gpsState && gpsState.ei === ei) stopGpsTracking(false);
+        activeSession.exercises.splice(ei, 1);
         renderSession();
       });
     });
+    list.querySelectorAll(".gps-start-btn").forEach(btn => {
+      btn.addEventListener("click", () => startGpsTracking(Number(btn.dataset.ei)));
+    });
+    list.querySelectorAll(".gps-stop-btn").forEach(btn => {
+      btn.addEventListener("click", () => stopGpsTracking(true));
+    });
+    if (gpsState) updateGpsDisplay();
     list.querySelectorAll(".session-add-set").forEach(btn => {
       btn.addEventListener("click", () => {
         activeSession.exercises[Number(btn.dataset.ei)].sets.push({ reps: "", weight: "", distance: "", calories: "", done: false });
@@ -969,6 +1054,7 @@
     if (activeSession && activeSession.exercises.some(e => e.sets.some(s => s.reps))) {
       if (!confirm("Discard this session?")) return;
     }
+    if (gpsState) stopGpsTracking(false);
     stopSessionTimer();
     activeSession = null;
     showView("log");
@@ -980,6 +1066,7 @@
 
   document.getElementById("finish-session-btn").addEventListener("click", () => {
     if (!activeSession) return;
+    if (gpsState) stopGpsTracking(true);
     const date = document.getElementById("session-date").value || todayStr();
     let saved = 0;
     activeSession.exercises.forEach(ex => {

@@ -2576,3 +2576,21 @@ textarea { resize: vertical; font-family: inherit; }
   padding: 0 2px 8px;
 }
 .session-pace { color: var(--lime); font-weight: 600; }
+
+/* ---- Live GPS tracking ---- */
+.gps-track-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-elevated);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.gps-start-btn { width: 100%; display: flex; align-items: center; justify-content: center; }
+.gps-live-stats {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--lime);
+  font-variant-numeric: tabular-nums;
+}
