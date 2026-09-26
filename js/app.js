@@ -78,6 +78,7 @@
   const defaultData = () => ({
     workouts: [],   // { id, date: 'YYYY-MM-DD', exercise, sets: [{reps, weight}], notes }
     routines: [],   // { id, name, exercises: [{name}] }
+    mapStyle: "dark", // GPS map tile style: dark | voyager | osm | satellite
     bodyWeight: [], // { id, date, weight }
     nutrition: [],  // { id, date, meal, name, calories, protein, carbs, fat }
     calorieGoal: 2000,
@@ -800,12 +801,21 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  const MAP_STYLES = {
+    dark:      { label: "Dark",      url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", maxZoom: 20, subdomains: "abcd" },
+    voyager:   { label: "Voyager",   url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", maxZoom: 20, subdomains: "abcd" },
+    osm:       { label: "Standard",  url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", maxZoom: 19, subdomains: "abc" },
+    satellite: { label: "Satellite", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", maxZoom: 19, subdomains: "" }
+  };
+  const MAP_STYLE_ORDER = ["dark", "voyager", "osm", "satellite"];
+
   function initGpsMap(lat, lon) {
     if (typeof L === "undefined") return null;
     const mapEl = document.getElementById("gps-map");
     if (!mapEl) return null;
+    const style = MAP_STYLES[data.mapStyle] || MAP_STYLES.dark;
     const map = L.map(mapEl, { zoomControl: false, attributionControl: false }).setView([lat, lon], 16);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+    L.tileLayer(style.url, { maxZoom: style.maxZoom, subdomains: style.subdomains || "abc" }).addTo(map);
     const polyline = L.polyline([[lat, lon]], { color: "#d7ff3d", weight: 4 }).addTo(map);
     const marker = L.circleMarker([lat, lon], { radius: 6, color: "#d7ff3d", fillColor: "#d7ff3d", fillOpacity: 1 }).addTo(map);
     return { map, polyline, marker };
@@ -2465,6 +2475,8 @@
   function renderSettings() {
     const unitsVal = document.getElementById("units-row-value");
     if (unitsVal) unitsVal.textContent = data.unit || "kg";
+    const mapStyleVal = document.getElementById("map-style-row-value");
+    if (mapStyleVal) mapStyleVal.textContent = (MAP_STYLES[data.mapStyle] || MAP_STYLES.dark).label;
     document.getElementById("calorie-goal-input").value = data.calorieGoal || 2000;
     document.getElementById("protein-goal-input").value = data.proteinGoal || 0;
     document.getElementById("carbs-goal-input").value = data.carbsGoal || 0;
@@ -3441,6 +3453,13 @@
   document.getElementById("accounts-back").addEventListener("click", () => showView("settings"));
   document.getElementById("themes-row").addEventListener("click", () => { renderThemes(); showView("themes"); });
   document.getElementById("themes-back").addEventListener("click", () => showView("settings"));
+  document.getElementById("map-style-row").addEventListener("click", () => {
+    const idx = MAP_STYLE_ORDER.indexOf(data.mapStyle || "dark");
+    data.mapStyle = MAP_STYLE_ORDER[(idx + 1) % MAP_STYLE_ORDER.length];
+    saveData();
+    renderSettings();
+    toast("Map style: " + MAP_STYLES[data.mapStyle].label);
+  });
   document.getElementById("units-row").addEventListener("click", () => { renderUnits(); showView("units"); });
   document.getElementById("units-back").addEventListener("click", () => showView("settings"));
   document.getElementById("calendar-row").addEventListener("click", () => { renderCalendar(); showView("calendar"); });
