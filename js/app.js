@@ -401,7 +401,7 @@
     }
     if (exercisePickerContext === "session") {
       if (activeSession) {
-        activeSession.exercises.push({ name, sets: [{ reps: "", weight: "" }], notes: "" });
+        activeSession.exercises.push({ name, sets: [{ reps: "", weight: "", done: false }], notes: "" });
         renderSession();
       }
       showView("workout-session");
@@ -412,7 +412,19 @@
     const lbl = document.getElementById("exercise-picker-label");
     lbl.textContent = name;
     lbl.classList.remove("exercise-picker-placeholder");
+    updateQuickLogUnitLabels();
     showView("quick-log");
+  }
+
+  function updateQuickLogUnitLabels() {
+    const name = document.getElementById("log-exercise").value.trim();
+    const cardio = isCardioExercise(name);
+    document.querySelectorAll("#sets-container .set-row").forEach(row => {
+      const repsInput = row.querySelector(".set-reps");
+      const wtInput = row.querySelector(".set-weight");
+      if (repsInput) repsInput.placeholder = cardio ? "Duration (min)" : "Reps";
+      if (wtInput) wtInput.style.display = cardio ? "none" : "";
+    });
   }
 
   const MUSCLE_ICONS = {
@@ -543,7 +555,10 @@
     });
   }
 
-  document.getElementById("add-set-btn").addEventListener("click", () => addSetRow());
+  document.getElementById("add-set-btn").addEventListener("click", () => {
+    addSetRow();
+    updateQuickLogUnitLabels();
+  });
 
   document.getElementById("log-form").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -703,6 +718,16 @@
     return matches.length ? (matches[0].sets || []) : [];
   }
 
+  function findExerciseMeta(name) {
+    const db = window.GOFITR_EXERCISE_DATABASE || [];
+    return db.find(e => e.name === name);
+  }
+
+  function isCardioExercise(name) {
+    const meta = findExerciseMeta(name);
+    return !!meta && meta.muscle === "Cardio";
+  }
+
   function startSessionTimer() {
     clearInterval(sessionTimerInterval);
     const startMs = Date.now() - (activeSession.elapsedMs || 0);
@@ -760,6 +785,7 @@
     }
     list.innerHTML = activeSession.exercises.map((ex, ei) => {
       const prev = getPrevSets(ex.name);
+      const cardio = isCardioExercise(ex.name);
       return `
       <div class="session-ex-card" data-ei="${ei}">
         <div class="session-ex-header">
@@ -768,11 +794,24 @@
             <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
           </button>
         </div>
-        <div class="session-sets-head">
-          <span>Set</span><span>Prev</span><span>${data.unit}</span><span>Reps</span><span></span>
-        </div>
+        ${cardio
+          ? `<div class="session-sets-head session-sets-head-cardio"><span>Set</span><span>Prev</span><span>Duration (min)</span><span></span></div>`
+          : `<div class="session-sets-head"><span>Set</span><span>Prev</span><span>${data.unit}</span><span>Reps</span><span></span></div>`
+        }
         ${ex.sets.map((s, si) => {
           const p = prev[si];
+          if (cardio) {
+            const prevText = p ? `${p.reps} min` : "-";
+            return `
+            <div class="session-set-row session-set-row-cardio${s.done ? " session-set-done" : ""}" data-ei="${ei}" data-si="${si}">
+              <span class="set-index">${si + 1}</span>
+              <span class="set-prev">${prevText}</span>
+              <input type="number" class="session-reps" value="${s.reps}" placeholder="0" min="0" step="0.5">
+              <button class="session-set-check${s.done ? " session-set-check-done" : ""}" data-ei="${ei}" data-si="${si}" title="Mark done">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>`;
+          }
           const prevText = p ? (p.weight > 0 ? `${p.weight}x${p.reps}` : `${p.reps}`) : "-";
           return `
           <div class="session-set-row${s.done ? " session-set-done" : ""}" data-ei="${ei}" data-si="${si}">
@@ -814,9 +853,12 @@
       row.querySelector(".session-reps").addEventListener("input", e => {
         activeSession.exercises[ei].sets[si].reps = e.target.value;
       });
-      row.querySelector(".session-wt").addEventListener("input", e => {
-        activeSession.exercises[ei].sets[si].weight = e.target.value;
-      });
+      const wtInput = row.querySelector(".session-wt");
+      if (wtInput) {
+        wtInput.addEventListener("input", e => {
+          activeSession.exercises[ei].sets[si].weight = e.target.value;
+        });
+      }
     });
     list.querySelectorAll(".session-notes").forEach(inp => {
       const ei = Number(inp.closest("[data-ei]").dataset.ei);

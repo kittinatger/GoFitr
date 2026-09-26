@@ -2556,3 +2556,9 @@ textarea { resize: vertical; font-family: inherit; }
 .sync-syncing { background: #f5a623; animation: pulse 1s infinite; }
 .sync-fail { background: var(--coral); }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ---- Cardio session rows (duration instead of weight/reps) ---- */
+.session-sets-head-cardio,
+.session-set-row-cardio {
+  grid-template-columns: 28px 60px 1fr 36px;
+}
