@@ -2656,3 +2656,35 @@ textarea { resize: vertical; font-family: inherit; }
   padding: 0 16px 16px;
 }
 .live-activity-actions .btn { display: flex; align-items: center; justify-content: center; }
+
+/* ---- Live Activity manual fallback ---- */
+.live-activity-manual-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 4px 16px 6px;
+  margin: 0;
+}
+.live-activity-manual-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 16px 8px;
+}
+.live-activity-manual-grid label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+}
+.live-activity-manual-grid input {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+}
+.live-activity-actions .btn:disabled,
+.live-activity-manual-grid input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -1096,6 +1096,27 @@
     return { mapElId: "live-gps-map", statsElId: "live-activity-stats", rerender: () => {} };
   }
 
+  function isLiveActivityTracking() {
+    return (gpsState && gpsState.mapElId === "live-gps-map") || (bleState && bleState.statsElId === "live-activity-stats");
+  }
+
+  function updateLiveActivityButtons() {
+    const gpsLabel = document.getElementById("live-activity-gps-btn-label");
+    const bleLabel = document.getElementById("live-activity-ble-btn-label");
+    const gpsOn = gpsState && gpsState.mapElId === "live-gps-map";
+    const bleOn = bleState && bleState.statsElId === "live-activity-stats";
+    if (gpsLabel) gpsLabel.textContent = gpsOn ? "Stop GPS" : "Start GPS";
+    if (bleLabel) bleLabel.textContent = bleOn ? "Disconnect" : "Connect Equipment";
+    const gpsBtn = document.getElementById("live-activity-gps-btn");
+    const bleBtn = document.getElementById("live-activity-ble-btn");
+    if (gpsBtn) gpsBtn.disabled = bleOn;
+    if (bleBtn) bleBtn.disabled = gpsOn;
+    ["live-activity-manual-duration", "live-activity-manual-distance", "live-activity-manual-calories"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = gpsOn || bleOn;
+    });
+  }
+
   function startLiveActivity(name) {
     activeSession = {
       date: todayStr(),
@@ -1106,25 +1127,44 @@
     document.getElementById("live-activity-name").textContent = name;
     document.getElementById("live-activity-stats").textContent = "Tap Start GPS or Connect Equipment to begin";
     document.getElementById("live-activity-notes").value = "";
+    document.getElementById("live-activity-manual-duration").value = "";
+    document.getElementById("live-activity-manual-distance").value = "";
+    document.getElementById("live-activity-manual-calories").value = "";
+    updateLiveActivityButtons();
     showView("live-activity");
     startSessionTimer("live-activity-timer");
   }
 
   document.getElementById("live-activity-gps-btn").addEventListener("click", () => {
-    if (gpsState) { stopGpsTracking(true); return; }
-    if (bleState) stopBleTracking(true);
-    startGpsTracking(0, { mapElId: "live-gps-map", statsElId: "live-activity-stats", rerender: () => {} });
-    document.getElementById("live-activity-gps-btn").textContent = "Stop GPS";
+    if (gpsState) { stopGpsTracking(true); updateLiveActivityButtons(); return; }
+    startGpsTracking(0, {
+      mapElId: "live-gps-map", statsElId: "live-activity-stats",
+      rerender: () => updateLiveActivityButtons()
+    });
+    updateLiveActivityButtons();
   });
 
   document.getElementById("live-activity-ble-btn").addEventListener("click", () => {
-    if (bleState) { stopBleTracking(true); return; }
-    if (gpsState) stopGpsTracking(true);
-    connectBleDevice(0, { statsElId: "live-activity-stats", rerender: () => {} });
+    if (bleState) { stopBleTracking(true); updateLiveActivityButtons(); return; }
+    connectBleDevice(0, {
+      statsElId: "live-activity-stats",
+      rerender: () => updateLiveActivityButtons()
+    });
   });
 
   document.getElementById("live-activity-notes").addEventListener("input", e => {
     if (activeSession && activeSession.exercises[0]) activeSession.exercises[0].notes = e.target.value;
+  });
+
+  // Manual fallback fields — only active when GPS/Equipment tracking isn't running
+  document.getElementById("live-activity-manual-duration").addEventListener("input", e => {
+    if (activeSession && activeSession.exercises[0]) activeSession.exercises[0].sets[0].reps = e.target.value;
+  });
+  document.getElementById("live-activity-manual-distance").addEventListener("input", e => {
+    if (activeSession && activeSession.exercises[0]) activeSession.exercises[0].sets[0].distance = e.target.value;
+  });
+  document.getElementById("live-activity-manual-calories").addEventListener("input", e => {
+    if (activeSession && activeSession.exercises[0]) activeSession.exercises[0].sets[0].calories = e.target.value;
   });
 
   document.getElementById("live-activity-cancel-btn").addEventListener("click", () => {
@@ -1165,7 +1205,7 @@
     toast(ex.name + " saved");
     stopSessionTimer();
     activeSession = null;
-    document.getElementById("live-activity-gps-btn").textContent = "Start GPS";
+    updateLiveActivityButtons();
     showView("history");
   });
 
@@ -1535,8 +1575,22 @@
     }
   }
 
+  function workoutSetChip(s, logType) {
+    if (logType === "cardio") {
+      const parts = [`${s.reps} min`];
+      if (s.distance > 0) parts.push(`${s.distance} km`);
+      if (s.calories > 0) parts.push(`${s.calories} kcal`);
+      if (s.elevGain > 0) parts.push(`+${s.elevGain}m`);
+      if (s.avgHr > 0) parts.push(`${s.avgHr} bpm`);
+      return parts.join(" · ");
+    }
+    if (logType === "hold") return `${s.reps} sec`;
+    return `${s.reps} × ${s.weight}${data.unit}`;
+  }
+
   function workoutCardHtml(w) {
-    const setsHtml = w.sets.map(s => `<span class="set-chip">${s.reps} × ${s.weight}${data.unit}</span>`).join("");
+    const logType = exerciseLogType(w.exercise);
+    const setsHtml = w.sets.map(s => `<span class="set-chip">${workoutSetChip(s, logType)}</span>`).join("");
     return `
       <div class="workout-card" data-id="${w.id}">
         <div class="workout-icon">${ICON_DUMBBELL}</div>
@@ -1641,36 +1695,35 @@
     canvas.style.display = "block";
 
     const labels = entries.map(w => formatDate(w.date));
-    const maxWeights = entries.map(w => Math.max(...w.sets.map(s => s.weight)));
-    const volumes = entries.map(w => volumeOf(w));
+    const logType = exerciseLogType(exercise);
+
+    let datasets;
+    if (logType === "cardio") {
+      const durations = entries.map(w => Math.max(...w.sets.map(s => s.reps)));
+      const distances = entries.map(w => Math.max(...w.sets.map(s => s.distance || 0)));
+      datasets = [
+        { label: "Duration (min)", data: durations, borderColor: "#d7ff3d", backgroundColor: "rgba(215,255,61,0.14)", tension: 0.3, yAxisID: "y", fill: true },
+        { label: "Distance (km)", data: distances, borderColor: "#ff6b57", backgroundColor: "rgba(255,107,87,0.1)", tension: 0.3, yAxisID: "y1", fill: true }
+      ];
+    } else if (logType === "hold") {
+      const durations = entries.map(w => Math.max(...w.sets.map(s => s.reps)));
+      datasets = [
+        { label: "Duration (sec)", data: durations, borderColor: "#d7ff3d", backgroundColor: "rgba(215,255,61,0.14)", tension: 0.3, yAxisID: "y", fill: true }
+      ];
+    } else {
+      const maxWeights = entries.map(w => Math.max(...w.sets.map(s => s.weight)));
+      const volumes = entries.map(w => volumeOf(w));
+      datasets = [
+        { label: `Max Weight (${data.unit})`, data: maxWeights, borderColor: "#d7ff3d", backgroundColor: "rgba(215,255,61,0.14)", tension: 0.3, yAxisID: "y", fill: true },
+        { label: `Volume (${data.unit})`, data: volumes, borderColor: "#ff6b57", backgroundColor: "rgba(255,107,87,0.1)", tension: 0.3, yAxisID: "y1", fill: true }
+      ];
+    }
 
     if (charts.progress) charts.progress.destroy();
     charts.progress = new Chart(canvas.getContext("2d"), {
       type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: `Max Weight (${data.unit})`,
-            data: maxWeights,
-            borderColor: "#d7ff3d",
-            backgroundColor: "rgba(215,255,61,0.14)",
-            tension: 0.3,
-            yAxisID: "y",
-            fill: true,
-          },
-          {
-            label: `Volume (${data.unit})`,
-            data: volumes,
-            borderColor: "#ff6b57",
-            backgroundColor: "rgba(255,107,87,0.1)",
-            tension: 0.3,
-            yAxisID: "y1",
-            fill: true,
-          }
-        ]
-      },
-      options: chartOptions(true)
+      data: { labels, datasets },
+      options: chartOptions(datasets.length > 1)
     });
 
     renderPRs();
@@ -1703,12 +1756,25 @@
     }
     const cards = names.map(name => {
       const entries = data.workouts.filter(w => w.exercise === name);
-      let best = 0;
-      entries.forEach(w => w.sets.forEach(s => { if (s.weight > best) best = s.weight; }));
+      const logType = exerciseLogType(name);
+      let value;
+      if (logType === "cardio") {
+        let best = 0;
+        entries.forEach(w => w.sets.forEach(s => { if (s.distance > best) best = s.distance; }));
+        value = best > 0 ? `${best.toFixed(2)} km` : `${Math.max(0, ...entries.flatMap(w => w.sets.map(s => s.reps)))} min`;
+      } else if (logType === "hold") {
+        let best = 0;
+        entries.forEach(w => w.sets.forEach(s => { if (s.reps > best) best = s.reps; }));
+        value = `${best} sec`;
+      } else {
+        let best = 0;
+        entries.forEach(w => w.sets.forEach(s => { if (s.weight > best) best = s.weight; }));
+        value = `${best}${data.unit}`;
+      }
       return `
         <div class="pr-card">
           <div class="pr-exercise">${escapeHtml(name)}</div>
-          <div class="pr-value">${best}${data.unit}</div>
+          <div class="pr-value">${value}</div>
         </div>
       `;
     });

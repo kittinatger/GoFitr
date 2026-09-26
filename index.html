@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
@@ -370,8 +370,12 @@
         <input type="date" id="session-date" class="input-field" style="width:100%;box-sizing:border-box;">
       </div>
       <div id="session-exercises-list"></div>
-      <div style="padding:8px 16px 32px;">
+      <div style="padding:8px 16px 8px;">
         <button type="button" class="btn btn-ghost" id="session-add-exercise-btn" style="width:100%;">+ Add Exercise</button>
+      </div>
+      <div class="disclaimer-banner disclaimer-banner--standalone" style="margin:8px 16px 32px;">
+        <svg viewBox="0 0 24 24" class="disclaimer-banner-icon"><use href="#icon-info"/></svg>
+        <span>GPS and Bluetooth equipment tracking on cardio exercises are estimates from your device's sensors, not medical-grade measurements.</span>
       </div>
     </section>
 
@@ -395,6 +399,10 @@
         <h1>Start Activity</h1>
       </header>
       <div id="choose-activity-list" class="activity-grid"></div>
+      <div class="disclaimer-banner disclaimer-banner--standalone">
+        <svg viewBox="0 0 24 24" class="disclaimer-banner-icon"><use href="#icon-info"/></svg>
+        <span>GPS tracking needs location permission and a modern browser; Bluetooth equipment (heart rate straps, treadmills, bikes) only works in Chrome or Edge, not Safari or iPhone. Neither is a substitute for a certified GPS watch or medical-grade heart rate monitor.</span>
+      </div>
     </section>
 
     <!-- Live Activity (dedicated cardio tracking) -->
@@ -414,15 +422,34 @@
       <div class="live-activity-actions">
         <button type="button" class="btn btn-ghost" id="live-activity-gps-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M20.94 11A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/><circle cx="12" cy="12" r="3"/></svg>
-          Start GPS
+          <span id="live-activity-gps-btn-label">Start GPS</span>
         </button>
         <button type="button" class="btn btn-ghost" id="live-activity-ble-btn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>
-          Connect Equipment
+          <span id="live-activity-ble-btn-label">Connect Equipment</span>
         </button>
       </div>
-      <div style="padding:4px 16px 32px;">
+      <p class="live-activity-manual-note">No GPS or equipment? Enter it yourself instead:</p>
+      <div class="live-activity-manual-grid">
+        <div>
+          <label for="live-activity-manual-duration">Minutes</label>
+          <input type="number" id="live-activity-manual-duration" class="input-field" min="0" step="0.5" placeholder="0">
+        </div>
+        <div>
+          <label for="live-activity-manual-distance">Km</label>
+          <input type="number" id="live-activity-manual-distance" class="input-field" min="0" step="0.01" placeholder="0">
+        </div>
+        <div>
+          <label for="live-activity-manual-calories">Kcal</label>
+          <input type="number" id="live-activity-manual-calories" class="input-field" min="0" step="1" placeholder="0">
+        </div>
+      </div>
+      <div style="padding:4px 16px 8px;">
         <input type="text" id="live-activity-notes" class="input-field" placeholder="Notes..." style="width:100%;box-sizing:border-box;">
+      </div>
+      <div class="disclaimer-banner disclaimer-banner--standalone" style="margin:8px 16px 32px;">
+        <svg viewBox="0 0 24 24" class="disclaimer-banner-icon"><use href="#icon-info"/></svg>
+        <span>Phone GPS distance and elevation are estimates and can drift, especially indoors, under tree cover, or between tall buildings — treat them as approximate, not lab-accurate.</span>
       </div>
     </section>
 
@@ -1532,8 +1559,8 @@
   src="https://safe-airedale-9177.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
   type="text/javascript"
 ></script>
-<script src="js/food-database.js?v=2"></script>
-<script src="js/exercise-database.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/food-database.js?v=3"></script>
+<script src="js/exercise-database.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>
