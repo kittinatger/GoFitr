@@ -789,7 +789,7 @@
   }
 
   // ---------- Live GPS tracking ----------
-  let gpsState = null; // { ei, watchId, timerInterval, points, startedAt, distanceKm }
+  let gpsState = null; // { ei, watchId, timerInterval, points, startedAt, distanceKm, elevGainM, map, polyline, marker }
 
   function haversineKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -800,18 +800,42 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  function initGpsMap(lat, lon) {
+    if (typeof L === "undefined") return null;
+    const mapEl = document.getElementById("gps-map");
+    if (!mapEl) return null;
+    const map = L.map(mapEl, { zoomControl: false, attributionControl: false }).setView([lat, lon], 16);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+    const polyline = L.polyline([[lat, lon]], { color: "#d7ff3d", weight: 4 }).addTo(map);
+    const marker = L.circleMarker([lat, lon], { radius: 6, color: "#d7ff3d", fillColor: "#d7ff3d", fillOpacity: 1 }).addTo(map);
+    return { map, polyline, marker };
+  }
+
   function startGpsTracking(ei) {
     if (!navigator.geolocation) { toast("GPS is not available on this device/browser"); return; }
     if (gpsState) stopGpsTracking(false);
-    gpsState = { ei, points: [], startedAt: Date.now(), distanceKm: 0 };
+    gpsState = { ei, points: [], startedAt: Date.now(), distanceKm: 0, elevGainM: 0, map: null, polyline: null, marker: null };
     gpsState.watchId = navigator.geolocation.watchPosition(
       pos => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, altitude } = pos.coords;
         if (gpsState.points.length > 0) {
           const last = gpsState.points[gpsState.points.length - 1];
           gpsState.distanceKm += haversineKm(last.lat, last.lon, latitude, longitude);
+          if (altitude != null && last.alt != null && altitude > last.alt) {
+            gpsState.elevGainM += (altitude - last.alt);
+          }
         }
-        gpsState.points.push({ lat: latitude, lon: longitude });
+        gpsState.points.push({ lat: latitude, lon: longitude, alt: altitude });
+
+        if (!gpsState.map) {
+          const setup = initGpsMap(latitude, longitude);
+          if (setup) Object.assign(gpsState, setup);
+        } else {
+          gpsState.polyline.addLatLng([latitude, longitude]);
+          gpsState.marker.setLatLng([latitude, longitude]);
+          gpsState.map.panTo([latitude, longitude]);
+        }
+        updateGpsDisplay();
       },
       err => {
         toast("GPS error: " + err.message + (location.protocol === "file:" ? " (needs HTTPS)" : ""));
@@ -827,16 +851,20 @@
     if (!gpsState) return;
     navigator.geolocation.clearWatch(gpsState.watchId);
     clearInterval(gpsState.timerInterval);
+    if (gpsState.map) gpsState.map.remove();
     const minutes = (Date.now() - gpsState.startedAt) / 60000;
     const ei = gpsState.ei;
     const km = gpsState.distanceKm;
+    const elevGain = Math.round(gpsState.elevGainM);
     gpsState = null;
     if (applyToSet && activeSession && activeSession.exercises[ei]) {
       const sets = activeSession.exercises[ei].sets;
       const set = sets[0] || { reps: "", weight: "", distance: "", calories: "", done: false };
       set.reps = minutes.toFixed(1);
       set.distance = km.toFixed(2);
+      set.elevGain = elevGain;
       sets[0] = set;
+      if (elevGain > 0) toast(`Saved: ${km.toFixed(2)} km, +${elevGain}m elevation`);
     }
     renderSession();
   }
@@ -849,7 +877,8 @@
     const totalSec = Math.floor(mins * 60);
     const mm = Math.floor(totalSec / 60), ss = totalSec % 60;
     const p = pace(mins, gpsState.distanceKm);
-    el.textContent = `${gpsState.distanceKm.toFixed(2)} km · ${mm}:${String(ss).padStart(2, "0")}${p ? " · " + p : ""}`;
+    const elev = Math.round(gpsState.elevGainM);
+    el.textContent = `${gpsState.distanceKm.toFixed(2)} km · ${mm}:${String(ss).padStart(2, "0")}${p ? " · " + p : ""}${elev > 0 ? " · +" + elev + "m" : ""}`;
   }
 
   function startSessionFromRoutine(routineId) {
@@ -907,7 +936,8 @@
                     Start GPS Tracking
                    </button>`
               }
-             </div>`
+             </div>
+             ${gpsState && gpsState.ei === ei ? `<div id="gps-map" class="gps-map"></div>` : ""}`
           : ""
         }
         ${logType === "cardio"
@@ -978,7 +1008,20 @@
     list.querySelectorAll(".gps-stop-btn").forEach(btn => {
       btn.addEventListener("click", () => stopGpsTracking(true));
     });
-    if (gpsState) updateGpsDisplay();
+    if (gpsState) {
+      updateGpsDisplay();
+      // renderSession() just replaced #gps-map's DOM node, so any prior Leaflet
+      // instance is now orphaned — rebuild it from the points we already have.
+      if (gpsState.map) { gpsState.map.remove(); gpsState.map = null; }
+      if (gpsState.points.length > 0) {
+        const lastPt = gpsState.points[gpsState.points.length - 1];
+        const setup = initGpsMap(lastPt.lat, lastPt.lon);
+        if (setup) {
+          Object.assign(gpsState, setup);
+          gpsState.polyline.setLatLngs(gpsState.points.map(p => [p.lat, p.lon]));
+        }
+      }
+    }
     list.querySelectorAll(".session-add-set").forEach(btn => {
       btn.addEventListener("click", () => {
         activeSession.exercises[Number(btn.dataset.ei)].sets.push({ reps: "", weight: "", distance: "", calories: "", done: false });
@@ -1075,7 +1118,8 @@
           reps: parseFloat(s.reps),
           weight: parseFloat(s.weight) || 0,
           distance: parseFloat(s.distance) || 0,
-          calories: parseFloat(s.calories) || 0
+          calories: parseFloat(s.calories) || 0,
+          elevGain: parseFloat(s.elevGain) || 0
         }))
         .filter(s => !isNaN(s.reps) && s.reps > 0);
       if (sets.length > 0) {
