@@ -789,6 +789,173 @@
     return exerciseLogType(name) !== "reps";
   }
 
+  // Position-aware stat sheets per sport. Each field is {key, label}. When a
+  // sport has "positions", the visible field set switches with the chosen
+  // position (e.g. a goalkeeper tracks saves, not goals).
+  const SPORT_STATS = {
+    "Football (Soccer) - Play a Match": {
+      positions: ["Outfield", "Goalkeeper"],
+      fields: {
+        Outfield: [
+          { key: "goals", label: "Goals" },
+          { key: "assists", label: "Assists" },
+          { key: "shots", label: "Shots" },
+          { key: "passes", label: "Passes" },
+          { key: "tackles", label: "Tackles" }
+        ],
+        Goalkeeper: [
+          { key: "saves", label: "Saves" },
+          { key: "goalsConceded", label: "Goals Conceded" },
+          { key: "cleanSheet", label: "Clean Sheet (0/1)" }
+        ]
+      }
+    },
+    "Basketball - Play a Game": {
+      fields: [
+        { key: "points", label: "Points" },
+        { key: "rebounds", label: "Rebounds" },
+        { key: "assists", label: "Assists" },
+        { key: "steals", label: "Steals" },
+        { key: "blocks", label: "Blocks" },
+        { key: "turnovers", label: "Turnovers" }
+      ]
+    },
+    "Tennis - Play a Match": {
+      fields: [
+        { key: "setsWon", label: "Sets Won" },
+        { key: "setsLost", label: "Sets Lost" },
+        { key: "aces", label: "Aces" },
+        { key: "doubleFaults", label: "Double Faults" },
+        { key: "winners", label: "Winners" },
+        { key: "unforcedErrors", label: "Unforced Errors" }
+      ]
+    },
+    "Volleyball - Play a Match": {
+      fields: [
+        { key: "kills", label: "Kills" },
+        { key: "digs", label: "Digs" },
+        { key: "blocks", label: "Blocks" },
+        { key: "aces", label: "Service Aces" },
+        { key: "assists", label: "Assists" }
+      ]
+    },
+    "Rugby - Play a Match": {
+      fields: [
+        { key: "tries", label: "Tries" },
+        { key: "tackles", label: "Tackles" },
+        { key: "carries", label: "Carries" },
+        { key: "metersGained", label: "Meters Gained" },
+        { key: "turnoversWon", label: "Turnovers Won" }
+      ]
+    },
+    "American Football - Play a Game": {
+      positions: ["Quarterback", "Rush/Receive", "Defense"],
+      fields: {
+        Quarterback: [
+          { key: "passYards", label: "Passing Yards" },
+          { key: "passTDs", label: "Passing TDs" },
+          { key: "completions", label: "Completions" },
+          { key: "interceptionsThrown", label: "Interceptions Thrown" }
+        ],
+        "Rush/Receive": [
+          { key: "rushYards", label: "Rushing Yards" },
+          { key: "recYards", label: "Receiving Yards" },
+          { key: "touchdowns", label: "Touchdowns" },
+          { key: "touches", label: "Carries/Receptions" }
+        ],
+        Defense: [
+          { key: "tackles", label: "Tackles" },
+          { key: "sacks", label: "Sacks" },
+          { key: "interceptions", label: "Interceptions" },
+          { key: "forcedFumbles", label: "Forced Fumbles" }
+        ]
+      }
+    },
+    "Baseball - Play a Game": {
+      positions: ["Batter", "Pitcher"],
+      fields: {
+        Batter: [
+          { key: "hits", label: "Hits" },
+          { key: "rbis", label: "RBIs" },
+          { key: "runs", label: "Runs Scored" },
+          { key: "homeRuns", label: "Home Runs" },
+          { key: "strikeouts", label: "Strikeouts" }
+        ],
+        Pitcher: [
+          { key: "inningsPitched", label: "Innings Pitched" },
+          { key: "strikeoutsThrown", label: "Strikeouts" },
+          { key: "earnedRuns", label: "Earned Runs" },
+          { key: "walksAllowed", label: "Walks Allowed" }
+        ]
+      }
+    },
+    "Cricket - Play a Match": {
+      positions: ["Batter", "Bowler"],
+      fields: {
+        Batter: [
+          { key: "runs", label: "Runs Scored" },
+          { key: "fours", label: "Fours" },
+          { key: "sixes", label: "Sixes" },
+          { key: "ballsFaced", label: "Balls Faced" }
+        ],
+        Bowler: [
+          { key: "overs", label: "Overs Bowled" },
+          { key: "wickets", label: "Wickets" },
+          { key: "runsConceded", label: "Runs Conceded" },
+          { key: "maidens", label: "Maidens" }
+        ]
+      }
+    }
+  };
+
+  function sportStatFields(exerciseName, position) {
+    const cfg = SPORT_STATS[exerciseName];
+    if (!cfg) return null;
+    return cfg.positions ? (cfg.fields[position] || cfg.fields[cfg.positions[0]]) : cfg.fields;
+  }
+
+  function renderSportStats() {
+    const container = document.getElementById("live-activity-sport-stats");
+    if (!activeSession) { container.innerHTML = ""; return; }
+    const ex = activeSession.exercises[0];
+    const cfg = SPORT_STATS[ex.name];
+    if (!cfg) { container.innerHTML = ""; return; }
+
+    if (!ex.position && cfg.positions) ex.position = cfg.positions[0];
+    if (!ex.sportStats) ex.sportStats = {};
+    const fields = sportStatFields(ex.name, ex.position);
+
+    const positionChips = cfg.positions ? `
+      <div class="sport-position-chips">
+        ${cfg.positions.map(p => `<button type="button" class="sport-position-chip${p === ex.position ? " active" : ""}" data-position="${escapeHtml(p)}">${escapeHtml(p)}</button>`).join("")}
+      </div>` : "";
+
+    container.innerHTML = `
+      <p class="live-activity-manual-note">Match Stats${cfg.positions ? " — pick your position" : ""}</p>
+      ${positionChips}
+      <div class="sport-stats-grid">
+        ${fields.map(f => `
+          <div>
+            <label for="sport-stat-${f.key}">${escapeHtml(f.label)}</label>
+            <input type="number" id="sport-stat-${f.key}" class="input-field" min="0" step="1" placeholder="0" value="${ex.sportStats[f.key] || ""}">
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+    container.querySelectorAll(".sport-position-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        ex.position = chip.dataset.position;
+        ex.sportStats = {}; // fields differ per position — start fresh
+        renderSportStats();
+      });
+    });
+    fields.forEach(f => {
+      const input = document.getElementById("sport-stat-" + f.key);
+      if (input) input.addEventListener("input", e => { ex.sportStats[f.key] = e.target.value; });
+    });
+  }
+
   function pace(minutes, km) {
     const m = parseFloat(minutes), d = parseFloat(km);
     if (!m || !d || m <= 0 || d <= 0) return "";
@@ -1157,6 +1324,7 @@
     document.getElementById("live-activity-manual-distance").value = "";
     document.getElementById("live-activity-manual-calories").value = "";
     updateLiveActivityButtons();
+    renderSportStats();
     showView("live-activity");
     startSessionTimer("live-activity-timer");
   }
@@ -1213,6 +1381,17 @@
     const s = ex.sets[0];
     const reps = parseFloat(s.reps);
     if (isNaN(reps) || reps <= 0) { toast("Track some time before finishing"); return; }
+
+    let sportStats = null;
+    if (SPORT_STATS[ex.name] && ex.sportStats) {
+      const cleaned = {};
+      Object.entries(ex.sportStats).forEach(([k, v]) => {
+        const n = parseFloat(v);
+        if (!isNaN(n) && n !== 0) cleaned[k] = n;
+      });
+      if (Object.keys(cleaned).length > 0) sportStats = cleaned;
+    }
+
     data.workouts.push({
       id: uid(),
       date: activeSession.date,
@@ -1225,7 +1404,9 @@
         elevGain: parseFloat(s.elevGain) || 0,
         avgHr: parseFloat(s.avgHr) || 0
       }],
-      notes: ex.notes || ""
+      notes: ex.notes || "",
+      position: ex.position || null,
+      sportStats
     });
     saveData();
     toast(ex.name + " saved");
@@ -1614,9 +1795,20 @@
     return `${s.reps} × ${s.weight}${data.unit}`;
   }
 
+  function sportStatsSummary(w) {
+    if (!w.sportStats) return "";
+    const fields = sportStatFields(w.exercise, w.position) || [];
+    const labelFor = key => { const f = fields.find(f => f.key === key); return f ? f.label : key; };
+    return Object.entries(w.sportStats).map(([k, v]) => `${v} ${labelFor(k)}`).join(" · ");
+  }
+
   function workoutCardHtml(w) {
     const logType = exerciseLogType(w.exercise);
     const setsHtml = w.sets.map(s => `<span class="set-chip">${workoutSetChip(s, logType)}</span>`).join("");
+    const statsText = sportStatsSummary(w);
+    const statsHtml = statsText
+      ? `<div class="workout-sport-stats">${w.position ? `<span class="workout-position-tag">${escapeHtml(w.position)}</span> ` : ""}${escapeHtml(statsText)}</div>`
+      : "";
     return `
       <div class="workout-card" data-id="${w.id}">
         <div class="workout-icon">${ICON_DUMBBELL}</div>
@@ -1626,6 +1818,7 @@
             <span class="workout-date">${formatDate(w.date)}</span>
           </div>
           <div class="workout-sets">${setsHtml}</div>
+          ${statsHtml}
           ${w.notes ? `<div class="workout-notes">${escapeHtml(w.notes)}</div>` : ""}
         </div>
         <div class="workout-actions">
@@ -1783,8 +1976,19 @@
     const cards = names.map(name => {
       const entries = data.workouts.filter(w => w.exercise === name);
       const logType = exerciseLogType(name);
+      const sportCfg = SPORT_STATS[name];
       let value;
-      if (logType === "cardio") {
+      if (sportCfg) {
+        const primaryField = sportCfg.positions
+          ? sportCfg.fields[sportCfg.positions[0]][0]
+          : sportCfg.fields[0];
+        let best = 0;
+        entries.forEach(w => {
+          const v = w.sportStats && w.sportStats[primaryField.key];
+          if (v > best) best = v;
+        });
+        value = best > 0 ? `${best} ${primaryField.label}` : `${entries.length} played`;
+      } else if (logType === "cardio") {
         let best = 0;
         entries.forEach(w => w.sets.forEach(s => { if (s.distance > best) best = s.distance; }));
         value = best > 0 ? `${best.toFixed(2)} km` : `${Math.max(0, ...entries.flatMap(w => w.sets.map(s => s.reps)))} min`;

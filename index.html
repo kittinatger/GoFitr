@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
@@ -444,12 +444,13 @@
           <input type="number" id="live-activity-manual-calories" class="input-field" min="0" step="1" placeholder="0">
         </div>
       </div>
+      <div id="live-activity-sport-stats"></div>
       <div style="padding:4px 16px 8px;">
         <input type="text" id="live-activity-notes" class="input-field" placeholder="Notes..." style="width:100%;box-sizing:border-box;">
       </div>
       <div class="disclaimer-banner disclaimer-banner--standalone" style="margin:8px 16px 32px;">
         <svg viewBox="0 0 24 24" class="disclaimer-banner-icon"><use href="#icon-info"/></svg>
-        <span>Phone GPS distance and elevation are estimates and can drift, especially indoors, under tree cover, or between tall buildings — treat them as approximate, not lab-accurate.</span>
+        <span>Phone GPS distance and elevation are estimates and can drift, especially indoors, under tree cover, or between tall buildings — treat them as approximate, not lab-accurate. Match stats below are self-reported and not verified.</span>
       </div>
     </section>
 
@@ -1559,8 +1560,8 @@
   src="https://safe-airedale-9177.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
   type="text/javascript"
 ></script>
-<script src="js/food-database.js?v=4"></script>
-<script src="js/exercise-database.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/food-database.js?v=5"></script>
+<script src="js/exercise-database.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>
