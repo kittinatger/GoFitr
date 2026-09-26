@@ -401,7 +401,7 @@
     }
     if (exercisePickerContext === "session") {
       if (activeSession) {
-        activeSession.exercises.push({ name, sets: [{ reps: "", weight: "", done: false }], notes: "" });
+        activeSession.exercises.push({ name, sets: [{ reps: "", weight: "", distance: "", calories: "", done: false }], notes: "" });
         renderSession();
       }
       showView("workout-session");
@@ -419,13 +419,18 @@
   function updateQuickLogUnitLabels() {
     const name = document.getElementById("log-exercise").value.trim();
     const logType = exerciseLogType(name);
-    const cardio = logType !== "reps";
-    const placeholder = logType === "hold" ? "Duration (sec)" : logType === "cardio" ? "Duration (min)" : "Reps";
+    const cardio = logType === "cardio";
+    const hold = logType === "hold";
+    const placeholder = hold ? "Duration (sec)" : cardio ? "Duration (min)" : "Reps";
     document.querySelectorAll("#sets-container .set-row").forEach(row => {
       const repsInput = row.querySelector(".set-reps");
       const wtInput = row.querySelector(".set-weight");
+      const distInput = row.querySelector(".set-distance");
+      const calInput = row.querySelector(".set-calories");
       if (repsInput) repsInput.placeholder = placeholder;
-      if (wtInput) wtInput.style.display = cardio ? "none" : "";
+      if (wtInput) wtInput.style.display = (cardio || hold) ? "none" : "";
+      if (distInput) distInput.style.display = cardio ? "" : "none";
+      if (calInput) calInput.style.display = cardio ? "" : "none";
     });
   }
 
@@ -530,7 +535,7 @@
     renderExercisePicker();
   });
 
-  function addSetRow(reps = "", weight = "") {
+  function addSetRow(reps = "", weight = "", distance = "", calories = "") {
     const container = document.getElementById("sets-container");
     const idx = container.children.length + 1;
     const row = document.createElement("div");
@@ -539,6 +544,8 @@
       <div class="set-index">${idx}</div>
       <input type="number" class="set-reps" placeholder="Reps" min="0" value="${reps}">
       <input type="number" class="set-weight" placeholder="Weight (${data.unit})" min="0" step="0.5" value="${weight}">
+      <input type="number" class="set-distance" placeholder="Distance (km)" min="0" step="0.01" value="${distance}" style="display:none;">
+      <input type="number" class="set-calories" placeholder="Calories" min="0" step="1" value="${calories}" style="display:none;">
       <button type="button" class="set-remove" title="Remove set">${ICON_X}</button>
     `;
     row.querySelector(".set-remove").addEventListener("click", () => {
@@ -572,8 +579,15 @@
     document.querySelectorAll("#sets-container .set-row").forEach(row => {
       const reps = parseFloat(row.querySelector(".set-reps").value);
       const weight = parseFloat(row.querySelector(".set-weight").value);
+      const distance = parseFloat(row.querySelector(".set-distance").value);
+      const calories = parseFloat(row.querySelector(".set-calories").value);
       if (!isNaN(reps) && reps > 0) {
-        sets.push({ reps, weight: isNaN(weight) ? 0 : weight });
+        sets.push({
+          reps,
+          weight: isNaN(weight) ? 0 : weight,
+          distance: isNaN(distance) ? 0 : distance,
+          calories: isNaN(calories) ? 0 : calories
+        });
       }
     });
 
@@ -745,6 +759,15 @@
     return exerciseLogType(name) !== "reps";
   }
 
+  function pace(minutes, km) {
+    const m = parseFloat(minutes), d = parseFloat(km);
+    if (!m || !d || m <= 0 || d <= 0) return "";
+    const paceMin = m / d;
+    const whole = Math.floor(paceMin);
+    const sec = Math.round((paceMin - whole) * 60);
+    return `${whole}'${String(sec).padStart(2, "0")}"/km`;
+  }
+
   function startSessionTimer() {
     clearInterval(sessionTimerInterval);
     const startMs = Date.now() - (activeSession.elapsedMs || 0);
@@ -770,7 +793,7 @@
     activeSession = {
       date: todayStr(),
       routineName: r ? r.name : "Workout",
-      exercises: r ? r.exercises.map(e => ({ name: e.name, sets: [{ reps: "", weight: "", done: false }], notes: "" })) : [],
+      exercises: r ? r.exercises.map(e => ({ name: e.name, sets: [{ reps: "", weight: "", distance: "", calories: "", done: false }], notes: "" })) : [],
       elapsedMs: 0
     };
     document.getElementById("session-heading").textContent = activeSession.routineName;
@@ -803,9 +826,6 @@
     list.innerHTML = activeSession.exercises.map((ex, ei) => {
       const prev = getPrevSets(ex.name);
       const logType = exerciseLogType(ex.name);
-      const cardio = logType !== "reps";
-      const durLabel = logType === "hold" ? "Duration (sec)" : "Duration (min)";
-      const durSuffix = logType === "hold" ? "sec" : "min";
       return `
       <div class="session-ex-card" data-ei="${ei}">
         <div class="session-ex-header">
@@ -814,14 +834,33 @@
             <svg width="15" height="15" viewBox="0 0 24 24"><use href="#icon-x"/></svg>
           </button>
         </div>
-        ${cardio
-          ? `<div class="session-sets-head session-sets-head-cardio"><span>Set</span><span>Prev</span><span>${durLabel}</span><span></span></div>`
+        ${logType === "cardio"
+          ? `<div class="session-sets-head session-sets-head-run"><span>Set</span><span>Min</span><span>Km</span><span>Kcal</span><span></span></div>`
+          : logType === "hold"
+          ? `<div class="session-sets-head session-sets-head-cardio"><span>Set</span><span>Prev</span><span>Duration (sec)</span><span></span></div>`
           : `<div class="session-sets-head"><span>Set</span><span>Prev</span><span>${data.unit}</span><span>Reps</span><span></span></div>`
         }
         ${ex.sets.map((s, si) => {
           const p = prev[si];
-          if (cardio) {
-            const prevText = p ? `${p.reps} ${durSuffix}` : "-";
+          if (logType === "cardio") {
+            const paceText = pace(s.reps, s.distance);
+            return `
+            <div class="session-set-row session-set-row-run${s.done ? " session-set-done" : ""}" data-ei="${ei}" data-si="${si}">
+              <span class="set-index">${si + 1}</span>
+              <input type="number" class="session-reps" value="${s.reps}" placeholder="0" min="0" step="0.5">
+              <input type="number" class="session-distance" value="${s.distance || ""}" placeholder="0" min="0" step="0.01">
+              <input type="number" class="session-calories" value="${s.calories || ""}" placeholder="0" min="0" step="1">
+              <button class="session-set-check${s.done ? " session-set-check-done" : ""}" data-ei="${ei}" data-si="${si}" title="Mark done">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+            <div class="session-cardio-meta">
+              <span class="set-prev">${p ? `Prev: ${p.reps}min${p.distance ? " / " + p.distance + "km" : ""}` : "No previous data"}</span>
+              <span class="session-pace" data-ei="${ei}" data-si="${si}">${paceText ? "Pace: " + paceText : ""}</span>
+            </div>`;
+          }
+          if (logType === "hold") {
+            const prevText = p ? `${p.reps} sec` : "-";
             return `
             <div class="session-set-row session-set-row-cardio${s.done ? " session-set-done" : ""}" data-ei="${ei}" data-si="${si}">
               <span class="set-index">${si + 1}</span>
@@ -857,7 +896,7 @@
     });
     list.querySelectorAll(".session-add-set").forEach(btn => {
       btn.addEventListener("click", () => {
-        activeSession.exercises[Number(btn.dataset.ei)].sets.push({ reps: "", weight: "", done: false });
+        activeSession.exercises[Number(btn.dataset.ei)].sets.push({ reps: "", weight: "", distance: "", calories: "", done: false });
         renderSession();
       });
     });
@@ -872,6 +911,7 @@
       const ei = Number(row.dataset.ei), si = Number(row.dataset.si);
       row.querySelector(".session-reps").addEventListener("input", e => {
         activeSession.exercises[ei].sets[si].reps = e.target.value;
+        updatePaceDisplay(ei, si);
       });
       const wtInput = row.querySelector(".session-wt");
       if (wtInput) {
@@ -879,7 +919,28 @@
           activeSession.exercises[ei].sets[si].weight = e.target.value;
         });
       }
+      const distInput = row.querySelector(".session-distance");
+      if (distInput) {
+        distInput.addEventListener("input", e => {
+          activeSession.exercises[ei].sets[si].distance = e.target.value;
+          updatePaceDisplay(ei, si);
+        });
+      }
+      const calInput = row.querySelector(".session-calories");
+      if (calInput) {
+        calInput.addEventListener("input", e => {
+          activeSession.exercises[ei].sets[si].calories = e.target.value;
+        });
+      }
     });
+
+    function updatePaceDisplay(ei, si) {
+      const s = activeSession.exercises[ei].sets[si];
+      const el = list.querySelector(`.session-pace[data-ei="${ei}"][data-si="${si}"]`);
+      if (!el) return;
+      const p = pace(s.reps, s.distance);
+      el.textContent = p ? "Pace: " + p : "";
+    }
     list.querySelectorAll(".session-notes").forEach(inp => {
       const ei = Number(inp.closest("[data-ei]").dataset.ei);
       inp.addEventListener("input", e => { activeSession.exercises[ei].notes = e.target.value; });
@@ -923,7 +984,12 @@
     let saved = 0;
     activeSession.exercises.forEach(ex => {
       const sets = ex.sets
-        .map(s => ({ reps: parseFloat(s.reps), weight: parseFloat(s.weight) || 0 }))
+        .map(s => ({
+          reps: parseFloat(s.reps),
+          weight: parseFloat(s.weight) || 0,
+          distance: parseFloat(s.distance) || 0,
+          calories: parseFloat(s.calories) || 0
+        }))
         .filter(s => !isNaN(s.reps) && s.reps > 0);
       if (sets.length > 0) {
         data.workouts.push({ id: uid(), date, exercise: ex.name, sets, notes: ex.notes || "" });

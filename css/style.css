@@ -2562,3 +2562,17 @@ textarea { resize: vertical; font-family: inherit; }
 .session-set-row-cardio {
   grid-template-columns: 28px 60px 1fr 36px;
 }
+
+/* ---- Cardio (running/cycling/etc) session rows: min/km/kcal ---- */
+.session-sets-head-run,
+.session-set-row-run {
+  grid-template-columns: 24px 1fr 1fr 1fr 36px;
+}
+.session-cardio-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 0 2px 8px;
+}
+.session-pace { color: var(--lime); font-weight: 600; }
