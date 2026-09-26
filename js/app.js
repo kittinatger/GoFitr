@@ -771,6 +771,20 @@
     { name: "Jump Rope",     icon: "M3 8c3-6 15-6 18 0M6 10v10M18 10v10" }
   ];
 
+  // Team/individual sports — reuse the "Play a Match/Game" entries already
+  // in the exercise database (all tagged muscle: "Cardio") so history,
+  // prev-set lookups, and the cardio min/km/kcal UI all just work.
+  const SPORT_ACTIVITIES = [
+    { name: "Football (Soccer) - Play a Match", label: "Football", svg: '<circle cx="12" cy="12" r="9"/><path d="M12 7l3.5 2.5-1.3 4.1H9.8L8.5 9.5z"/><path d="M12 3v4M4.5 8.5l3.3 1M19.5 8.5l-3.3 1M7.5 20l1.8-5.9M16.5 20l-1.8-5.9"/>' },
+    { name: "Basketball - Play a Game", label: "Basketball", svg: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6c3.6 3.6 3.6 9.2 0 12.8M18.4 5.6c-3.6 3.6-3.6 9.2 0 12.8"/>' },
+    { name: "Tennis - Play a Match", label: "Tennis", svg: '<circle cx="12" cy="12" r="9"/><path d="M4 8.5c4 2 12 2 16 0M4 15.5c4-2 12-2 16 0"/>' },
+    { name: "Volleyball - Play a Match", label: "Volleyball", svg: '<circle cx="12" cy="12" r="9"/><path d="M12 3c3 3 3 6 0 9M3 12c3-1.5 6-1.5 9 0s6 1.5 9 0M6 6c2 3 2 9-1 13"/>' },
+    { name: "Rugby - Play a Match", label: "Rugby", svg: '<ellipse cx="12" cy="12" rx="9" ry="6"/><path d="M4.5 12h15M9 9.5v5M12 9v6M15 9.5v5"/>' },
+    { name: "American Football - Play a Game", label: "Am. Football", svg: '<ellipse cx="12" cy="12" rx="6" ry="9"/><path d="M12 4v16M9.5 9h5M9.5 12h5M9.5 15h5"/>' },
+    { name: "Baseball - Play a Game", label: "Baseball", svg: '<circle cx="12" cy="12" r="9"/><path d="M6 6c3 3 3 9 0 12M18 6c-3 3-3 9 0 12"/>' },
+    { name: "Cricket - Play a Match", label: "Cricket", svg: '<circle cx="9" cy="9" r="4"/><path d="M13 13l6 6M17 17l3 1-1-3"/>' }
+  ];
+
   function isCardioExercise(name) {
     return exerciseLogType(name) !== "reps";
   }
@@ -1081,14 +1095,26 @@
   // ---------- Dedicated "Start Activity" flow (cardio only) ----------
   function renderChooseActivity() {
     const list = document.getElementById("choose-activity-list");
-    list.innerHTML = QUICK_ACTIVITIES.map(a => `
+    const cardioCards = QUICK_ACTIVITIES.map(a => `
       <button class="activity-card" data-name="${escapeHtml(a.name)}">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${a.icon}"/></svg>
         <span>${escapeHtml(a.name)}</span>
       </button>
     `).join("");
+    const sportCards = SPORT_ACTIVITIES.map(a => `
+      <button class="activity-card" data-name="${escapeHtml(a.name)}" data-label="${escapeHtml(a.label)}">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${a.svg}</svg>
+        <span>${escapeHtml(a.label)}</span>
+      </button>
+    `).join("");
+    list.innerHTML = `
+      <div class="activity-section-label">Cardio</div>
+      <div class="activity-grid">${cardioCards}</div>
+      <div class="activity-section-label">Team Sports</div>
+      <div class="activity-grid">${sportCards}</div>
+    `;
     list.querySelectorAll(".activity-card").forEach(btn => {
-      btn.addEventListener("click", () => startLiveActivity(btn.dataset.name));
+      btn.addEventListener("click", () => startLiveActivity(btn.dataset.name, btn.dataset.label));
     });
   }
 
@@ -1117,14 +1143,14 @@
     });
   }
 
-  function startLiveActivity(name) {
+  function startLiveActivity(name, label) {
     activeSession = {
       date: todayStr(),
       routineName: name,
       exercises: [{ name, sets: [{ reps: "", weight: "", distance: "", calories: "", done: false }], notes: "" }],
       elapsedMs: 0
     };
-    document.getElementById("live-activity-name").textContent = name;
+    document.getElementById("live-activity-name").textContent = label || name;
     document.getElementById("live-activity-stats").textContent = "Tap Start GPS or Connect Equipment to begin";
     document.getElementById("live-activity-notes").value = "";
     document.getElementById("live-activity-manual-duration").value = "";
